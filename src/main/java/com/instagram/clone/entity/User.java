@@ -32,4 +32,9 @@ public class User {
     private boolean isPrivate = false;
 
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate(){
+        this.createdAt = LocalDateTime.now();
+    }
 }
