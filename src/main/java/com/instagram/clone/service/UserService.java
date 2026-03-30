@@ -4,8 +4,12 @@ import com.instagram.clone.dto.UserRegisterRequest;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,10 +40,27 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("User not found");
         }
         userRepository.deleteById(id);
     }
+
+    public User updateBio(Long userId, String bio) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setBio(bio);
+
+        return userRepository.save(user);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+
 }

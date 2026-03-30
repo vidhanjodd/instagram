@@ -1,11 +1,14 @@
 package com.instagram.clone.controller;
 
+import com.instagram.clone.dto.UpdateBioRequest;
 import com.instagram.clone.dto.UserRegisterRequest;
 import com.instagram.clone.dto.UserRegisterResponse;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -31,5 +34,17 @@ public class UserController {
     public String delete(@PathVariable Long id) {
         userService.deleteUser(id);
         return "user deleted";
+    }
+
+    @PutMapping("/{id}/bio")
+    public User updateBio(@PathVariable Long id,
+                          @RequestBody UpdateBioRequest request) {
+
+        return userService.updateBio(id, request.getBio());
+    }
+
+    @GetMapping("/all")
+    public List<User> getAllUsers() {
+        return userService.getAllUsers();
     }
 }
