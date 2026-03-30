@@ -21,6 +21,7 @@ public class SecurityConfig {
 //                        .requestMatchers("/api/users/*/bio").permitAll()
 //                        .anyRequest().authenticated()
                           .requestMatchers("/api/users/**").permitAll()
+                                .requestMatchers("/api/users/all", "/api/chat/**", "/ws/**").permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 
