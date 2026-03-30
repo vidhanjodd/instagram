@@ -1,7 +1,7 @@
 package com.instagram.clone.controller;
 
 import com.instagram.clone.dto.UserRegisterRequest;
-import com.instagram.clone.dto.UserResponse;
+import com.instagram.clone.dto.UserRegisterResponse;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +15,9 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public UserResponse register(@RequestBody UserRegisterRequest request) {
+    public UserRegisterResponse register(@RequestBody UserRegisterRequest request) {
         User user = userService.register(request);
-        return UserResponse.builder()
+        return UserRegisterResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
@@ -25,5 +25,11 @@ public class UserController {
                 .isPrivate(user.isPrivate())
                 .createdAt(user.getCreatedAt())
                 .build();
+    }
+
+    @PostMapping("/delete/{id}")
+    public String delete(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return "user deleted";
     }
 }
