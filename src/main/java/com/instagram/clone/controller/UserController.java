@@ -30,7 +30,7 @@ public class UserController {
                 .build();
     }
 
-    @PostMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public String delete(@PathVariable Long id) {
         userService.deleteUser(id);
         return "user deleted";
