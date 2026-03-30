@@ -62,4 +62,17 @@ public class PostService {
         return postRepository.findByUserId(userId);
     }
 
+    public void deletePost(Long postId) {
+
+        // 1. Find post
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        // 2. Delete from Cloudinary
+        cloudinaryService.deleteFile(post.getPublicId());
+
+        // 3. Delete from DB
+        postRepository.delete(post);
+    }
+
 }
