@@ -22,25 +22,26 @@ public class PostController {
             @RequestParam("caption") String caption,
             @RequestParam("userId") Long userId
     ) {
-
         Post post = postService.createPost(file, caption, userId);
-
         return ResponseEntity.ok(post);
     }
+
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
-        return ResponseEntity.ok(postService.getAllPosts());
+        List<Post> posts = postService.getAllPosts();
+        return ResponseEntity.ok(posts);
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/users/{userId}")
     public ResponseEntity<List<Post>> getPostsByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(postService.getPostsByUserId(userId));
+        List<Post> posts = postService.getPostsByUserId(userId);
+        return ResponseEntity.ok(posts);
     }
 
     @DeleteMapping("/{postId}")
-    public ResponseEntity<String> deletePost(@PathVariable Long postId) {
+    public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
-        return ResponseEntity.ok("Post deleted successfully");
+        return ResponseEntity.noContent().build(); // cleaner than string
     }
 
 }
