@@ -19,7 +19,7 @@ public class SecurityConfig {
 //                        .requestMatchers("/api/users/all").permitAll()
 //                        .requestMatchers("/api/users/*/bio").permitAll()
 //                        .anyRequest().authenticated()
-                          .requestMatchers("/api/users/**").permitAll()
+                          .requestMatchers("/**").permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 
