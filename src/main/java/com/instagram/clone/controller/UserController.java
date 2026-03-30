@@ -37,14 +37,14 @@ public class UserController {
     }
 
     @PutMapping("/{id}/bio")
-    public User updateBio(@PathVariable Long id,
+    public UserRegisterResponse updateBio(@PathVariable Long id,
                           @RequestBody UpdateBioRequest request) {
 
         return userService.updateBio(id, request.getBio());
     }
 
     @GetMapping("/all")
-    public List<User> getAllUsers() {
+    public List<UserRegisterResponse> getAllUsers() {
         return userService.getAllUsers();
     }
 }

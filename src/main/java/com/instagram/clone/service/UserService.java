@@ -1,6 +1,7 @@
 package com.instagram.clone.service;
 
 import com.instagram.clone.dto.UserRegisterRequest;
+import com.instagram.clone.dto.UserRegisterResponse;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,18 +49,33 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public User updateBio(Long userId, String bio) {
+    public UserRegisterResponse updateBio(Long userId, String bio) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         user.setBio(bio);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return mapToResponse(savedUser);
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserRegisterResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private UserRegisterResponse mapToResponse(User user) {
+        return UserRegisterResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .bio(user.getBio())
+                .isPrivate(user.isPrivate())
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 
 
