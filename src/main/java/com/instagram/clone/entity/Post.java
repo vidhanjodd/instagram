@@ -1,9 +1,11 @@
 package com.instagram.clone.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "posts")
@@ -26,7 +28,12 @@ public class Post {
 
     private String publicId; // from Cloudinary
 
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "post" , cascade = CascadeType.ALL)
+    private List<Comment> comments;
     private LocalDateTime createdAt;
 }

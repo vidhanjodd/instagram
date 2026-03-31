@@ -1,6 +1,7 @@
 package com.instagram.clone.service;
 
 import com.instagram.clone.entity.Post;
+import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.PostRepository;
 import com.instagram.clone.repository.UserRepository; // ✅ added
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +26,6 @@ public class PostService {
 
     public Post createPost(MultipartFile file, String caption, Long userId) {
 
-        if (!userRepository.existsById(userId)) {
-            throw new RuntimeException("User does not exist");
-        }
-
         // 1. Upload to Cloudinary
         Map<String, Object> uploadResult = cloudinaryService.uploadFile(file);
 
@@ -39,14 +36,14 @@ public class PostService {
 
         // 3. Decide media type
         String mediaType = resourceType.equals("video") ? "VIDEO" : "IMAGE";
-
+        User user = userRepository.findById(userId).orElseThrow(()->new RuntimeException("User does not exist"));
         // 4. Create Post object
         Post post = Post.builder()
                 .caption(caption)
                 .mediaUrl(mediaUrl)
                 .mediaType(mediaType)
                 .publicId(publicId)
-                .userId(userId)
+                .user(user)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -59,7 +56,7 @@ public class PostService {
     }
 
     public List<Post> getPostsByUserId(Long userId) {
-        return postRepository.findByUserId(userId);
+        return postRepository.findByUser_Id(userId);
     }
 
     public void deletePost(Long postId) {
