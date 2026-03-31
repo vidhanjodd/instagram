@@ -17,9 +17,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                           .requestMatchers("/api/users/**").permitAll()
-                                .requestMatchers("/api/posts/**").permitAll()
-                                .requestMatchers("/api/comments/**").permitAll()
-                                .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 
