@@ -77,6 +77,10 @@ public class UserService {
                 .createdAt(user.getCreatedAt())
                 .build();
     }
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
 
 
 }
