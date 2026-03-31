@@ -145,7 +145,7 @@
 
     <form th:action="@{/posts/create}" method="post" enctype="multipart/form-data" id="postForm">
         <!-- Hidden userId — wire from Spring Security session in production -->
-        <input type="hidden" name="userId" value="1"/>
+        <input type="hidden" name="userId" th:value="${currentUserId}"/>
 
         <div class="modal">
             <div class="modal-header">

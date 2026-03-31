@@ -29,7 +29,7 @@ public class PostService {
         // 1. Upload to Cloudinary
         Map<String, Object> uploadResult = cloudinaryService.uploadFile(file);
 
-        // 2. Extract important fields
+        // 2. Extract impielortant fds
         String mediaUrl = uploadResult.get("secure_url").toString();
         String publicId = uploadResult.get("public_id").toString();
         String resourceType = uploadResult.get("resource_type").toString();

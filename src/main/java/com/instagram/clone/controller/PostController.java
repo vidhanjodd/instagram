@@ -1,9 +1,11 @@
-
 package com.instagram.clone.controller;
 
 import com.instagram.clone.entity.Post;
+import com.instagram.clone.entity.User;
+import com.instagram.clone.repository.UserRepository;
 import com.instagram.clone.service.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,23 +19,30 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final UserRepository userRepository; // ← to fetch logged-in user
 
-    // Feed — all posts
     @GetMapping
-    public String getAllPosts(Model model) {
+    public String getAllPosts(Model model, Authentication authentication) {
         List<Post> posts = postService.getAllPosts();
         model.addAttribute("posts", posts);
-        return "posts/feed"; // templates/posts/feed.html
+
+        // Pass logged-in user to view
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        model.addAttribute("currentUser", user);
+
+        return "posts/feed";
     }
 
-    // Show create post form
     @GetMapping("/create")
-    public String showCreateForm(Model model) {
-        // Pass logged-in userId via session/security context in real app
-        return "posts/create"; // templates/posts/create.html
+    public String showCreateForm(Model model, Authentication authentication) {
+        // Get logged-in user and pass their ID to the view
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        model.addAttribute("currentUserId", user.getId());
+        return "posts/create";
     }
 
-    // Handle post creation
     @PostMapping("/create")
     public String createPost(@RequestParam("file") MultipartFile file,
                              @RequestParam("caption") String caption,
@@ -48,7 +57,6 @@ public class PostController {
         }
     }
 
-    // Delete post
     @PostMapping("/{postId}/delete")
     public String deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
