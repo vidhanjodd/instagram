@@ -42,7 +42,7 @@ public class UserController {
         User user = userService.getUserById(id);
         model.addAttribute("user", user);
         model.addAttribute("posts", postService.getPostsByUserId(id));
-        return "users/profile"; // templates/users/profile.html
+        return "users/profile";
     }
 
     // Show edit bio form

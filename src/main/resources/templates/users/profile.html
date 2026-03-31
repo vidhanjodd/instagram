@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${user.username} + ' · Instagram'">Profile · Instagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #000; --surface: #0a0a0a; --border: #2a2a2a;
+            --text: #f5f5f5; --muted: #8e8e8e;
+            --btn: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+        }
+        body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            height: 54px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px;
+        }
+        .nav-logo {
+            font-family: 'Grand Hotel', cursive; font-size: 26px;
+            background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            text-decoration: none;
+        }
+        .nav-icons { display: flex; align-items: center; gap: 18px; }
+        .nav-icons a, .nav-icons button {
+            background: none; border: none; color: var(--text); cursor: pointer;
+            font-size: 20px; padding: 4px; text-decoration: none;
+            transition: transform 0.15s;
+        }
+        .nav-icons a:hover, .nav-icons button:hover { transform: scale(1.1); }
+
+        .page { padding: 74px 0 40px; max-width: 935px; margin: 0 auto; padding-left: 20px; padding-right: 20px; }
+
+        /* PROFILE HEADER */
+        .profile-header {
+            display: flex; align-items: flex-start; gap: 60px;
+            padding: 30px 0 40px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease both;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .profile-avatar-wrap { flex-shrink: 0; }
+        .profile-avatar-ring {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+            padding: 3px;
+        }
+        .profile-avatar-inner {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: #1a1a1a; border: 3px solid var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px; overflow: hidden;
+        }
+
+        .profile-info { flex: 1; }
+        .profile-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+        .profile-username { font-size: 22px; font-weight: 300; }
+        .profile-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .btn-edit {
+            padding: 6px 16px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-edit:hover { background: rgba(255,255,255,0.05); }
+
+        .btn-follow {
+            padding: 6px 20px;
+            background: #0095f6;
+            border: none; border-radius: 8px;
+            color: #fff; font-family: 'DM Sans', sans-serif;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-follow:hover { background: #1aa3ff; }
+
+        .btn-danger {
+            padding: 6px 16px;
+            background: none;
+            border: 1px solid rgba(225,48,108,0.4);
+            border-radius: 8px;
+            color: #e1306c;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-danger:hover { background: rgba(225,48,108,0.08); }
+
+        .profile-stats { display: flex; gap: 36px; margin-bottom: 18px; }
+        .stat { text-align: center; }
+        .stat-num { font-size: 17px; font-weight: 600; display: block; }
+        .stat-label { font-size: 13px; color: var(--muted); }
+
+        .profile-bio .display-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .profile-bio .bio-text { font-size: 14px; line-height: 1.5; color: var(--text); white-space: pre-wrap; }
+
+        /* TABS */
+        .profile-tabs {
+            display: flex; justify-content: center; gap: 0;
+            border-top: 1px solid var(--border);
+            margin-bottom: 4px;
+        }
+        .tab {
+            display: flex; align-items: center; gap: 6px;
+            padding: 14px 24px;
+            font-size: 12px; font-weight: 600; letter-spacing: 1px;
+            color: var(--muted); cursor: pointer;
+            border-top: 1px solid transparent; margin-top: -1px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+        .tab.active { color: var(--text); border-top-color: var(--text); }
+        .tab:hover { color: var(--text); }
+
+        /* GRID */
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+        }
+
+        .grid-item {
+            position: relative; aspect-ratio: 1;
+            overflow: hidden; cursor: pointer;
+            background: #1a1a1a;
+        }
+        .grid-item img, .grid-item video {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.3s, filter 0.3s;
+        }
+        .grid-item:hover img, .grid-item:hover video {
+            transform: scale(1.04); filter: brightness(0.75);
+        }
+        .grid-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            opacity: 0; transition: opacity 0.25s;
+        }
+        .grid-item:hover .grid-overlay { opacity: 1; }
+        .grid-stat { color: #fff; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+
+        .video-badge {
+            position: absolute; top: 8px; right: 8px;
+            font-size: 16px;
+        }
+
+        /* EMPTY */
+        .empty-grid {
+            grid-column: 1 / -1;
+            text-align: center; padding: 60px 20px; color: var(--muted);
+        }
+        .empty-grid .icon { font-size: 52px; margin-bottom: 14px; }
+        .empty-grid h3 { font-size: 20px; color: var(--text); margin-bottom: 8px; }
+
+        .create-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+            border: none; border-radius: 8px; color: #fff;
+            font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+            padding: 8px 18px; cursor: pointer; text-decoration: none; margin-top: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .profile-header { gap: 24px; }
+            .profile-avatar-ring { width: 80px; height: 80px; }
+            .profile-avatar-inner { font-size: 32px; }
+            .profile-stats { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+<nav>
+    <a class="nav-logo" th:href="@{/posts}">Instagram</a>
+    <div style="font-size:15px; font-weight:600;" th:text="${user.username}">username</div>
+    <div class="nav-icons">
+        <a th:href="@{/posts}">🏠</a>
+        <form th:action="@{/logout}" method="post" style="display:inline">
+            <button type="submit">🚪</button>
+        </form>
+    </div>
+</nav>
+
+<div class="page">
+    <!-- PROFILE HEADER -->
+    <div class="profile-header">
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar-ring">
+                <div class="profile-avatar-inner"
+                     th:text="${#strings.substring(user.username,0,1).toUpperCase()}">A</div>
+            </div>
+        </div>
+
+        <div class="profile-info">
+            <div class="profile-top">
+                <span class="profile-username" th:text="${user.username}">username</span>
+                <div class="profile-actions">
+                    <a class="btn-edit" th:href="@{/users/{id}/edit(id=${user.id})}">Edit profile</a>
+                    <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post" style="display:inline"
+                          onsubmit="return confirm('Delete account?')">
+                        <button class="btn-danger" type="submit">Delete account</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="profile-stats">
+                <div class="stat">
+                    <span class="stat-num" th:text="${#lists.size(posts)}">0</span>
+                    <span class="stat-label">posts</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-num">—</span>
+                    <span class="stat-label">followers</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-num">—</span>
+                    <span class="stat-label">following</span>
+                </div>
+            </div>
+
+            <div class="profile-bio">
+                <div class="display-name" th:text="${user.username}">username</div>
+                <div class="bio-text" th:text="${user.bio != null && !#strings.isEmpty(user.bio) ? user.bio : 'No bio yet.'}">Bio here</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="profile-tabs">
+        <div class="tab active">⊞ Posts</div>
+        <div class="tab">🎬 Reels</div>
+        <div class="tab">🏷 Tagged</div>
+    </div>
+
+    <!-- POSTS GRID -->
+    <div class="posts-grid">
+        <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">
+            <div class="icon">📷</div>
+            <h3>Share Photos</h3>
+            <p>When you share photos, they will appear on your profile.</p>
+            <a th:href="@{/posts/create}" class="create-btn">+ Share your first photo</a>
+        </div>
+
+        <div class="grid-item" th:each="post : ${posts}">
+            <img th:if="${post.mediaType == 'IMAGE'}"
+                 th:src="${post.mediaUrl}"
+                 th:alt="${post.caption}"/>
+            <video th:if="${post.mediaType == 'VIDEO'}"
+                   th:src="${post.mediaUrl}"></video>
+            <span th:if="${post.mediaType == 'VIDEO'}" class="video-badge">🎬</span>
+            <div class="grid-overlay">
+                <span class="grid-stat">🤍 0</span>
+                <span class="grid-stat">💬 0</span>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
