@@ -12,17 +12,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-
-                          .requestMatchers("/api/users/**").permitAll()
-                                .requestMatchers("/api/posts/**").permitAll()
-                                .requestMatchers("/api/comments/**").permitAll()
-                                .anyRequest().permitAll()
+                        .requestMatchers("/users/register", "/css/**", "/js/**").permitAll()
+                        .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults());
-
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/posts", true)
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("/login")
+                        .permitAll()
+                );
         return http.build();
     }
 }

@@ -15,21 +15,6 @@ public class AppConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
 
-    @Configuration
-    @EnableWebSocketMessageBroker
-    public static class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
-        @Override
-        public void configureMessageBroker(MessageBrokerRegistry config) {
-            config.enableSimpleBroker("/topic");
-            config.setApplicationDestinationPrefixes("/app");
-        }
-
-        @Override
-        public void registerStompEndpoints(StompEndpointRegistry registry) {
-            registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
-        }
     }
 }
