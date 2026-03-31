@@ -21,6 +21,9 @@ public class SecurityConfig {
 //                        .requestMatchers("/api/users/*/bio").permitAll()
 //                        .anyRequest().authenticated()
                           .requestMatchers("/api/users/**").permitAll()
+                                .requestMatchers("/api/posts/**").permitAll()
+                                .requestMatchers("/api/comments/**").permitAll()
+                                .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());
 
