@@ -19,14 +19,13 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
-    private final UserRepository userRepository; // ← to fetch logged-in user
+    private final UserRepository userRepository;
 
     @GetMapping
     public String getAllPosts(Model model, Authentication authentication) {
         List<Post> posts = postService.getAllPosts();
         model.addAttribute("posts", posts);
 
-        // Pass logged-in user to view
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         model.addAttribute("currentUser", user);
@@ -36,11 +35,10 @@ public class PostController {
 
     @GetMapping("/create")
     public String showCreateForm(Model model, Authentication authentication) {
-        // Get logged-in user and pass their ID to the view
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         model.addAttribute("currentUserId", user.getId());
-        return "posts/create";
+        return "homepage/create";
     }
 
     @PostMapping("/create")
@@ -61,5 +59,21 @@ public class PostController {
     public String deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
         return "redirect:/posts";
+    }
+
+    @GetMapping("/{postId}")
+    public String getPostDetails(@PathVariable Long postId,
+                                 Model model,
+                                 Authentication authentication) {
+
+        Post post = postService.getPostById(postId);
+
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        model.addAttribute("post", post);
+        model.addAttribute("currentUser", user);
+
+        return "homepage/post-details";
     }
 }

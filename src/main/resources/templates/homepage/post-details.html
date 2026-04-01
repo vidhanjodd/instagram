@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Post Details</title>
+
+    <link rel="stylesheet" th:href="@{/css/post-details.css}" />
+</head>
+<body>
+<nav class="navbar">
+    <a class="nav-logo" th:href="@{/posts}">Instagram</a>
+    <a class="back-link" th:href="@{/posts}">← Back</a>
+</nav>
+
+<div class="post-details-wrapper">
+    <div class="post-left">
+        <img th:if="${post.mediaType == 'IMAGE'}" class="post-media" th:src="${post.mediaUrl}" th:alt="${post.caption}" />
+        <video th:if="${post.mediaType == 'VIDEO'}" class="post-media" th:src="${post.mediaUrl}" controls></video>
+    </div>
+
+    <div class="post-right">
+        <div class="post-header">
+            <div class="post-avatar" th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">A</div>
+            <div class="post-username" th:text="${post.user.username}">username</div>
+        </div>
+
+        <div class="comments-scroll-area">
+            <div class="caption-row">
+                <div class="small-avatar" th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">A</div>
+                <div class="comment-content">
+                    <span class="comment-user" th:text="${post.user.username}">username</span>
+                    <span th:text="${post.caption}">Caption here</span>
+                </div>
+            </div>
+
+            <div th:fragment="commentTree(commentsList)">
+                <div th:each="comment : ${commentsList}" class="comment-branch">
+                    <div class="comment-row">
+                        <div class="small-avatar" th:text="${#strings.substring(comment.user.username, 0, 1).toUpperCase()}">A</div>
+                        <div class="comment-content">
+                            <span class="comment-user" th:text="${comment.user.username}">user</span>
+                            <span th:text="${comment.content}">Nice post</span>
+
+                            <div class="reply-btn-wrapper" style="margin-top: 4px;">
+                                <button class="reply-link"
+                                        style="background:none; border:none; padding:0; color:gray; font-size:12px; cursor:pointer;"
+                                        th:onclick="prepareReply([[${comment.id}]], [[${comment.user.username}]])">
+                                    Reply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${comment.replies != null and !comment.replies.isEmpty()}"
+                         class="replies-container"
+                         style="margin-left: 40px; border-left: 1px solid #efefef;">
+                        <div th:replace="~{::commentTree(${comment.replies})}"></div>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="~{::commentTree(${post.comments.?[parent == null]})}"></div>
+
+        </div>
+
+        <div class="post-footer">
+
+            <div id="reply-info" style="display: none; background: #fafafa; padding: 5px 15px; font-size: 12px; border-top: 1px solid #dbdbdb;">
+                Replying to <span id="reply-username" style="font-weight: 600;"></span>
+                <span style="float: right; cursor: pointer; color: #ed4956;" onclick="cancelReply()">✕</span>
+            </div>
+
+            <div class="post-actions">
+                <button class="action-btn">❤️</button>
+                <button class="action-btn">💬</button>
+                <button class="action-btn">🔗</button>
+            </div>
+
+            <div class="post-time" th:text="${post.createdAt}">2 hours ago</div>
+
+            <form class="comment-form" th:action="@{/comments/add}" method="POST" id="mainCommentForm">
+                <input type="hidden" name="postId" th:value="${post.id}" />
+                <input type="hidden" name="userId" th:value="${currentUser.id}" />
+
+                <input type="hidden" name="parentId" id="parentIdField" value="" />
+
+                <input class="comment-input"
+                       id="commentInputField"
+                       type="text"
+                       name="content"
+                       placeholder="Add a comment..."
+                       required
+                       autocomplete="off"/>
+
+                <button type="submit" class="post-btn">Post</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function prepareReply(commentId, username) {
+        // 1. Fill the hidden parentId field
+        document.getElementById('parentIdField').value = commentId;
+
+        // 2. Show the "Replying to @user" bar
+        document.getElementById('reply-username').innerText = '@' + username;
+        document.getElementById('reply-info').style.display = 'block';
+
+        // 3. Focus the input field and change placeholder
+        const input = document.getElementById('commentInputField');
+        input.placeholder = "Reply to @" + username + "...";
+        input.focus();
+    }
+
+    function cancelReply() {
+        // 1. Reset hidden field
+        document.getElementById('parentIdField').value = "";
+
+        // 2. Hide the bar
+        document.getElementById('reply-info').style.display = 'none';
+
+        // 3. Reset input
+        const input = document.getElementById('commentInputField');
+        input.placeholder = "Add a comment...";
+        input.value = "";
+    }
+</script>
+
+</body>
+</html>

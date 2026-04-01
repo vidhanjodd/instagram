@@ -1,0 +1,320 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #fafafa;
+    font-family: Arial, sans-serif;
+    color: #111;
+}
+
+.navbar {
+    height: 60px;
+    background: #fff;
+    border-bottom: 1px solid #dbdbdb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-logo {
+    text-decoration: none;
+    font-size: 28px;
+    font-weight: 700;
+    color: #111;
+    font-family: 'Grand Hotel', cursive;
+}
+
+.back-link {
+    text-decoration: none;
+    color: #111;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.post-details-wrapper {
+    max-width: 1100px;
+    margin: 32px auto;
+    background: #fff;
+    border: 1px solid #dbdbdb;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    min-height: 700px;
+}
+
+.post-left {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.post-media {
+    width: 100%;
+    height: 100%;
+    max-height: 700px;
+    object-fit: contain;
+    background: #000;
+}
+
+.post-right {
+    display: flex;
+    flex-direction: column;
+    height: 700px;
+    background: #fff;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #efefef;
+}
+
+.post-avatar,
+.small-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af, #515bd4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.small-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+}
+
+.post-username {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+}
+
+.comments-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.comments-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comments-scroll-area::-webkit-scrollbar-thumb {
+    background: #c7c7c7;
+    border-radius: 10px;
+}
+
+.caption-row,
+.comment-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.comment-content {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #111;
+    word-break: break-word;
+}
+
+.comment-user {
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.post-footer {
+    border-top: 1px solid #efefef;
+    background: #fff;
+}
+
+.post-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.action-btn:hover {
+    opacity: 0.7;
+}
+
+.post-time {
+    padding: 0 16px 12px;
+    font-size: 12px;
+    color: #8e8e8e;
+    text-transform: uppercase;
+}
+
+.comment-form {
+    border-top: 1px solid #efefef;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.comment-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    background: transparent;
+    color: #111;
+}
+
+.comment-input::placeholder {
+    color: #8e8e8e;
+}
+
+.post-btn {
+    background: none;
+    border: none;
+    color: #0095f6;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.post-btn:hover {
+    opacity: 0.7;
+}
+
+@media (max-width: 900px) {
+    .post-details-wrapper {
+        grid-template-columns: 1fr;
+        margin: 0;
+        border-left: none;
+        border-right: none;
+        min-height: auto;
+    }
+
+    .post-left {
+        max-height: 450px;
+    }
+
+    .post-media {
+        max-height: 450px;
+    }
+
+    .post-right {
+        height: auto;
+    }
+
+    .comments-scroll-area {
+        max-height: 350px;
+    }
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        padding: 0 16px;
+    }
+
+    .nav-logo {
+        font-size: 24px;
+    }
+
+    .back-link {
+        font-size: 13px;
+    }
+
+    .post-header,
+    .post-actions,
+    .comment-form,
+    .post-time,
+    .comments-scroll-area {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+/* --- Nested Comments Styling --- */
+
+/* Container for all replies belonging to a parent */
+.replies-container {
+    margin-left: 42px; /* Aligns with the start of the parent's text */
+    margin-top: 8px;
+    border-left: 1.5px solid #efefef; /* Subtle vertical line like Instagram */
+    padding-left: 12px;
+}
+
+/* Individual branch wrapper to ensure spacing */
+.comment-branch {
+    margin-bottom: 12px;
+}
+
+/* The Reply button appearance */
+.reply-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #8e8e8e;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: color 0.2s;
+}
+
+.reply-link:hover {
+    color: #262626;
+}
+
+/* Reply Indicator Bar (The one that appears above the input) */
+#reply-info {
+    display: none; /* Hidden by default */
+    background: #fafafa;
+    padding: 8px 16px;
+    font-size: 12px;
+    border-top: 1px solid #efefef;
+    border-bottom: 1px solid #efefef;
+    color: #8e8e8e;
+    animation: slideUp 0.3s ease;
+}
+
+#reply-username {
+    color: #262626;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+/* Animation for the reply bar */
+@keyframes slideUp {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Ensure the scroll area handles the nested width on small screens */
+@media (max-width: 600px) {
+    .replies-container {
+        margin-left: 20px; /* Reduced indentation on mobile to save space */
+        padding-left: 8px;
+    }
+}

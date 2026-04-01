@@ -19,10 +19,10 @@ public class CloudinaryService {
         try {
             return cloudinary.uploader().upload(
                     file.getBytes(),
-                    ObjectUtils.emptyMap()
+                    ObjectUtils.asMap("resource_type", "auto")
             );
         } catch (IOException e) {
-            throw new RuntimeException("File upload failed");
+            throw new RuntimeException("File upload failed: " + e.getMessage());
         }
     }
 
@@ -30,8 +30,7 @@ public class CloudinaryService {
         try {
             cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to delete file from Cloudinary");
+            throw new RuntimeException("Failed to delete file from Cloudinary: " + e.getMessage());
         }
     }
-
 }

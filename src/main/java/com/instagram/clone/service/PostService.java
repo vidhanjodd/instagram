@@ -3,7 +3,7 @@ package com.instagram.clone.service;
 import com.instagram.clone.entity.Post;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.PostRepository;
-import com.instagram.clone.repository.UserRepository; // ✅ added
+import com.instagram.clone.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +37,7 @@ public class PostService {
 
         // 3. Decide media type
         String mediaType = resourceType.equals("video") ? "VIDEO" : "IMAGE";
-        User user = userRepository.findById(userId).orElseThrow(()->new RuntimeException("User does not exist"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User does not exist"));
 
         // 4. Create Post object
         Post post = Post.builder()
@@ -61,16 +61,22 @@ public class PostService {
         return postRepository.findByUser_Id(userId);
     }
 
+    // CHANGED: added this method for post details page
+    public Post getPostById(Long postId) {
+        return postRepository.getPostById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+    }
+
     @Transactional
     public void deletePost(Long postId) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        try{
+        try {
             postRepository.delete(post);
-        }catch (Exception e){
-            System.err.println("Post deletion did not happen. "+ e.getMessage() );
+        } catch (Exception e) {
+            System.err.println("Post deletion did not happen. " + e.getMessage());
         }
 
         try {
@@ -79,5 +85,4 @@ public class PostService {
             System.err.println("Cloudinary delete failed: " + e.getMessage());
         }
     }
-
 }

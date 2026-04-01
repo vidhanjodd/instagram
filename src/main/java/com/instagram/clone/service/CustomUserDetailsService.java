@@ -19,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
-                .password(user.getPassword())  // already BCrypt encoded
+                .password(user.getPassword())
                 .roles("USER")
                 .build();
     }
