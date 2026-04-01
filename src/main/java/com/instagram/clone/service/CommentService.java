@@ -21,7 +21,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
 
-    public CommentResponse createComment(CommentRequest request) {
+    public void createTopLevelComment(CommentRequest request) {
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -29,49 +29,31 @@ public class CommentService {
         Post post = postRepository.findById(request.getPostId())
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        Comment parent = null;
-        if (request.getParentId() != null) {
-            parent = commentRepository.findById(request.getParentId())
-                    .orElseThrow(() -> new RuntimeException("Parent comment not found"));
-        }
-
         Comment comment = Comment.builder()
                 .user(user)
                 .post(post)
                 .content(request.getContent())
-                .parent(parent)
+                .parent(null)
                 .build();
 
-        Comment saved = commentRepository.save(comment);
-
-        return mapToResponse(saved);
+        commentRepository.save(comment);
     }
 
-    public List<CommentResponse> getComments(Long postId) {
+    public List<CommentResponse> getCommentsForPost(Long postId) {
 
-        List<Comment> comments =
-                commentRepository.findByParentIsNullAndPostId(postId);
+        List<Comment> comments = commentRepository.findByParentIsNullAndPostId(postId);
 
         return comments.stream()
-                .map(this::mapToResponse)
+                .map(this::mapToBasicResponse)
                 .toList();
     }
 
-    private CommentResponse mapToResponse(Comment comment) {
-
-        List<CommentResponse> replies = comment.getReplies() == null
-                ? List.of()
-                : comment.getReplies()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-
+    private CommentResponse mapToBasicResponse(Comment comment) {
         return CommentResponse.builder()
                 .id(comment.getId())
                 .username(comment.getUser().getUsername())
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
-                .replies(replies)
                 .build();
     }
 }

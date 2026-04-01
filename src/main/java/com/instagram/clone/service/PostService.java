@@ -6,6 +6,7 @@ import com.instagram.clone.repository.PostRepository;
 import com.instagram.clone.repository.UserRepository; // ✅ added
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ public class PostService {
         // 1. Upload to Cloudinary
         Map<String, Object> uploadResult = cloudinaryService.uploadFile(file);
 
-        // 2. Extract impielortant fds
+        // 2. Extract important fds
         String mediaUrl = uploadResult.get("secure_url").toString();
         String publicId = uploadResult.get("public_id").toString();
         String resourceType = uploadResult.get("resource_type").toString();
@@ -37,6 +38,7 @@ public class PostService {
         // 3. Decide media type
         String mediaType = resourceType.equals("video") ? "VIDEO" : "IMAGE";
         User user = userRepository.findById(userId).orElseThrow(()->new RuntimeException("User does not exist"));
+
         // 4. Create Post object
         Post post = Post.builder()
                 .caption(caption)
@@ -59,17 +61,23 @@ public class PostService {
         return postRepository.findByUser_Id(userId);
     }
 
+    @Transactional
     public void deletePost(Long postId) {
 
-        // 1. Find post
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        // 2. Delete from Cloudinary
-        cloudinaryService.deleteFile(post.getPublicId());
+        try{
+            postRepository.delete(post);
+        }catch (Exception e){
+            System.err.println("Post deletion did not happen. "+ e.getMessage() );
+        }
 
-        // 3. Delete from DB
-        postRepository.delete(post);
+        try {
+            cloudinaryService.deleteFile(post.getPublicId());
+        } catch (Exception e) {
+            System.err.println("Cloudinary delete failed: " + e.getMessage());
+        }
     }
 
 }

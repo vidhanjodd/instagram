@@ -31,7 +31,7 @@ public class PostController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         model.addAttribute("currentUser", user);
 
-        return "posts/feed";
+        return "homepage/feed";
     }
 
     @GetMapping("/create")
@@ -53,7 +53,7 @@ public class PostController {
             return "redirect:/posts";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
-            return "posts/create";
+            return "homepage/create";
         }
     }
 
