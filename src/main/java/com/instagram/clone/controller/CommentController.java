@@ -29,10 +29,15 @@
 package com.instagram.clone.controller;
 
 import com.instagram.clone.dto.CommentRequest;
+import com.instagram.clone.dto.CommentResponse;
 import com.instagram.clone.service.CommentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/comments")
@@ -52,6 +57,26 @@ public class CommentController {
         }
 
         // Redirect back to the post or wherever you need the user to go
-        return "redirect:/posts";
+        return "redirect:/posts/" + request.getPostId();
+    }
+
+
+    @PostMapping("/delete/{commentId}")
+    @ResponseBody
+    public ResponseEntity<String> deleteComment(@PathVariable Long commentId,
+                                                Authentication authentication) {
+        try {
+            commentService.deleteComment(commentId);
+            return ResponseEntity.ok("deleted");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("error: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/replies/{parentId}")
+    @ResponseBody
+    public ResponseEntity<List<CommentResponse>> getReplies(@PathVariable Long parentId) {
+        List<CommentResponse> replies = commentService.getRepliesToComment(parentId);
+        return ResponseEntity.ok(replies);
     }
 }

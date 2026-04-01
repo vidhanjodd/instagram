@@ -1,8 +1,10 @@
 package com.instagram.clone.controller;
 
+import com.instagram.clone.dto.CommentResponse;
 import com.instagram.clone.entity.Post;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.UserRepository;
+import com.instagram.clone.service.CommentService;
 import com.instagram.clone.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -20,6 +22,7 @@ public class PostController {
 
     private final PostService postService;
     private final UserRepository userRepository;
+    private final CommentService commentService;
 
     @GetMapping
     public String getAllPosts(Model model, Authentication authentication) {
@@ -68,11 +71,15 @@ public class PostController {
 
         Post post = postService.getPostById(postId);
 
-        User user = userRepository.findByUsername(authentication.getName())
+        User currentUser = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Load only parent-level comments — replies are loaded lazily via JS
+        List<CommentResponse> comments = commentService.getCommentsForPost(postId);
+
         model.addAttribute("post", post);
-        model.addAttribute("currentUser", user);
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("comments", comments); // separate from post.comments
 
         return "homepage/post-details";
     }

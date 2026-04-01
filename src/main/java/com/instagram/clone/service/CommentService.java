@@ -22,7 +22,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
 
-    // 1. Handles normal top-level comments
+    // 1. Creates a top-level comment (no parent)
     public void createTopLevelComment(CommentRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -34,13 +34,13 @@ public class CommentService {
                 .user(user)
                 .post(post)
                 .content(request.getContent())
-                .parent(null) // Top-level has no parent
+                .parent(null)
                 .build();
 
         commentRepository.save(comment);
     }
 
-    // 2. NEW: Handles replies to existing comments
+    // 2. Creates a reply to an existing comment
     public void addReply(CommentRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -51,42 +51,78 @@ public class CommentService {
         Comment parentComment = commentRepository.findById(request.getParentId())
                 .orElseThrow(() -> new RuntimeException("Parent comment not found"));
 
-        // Format the content to tag the original commenter: "@username original content"
-        String taggedContent = "@" + parentComment.getUser().getUsername() + " " + request.getContent();
+        // Tag the original commenter automatically
+        String taggedContent;
+
+        if (request.getReplyingToUsername() != null) {
+            taggedContent = "@" + request.getReplyingToUsername() + " " + request.getContent();
+        } else {
+            taggedContent = request.getContent();
+        }
 
         Comment reply = Comment.builder()
                 .user(user)
                 .post(post)
                 .content(taggedContent)
-                .parent(parentComment) // Link this reply to the parent comment
+                .parent(parentComment)
                 .build();
 
         commentRepository.save(reply);
     }
 
-    // 3. Fetching comments (Grabs top-level, mapping handles the rest)
+    // 3. Returns only top-level (parent) comments for a post
+    //    Replies are NOT loaded here — they are loaded on demand via getRepliesToComment()
     public List<CommentResponse> getCommentsForPost(Long postId) {
         List<Comment> topLevelComments = commentRepository.findByParentIsNullAndPostId(postId);
 
         return topLevelComments.stream()
+                .map(this::mapToResponseWithReplyCount)
+                .toList();
+    }
+
+    // 4. Returns direct replies for a parent comment (called when user clicks "View X replies")
+    //    Only ONE level deep — we load replies flat, just like Instagram
+    public List<CommentResponse> getRepliesToComment(Long parentId) {
+        List<Comment> replies = commentRepository.findByParentId(parentId);
+
+        return replies.stream()
                 .map(this::mapToBasicResponse)
                 .toList();
     }
 
-    // 4. NEW: Recursive mapping to handle infinite layers of replies
-    private CommentResponse mapToBasicResponse(Comment comment) {
+    // 5. Deletes a comment (and its replies cascade automatically due to orphanRemoval=true on Comment entity)
+    public void deleteComment(Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+        commentRepository.delete(comment);
+    }
 
-        // If there are replies, map them. Otherwise, return an empty list.
-        List<CommentResponse> mappedReplies = comment.getReplies() != null ?
-                comment.getReplies().stream().map(this::mapToBasicResponse).toList() :
-                Collections.emptyList();
+    // Maps a top-level comment — includes reply count but NOT the actual replies
+    // This is what we show initially in the popup (Instagram-style: lazy replies)
+    private CommentResponse mapToResponseWithReplyCount(Comment comment) {
+        int replyCount = (comment.getReplies() != null) ? comment.getReplies().size() : 0;
 
         return CommentResponse.builder()
                 .id(comment.getId())
                 .username(comment.getUser().getUsername())
+                .userId(comment.getUser().getId())
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
-                .replies(mappedReplies) // Attach the mapped nested replies here
+                .replyCount(replyCount)
+                .replies(Collections.emptyList()) // Replies are NOT sent initially
+                .build();
+    }
+
+    // Maps a reply comment — simple flat mapping, no nested replies
+    private CommentResponse mapToBasicResponse(Comment comment) {
+        return CommentResponse.builder()
+                .id(comment.getId())
+                .username(comment.getUser().getUsername())
+                .userId(comment.getUser().getId())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .replyCount(0)
+                .replies(Collections.emptyList())
                 .build();
     }
 }
