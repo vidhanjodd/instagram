@@ -1,22 +1,271 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org" lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8"/>-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>-->
+<!--    <title th:text="${user.username} + ' · Instagram'">Profile · Instagram</title>-->
+<!--    <link rel="stylesheet" th:href="@{/css/profile.css}"/>-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>-->
+
+<!--</head>-->
+<!--<body>-->
+<!--<nav>-->
+<!--    <a class="nav-logo" th:href="@{/posts}">Instagram</a>-->
+<!--    <div style="font-size:15px; font-weight:600;" th:text="${user.username}">username</div>-->
+<!--    <div class="nav-icons">-->
+<!--        <i class="fa-solid fa-house"></i>-->
+<!--        <form th:action="@{/logout}" method="post" style="display:inline">-->
+<!--            <i class="fa-solid fa-arrow-right-from-bracket"></i>-->
+<!--        </form>-->
+<!--    </div>-->
+<!--</nav>-->
+
+<!--<div class="page">-->
+<!--    &lt;!&ndash; PROFILE HEADER &ndash;&gt;-->
+<!--    <div class="profile-header">-->
+<!--        <div class="profile-avatar-wrap">-->
+<!--            <div class="profile-avatar-ring">-->
+<!--                <div class="profile-avatar-inner"-->
+<!--                     th:text="${#strings.substring(user.username,0,1).toUpperCase()}">A</div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="profile-info">-->
+<!--            <div class="profile-top">-->
+<!--                <span class="profile-username" th:text="${user.username}">username</span>-->
+<!--                <div class="profile-actions" th:if="${currentUserId == user.id}">-->
+<!--                    <a class="btn-edit" th:href="@{/users/{id}/edit(id=${user.id})}">Edit profile</a>-->
+<!--                    <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post" style="display:inline"-->
+<!--                          onsubmit="return confirm('Delete account?')">-->
+<!--                        <button class="btn-danger" type="submit">Delete account</button>-->
+<!--                    </form>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div class="profile-stats">-->
+<!--                <div class="stat">-->
+<!--                    <span class="stat-num" th:text="${#lists.size(posts)}">0</span>-->
+<!--                    <span class="stat-label">posts</span>-->
+<!--                </div>-->
+<!--                <div class="stat">-->
+<!--                    <span class="stat-num">—</span>-->
+<!--                    <span class="stat-label">followers</span>-->
+<!--                </div>-->
+<!--                <div class="stat">-->
+<!--                    <span class="stat-num">—</span>-->
+<!--                    <span class="stat-label">following</span>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div class="profile-bio">-->
+<!--                <div class="display-name" th:text="${user.username}">username</div>-->
+<!--                <div class="bio-text" th:text="${user.bio != null && !#strings.isEmpty(user.bio) ? user.bio : 'No bio yet.'}">Bio here</div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; TABS &ndash;&gt;-->
+<!--    <div class="profile-tabs">-->
+<!--        <div class="tab active">⊞ Posts</div>-->
+<!--        <div class="tab">🎬 Reels</div>-->
+<!--        <div class="tab">🏷 Tagged</div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; POSTS GRID &ndash;&gt;-->
+<!--    <div class="posts-grid">-->
+<!--        <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">-->
+<!--            <div class="icon">📷</div>-->
+<!--            <h3>Share Photos</h3>-->
+<!--            <p>When you share photos, they will appear on your profile.</p>-->
+<!--            <a th:href="@{/posts/create}" class="create-btn">+ Share your first photo</a>-->
+<!--        </div>-->
+
+<!--        <div class="grid-item"-->
+<!--             th:each="post : ${posts}"-->
+<!--             th:attr="data-post-url=@{/posts/{id}(id=${post.id})}"-->
+<!--             onclick="openPostModal(this)">-->
+
+<!--            <img th:if="${post.mediaType == 'IMAGE'}"-->
+<!--                 th:src="${post.mediaUrl}"-->
+<!--                 th:alt="${post.caption}"/>-->
+
+<!--            <video th:if="${post.mediaType == 'VIDEO'}"-->
+<!--                   th:src="${post.mediaUrl}"-->
+<!--                   muted></video>-->
+
+<!--            <span th:if="${post.mediaType == 'VIDEO'}" class="video-badge">-->
+<!--        <i class="fa-solid fa-play"></i>-->
+<!--    </span>-->
+
+<!--            <div class="grid-overlay">-->
+<!--                <span class="grid-stat"><i class="fa-solid fa-heart"></i> 0</span>-->
+<!--                <span class="grid-stat"><i class="fa-solid fa-comment"></i> 0</span>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title th:text="${user.username} + ' · Instagram'">Profile · Instagram</title>
+    <title th:text="${user.username} + ' • Instagram'">Profile • Instagram</title>
+
     <link rel="stylesheet" th:href="@{/css/profile.css}"/>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
+    <style>
+        .nav-icons {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
 
+        .nav-icons a,
+        .nav-icons button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: inherit;
+            padding: 0;
+        }
+
+        .grid-item {
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-item video,
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .video-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 16px;
+            z-index: 2;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            opacity: 0;
+            transition: 0.2s ease;
+            color: white;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        .grid-item:hover .grid-overlay {
+            opacity: 1;
+        }
+
+        .grid-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+
+        .post-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.82);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .post-modal.show {
+            display: flex;
+        }
+
+        .post-modal-content {
+            position: relative;
+            width: 95%;
+            max-width: 1250px;
+            height: 92vh;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+        }
+
+        .post-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 10001;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.65);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .post-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        .empty-grid {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .create-btn {
+            display: inline-block;
+            margin-top: 14px;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
 <nav>
     <a class="nav-logo" th:href="@{/posts}">Instagram</a>
+
     <div style="font-size:15px; font-weight:600;" th:text="${user.username}">username</div>
+
     <div class="nav-icons">
-        <a th:href="@{/posts}">🏠</a>
+        <a th:href="@{/posts}" title="Home">
+            <i class="fa-solid fa-house"></i>
+        </a>
+
         <form th:action="@{/logout}" method="post" style="display:inline">
-            <button type="submit">🚪</button>
+            <button type="submit" title="Logout">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
         </form>
     </div>
 </nav>
@@ -34,9 +283,13 @@
         <div class="profile-info">
             <div class="profile-top">
                 <span class="profile-username" th:text="${user.username}">username</span>
-                <div class="profile-actions">
+
+                <div class="profile-actions" th:if="${currentUserId == user.id}">
                     <a class="btn-edit" th:href="@{/users/{id}/edit(id=${user.id})}">Edit profile</a>
-                    <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post" style="display:inline"
+
+                    <form th:action="@{/users/{id}/delete(id=${user.id})}"
+                          method="post"
+                          style="display:inline"
                           onsubmit="return confirm('Delete account?')">
                         <button class="btn-danger" type="submit">Delete account</button>
                     </form>
@@ -48,52 +301,139 @@
                     <span class="stat-num" th:text="${#lists.size(posts)}">0</span>
                     <span class="stat-label">posts</span>
                 </div>
+
                 <div class="stat">
-                    <span class="stat-num">—</span>
+                    <span class="stat-num">0</span>
                     <span class="stat-label">followers</span>
                 </div>
+
                 <div class="stat">
-                    <span class="stat-num">—</span>
+                    <span class="stat-num">0</span>
                     <span class="stat-label">following</span>
                 </div>
             </div>
 
             <div class="profile-bio">
                 <div class="display-name" th:text="${user.username}">username</div>
-                <div class="bio-text" th:text="${user.bio != null && !#strings.isEmpty(user.bio) ? user.bio : 'No bio yet.'}">Bio here</div>
+                <div class="bio-text"
+                     th:text="${user.bio != null && !#strings.isEmpty(user.bio) ? user.bio : 'No bio yet.'}">
+                    Bio here
+                </div>
             </div>
         </div>
     </div>
 
+    <div th:if="${user.id != currentUser.id}" style="display: inline-block;">
+
+    <span th:with="isFollowing=${user.followers != null and user.followers.![follower.id].contains(currentUser.id)}">
+
+        <form th:action="@{/users/{id}/follow(id=${user.id})}" method="post" style="display:inline">
+
+            <button th:if="${isFollowing}" type="submit"
+                    style="background-color: #efefef; color: #000; border: none; padding: 7px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; transition: background-color 0.2s;">
+                Following
+            </button>
+
+            <button th:unless="${isFollowing}" type="submit"
+                    style="background-color: #0095f6; color: #fff; border: none; padding: 7px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; transition: background-color 0.2s;">
+                Follow
+            </button>
+
+        </form>
+    </span>
+    </div>
+
     <!-- TABS -->
     <div class="profile-tabs">
-        <div class="tab active">⊞ Posts</div>
-        <div class="tab">🎬 Reels</div>
-        <div class="tab">🏷 Tagged</div>
+        <div class="tab active"><i class="fa-solid fa-table-cells"></i> Posts</div>
+        <div class="tab"><i class="fa-solid fa-film"></i> Reels</div>
+        <div class="tab"><i class="fa-regular fa-id-badge"></i> Tagged</div>
     </div>
 
     <!-- POSTS GRID -->
     <div class="posts-grid">
         <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">
-            <div class="icon">📷</div>
+            <div class="icon"><i class="fa-regular fa-image"></i></div>
             <h3>Share Photos</h3>
             <p>When you share photos, they will appear on your profile.</p>
             <a th:href="@{/posts/create}" class="create-btn">+ Share your first photo</a>
         </div>
 
-        <div class="grid-item" th:each="post : ${posts}">
+        <div class="grid-item"
+             th:each="post : ${posts}"
+             th:attr="data-post-url=@{/posts/{id}(id=${post.id})}"
+             onclick="openPostModal(this)">
+
             <img th:if="${post.mediaType == 'IMAGE'}"
                  th:src="${post.mediaUrl}"
                  th:alt="${post.caption}"/>
+
             <video th:if="${post.mediaType == 'VIDEO'}"
-                   th:src="${post.mediaUrl}"></video>
-            <span th:if="${post.mediaType == 'VIDEO'}" class="video-badge">🎬</span>
+                   th:src="${post.mediaUrl}"
+                   muted></video>
+
+            <span th:if="${post.mediaType == 'VIDEO'}" class="video-badge">
+                <i class="fa-solid fa-play"></i>
+            </span>
+
             <div class="grid-overlay">
-                <span class="grid-stat">🤍 0</span>
-                <span class="grid-stat">💬 0</span>
+                <span class="grid-stat">
+                    <i class="fa-solid fa-heart"></i> 0
+                </span>
+                <span class="grid-stat">
+                    <i class="fa-solid fa-comment"></i> 0
+                </span>
             </div>
         </div>
     </div>
 </div>
+
+<!-- POST MODAL -->
+<div id="postModal" class="post-modal" onclick="closePostModal(event)">
+    <div class="post-modal-content" onclick="event.stopPropagation()">
+        <button class="post-modal-close" type="button" onclick="closePostModalDirect()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <iframe id="postFrame"
+                class="post-frame"
+                src=""
+                frameborder="0">
+        </iframe>
+    </div>
+</div>
+
+<script>
+    function openPostModal(element) {
+        const postUrl = element.getAttribute('data-post-url');
+        const modal = document.getElementById('postModal');
+        const frame = document.getElementById('postFrame');
+
+        frame.src = postUrl;
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePostModal(event) {
+        if (event.target.id === 'postModal') {
+            closePostModalDirect();
+        }
+    }
+
+    function closePostModalDirect() {
+        const modal = document.getElementById('postModal');
+        const frame = document.getElementById('postFrame');
+
+        modal.classList.remove('show');
+        frame.src = '';
+        document.body.style.overflow = 'auto';
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closePostModalDirect();
+        }
+    });
+</script>
 </body>
 </html>
