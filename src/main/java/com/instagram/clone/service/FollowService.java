@@ -52,4 +52,15 @@ public class FollowService {
 
         existingFollow.ifPresent(followRepository::delete);
     }
+    public long getFollowersCount(User user) {
+        return followRepository.countByFollowing(user);
+    }
+
+    public long getFollowingCount(User user) {
+        return followRepository.countByFollower(user);
+    }
+
+    public boolean isFollowing(User currentUser, User targetUser) {
+        return followRepository.findByFollowerAndFollowing(currentUser, targetUser).isPresent();
+    }
 }

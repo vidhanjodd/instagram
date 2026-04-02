@@ -2,6 +2,7 @@ package com.instagram.clone.controller;
 
 import com.instagram.clone.dto.UserRegisterRequest;
 import com.instagram.clone.entity.User;
+import com.instagram.clone.service.FollowService;
 import com.instagram.clone.service.PostService;
 import com.instagram.clone.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class UserController {
 
     private final UserService userService;
     private final PostService postService;
+    private final FollowService followService;
 
     // Show registration form
     @GetMapping("/register")
@@ -42,12 +44,18 @@ public class UserController {
     @GetMapping("/{id}/profile")
     public String viewProfile(@PathVariable Long id, Model model, Authentication authentication) {
         User profileUser = userService.getUserById(id);
-
         User loggedInUser = userService.getUserByUsername(authentication.getName());
 
+        long followersCount = followService.getFollowersCount(profileUser);
+        long followingCount = followService.getFollowingCount(profileUser);
+        boolean isFollowing = followService.isFollowing(loggedInUser, profileUser);
+
         model.addAttribute("user", profileUser);
-        model.addAttribute("currentUser", loggedInUser); // <-- THIS IS THE MISSING KEY
+        model.addAttribute("currentUser", loggedInUser);
         model.addAttribute("posts", postService.getPostsByUserId(id));
+        model.addAttribute("followersCount", followersCount);
+        model.addAttribute("followingCount", followingCount);
+        model.addAttribute("isFollowing", isFollowing);
 
         return "profilepage/profile";
     }
