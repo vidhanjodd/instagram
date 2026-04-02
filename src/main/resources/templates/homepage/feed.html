@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <title>Instagram</title>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" th:href="@{/css/feed.css}"/>
@@ -63,15 +65,17 @@
                    controls></video>
 
             <div class="post-actions">
+                <button class="action-btn like-btn"
+                        th:attr="data-post-id=${post.id},
+                 data-liked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}"
+                        style="background: none; border: none; padding: 0; cursor: pointer; margin-right: 12px;"
+                        title="Like">
 
-                <form th:action="@{/posts/{postId}/like(postId=${post.id})}" method="post" style="display: inline;">
-                    <button type="submit" class="action-btn" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; margin-right: 12px;" title="Like">
-                        <span th:with="isLiked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}">
-                            <i th:if="${isLiked}" class="fa-solid fa-heart" style="color: #ff3040; font-size: 24px;"></i>
-                            <i th:unless="${isLiked}" class="fa-regular fa-heart" style="font-size: 24px;"></i>
-                        </span>
-                    </button>
-                </form>
+                    <i class="fa-heart like-icon"
+                       th:classappend="${post.likes != null and post.likes.![user.id].contains(currentUser.id)} ? 'fa-solid' : 'fa-regular'"
+                       style="font-size: 24px;"></i>
+
+                </button>
 
                 <a class="action-btn"
                    th:href="@{/posts/{postId}(postId=${post.id})}"
@@ -82,11 +86,12 @@
                 <button class="action-btn" title="Share" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit;">
                     <i class="fa-regular fa-paper-plane" style="font-size: 24px;"></i>
                 </button>
-            </div>
 
-            <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px; padding: 0 14px;"
-                 th:if="${post.likes != null and #lists.size(post.likes) > 0}"
-                 th:text="${#lists.size(post.likes)} + ' likes'">
+            </div>
+            <div class="likes-count">
+                <span th:id="'like-count-' + ${post.id}"
+                      th:text="${post.likes.size()} + ' ' + (${post.likes.size()} == 1 ? 'like' : 'likes')"
+                </span>
             </div>
 
             <div class="post-caption">
@@ -120,5 +125,55 @@
     </main>
 </div>
 
+<script>
+    document.querySelectorAll('.like-btn').forEach(btn => {
+
+        const icon = btn.querySelector('.like-icon');
+
+        // 🔥 INITIAL STATE FIX (VERY IMPORTANT)
+        if (btn.dataset.liked == 'true' || btn.dataset.liked == true) {
+            icon.classList.remove('fa-regular');
+            icon.classList.add('fa-solid');
+            icon.style.color = '#ff3040';
+        }
+
+        btn.addEventListener('click', function () {
+
+            const postId = this.dataset.postId;
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            fetch('/posts/' + postId + '/like', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]:csrfToken
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                    if (data.liked) {
+                    icon.classList.remove('fa-regular');
+                    icon.classList.add('fa-solid');
+                    icon.style.color = '#ff3040';
+                } else {
+                    icon.classList.remove('fa-solid');
+                    icon.classList.add('fa-regular');
+                    icon.style.color = '';
+                }
+                    const countEl = document.getElementById('like-count-' + postId);
+                if (countEl) {
+                    const text = data.likeCount === 1 ? "like" : "likes";
+                    countEl.textContent = data.likeCount+" "+text;
+                }
+
+            })
+            .catch(() => {
+                console.error("Like failed");
+            });
+
+        });
+
+    });
+</script>
 </body>
 </html>
