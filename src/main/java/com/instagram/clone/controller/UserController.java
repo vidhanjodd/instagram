@@ -38,11 +38,17 @@ public class UserController {
     }
 
     // View user profile
+    // View user profile
     @GetMapping("/{id}/profile")
-    public String viewProfile(@PathVariable Long id, Model model) {
-        User user = userService.getUserById(id);
-        model.addAttribute("user", user);
+    public String viewProfile(@PathVariable Long id, Model model, Authentication authentication) {
+        User profileUser = userService.getUserById(id);
+
+        User loggedInUser = userService.getUserByUsername(authentication.getName());
+
+        model.addAttribute("user", profileUser);
+        model.addAttribute("currentUser", loggedInUser); // <-- THIS IS THE MISSING KEY
         model.addAttribute("posts", postService.getPostsByUserId(id));
+
         return "profilepage/profile";
     }
 
