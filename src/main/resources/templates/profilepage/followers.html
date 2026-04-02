@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${user.username} + ' • Followers'">Followers</title>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/followers.css}"/>
+
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a class="nav-back" th:href="@{/users/{id}/profile(id=${user.id})}">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    <span class="nav-title" th:text="${user.username}">username</span>
+    <span class="nav-spacer"></span>
+</nav>
+
+<div class="page">
+    <!-- TABS -->
+    <div class="tabs">
+        <a class="tab-link active"
+           th:href="@{/users/{id}/followers(id=${user.id})}">
+            Followers
+        </a>
+        <a class="tab-link"
+           th:href="@{/users/{id}/following(id=${user.id})}">
+            Following
+        </a>
+    </div>
+
+    <!-- LIST -->
+    <div class="user-list">
+
+        <div th:if="${#lists.isEmpty(followers)}" class="empty">
+            <i class="fa-regular fa-user"></i>
+            <h3>No followers yet</h3>
+            <p>When someone follows <span th:text="${user.username}">this user</span>, they'll appear here.</p>
+        </div>
+
+        <div th:each="follow : ${followers}" class="user-row">
+
+            <!-- Avatar -->
+            <a th:href="@{/users/{id}/profile(id=${follow.follower.id})}">
+                <div class="avatar-ring">
+                    <div class="avatar-inner"
+                         th:text="${#strings.substring(follow.follower.username, 0, 1).toUpperCase()}">A</div>
+                </div>
+            </a>
+
+            <!-- Username -->
+            <div class="user-info">
+                <a th:href="@{/users/{id}/profile(id=${follow.follower.id})}"
+                   th:text="${follow.follower.username}">username</a>
+                <div class="user-sub"
+                     th:text="${follow.follower.bio != null && !#strings.isEmpty(follow.follower.bio) ? follow.follower.bio : 'Instagram user'}">bio</div>
+            </div>
+
+            <!--
+                Remove button: only shown to the OWNER of this profile.
+                Calls POST /users/{followerId}/remove-follower
+            -->
+            <form th:if="${isOwnProfile}"
+                  th:action="@{/users/{followerId}/remove-follower(followerId=${follow.follower.id})}"
+                  method="post" style="display:inline">
+                <button class="btn-remove" type="submit">Remove</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

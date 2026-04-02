@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${user.username} + ' • Following'">Following</title>
+  <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" th:href="@{/css/following.css}"/>
+
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+<body>
+
+<nav>
+  <a class="nav-back" th:href="@{/users/{id}/profile(id=${user.id})}">
+    <i class="fa-solid fa-arrow-left"></i>
+  </a>
+  <span class="nav-title" th:text="${user.username}">username</span>
+  <span class="nav-spacer"></span>
+</nav>
+
+<div class="page">
+  <div class="tabs">
+    <a class="tab-link"
+       th:href="@{/users/{id}/followers(id=${user.id})}">
+      Followers
+    </a>
+    <a class="tab-link active"
+       th:href="@{/users/{id}/following(id=${user.id})}">
+      Following
+    </a>
+  </div>
+
+  <div class="user-list">
+
+    <div th:if="${#lists.isEmpty(following)}" class="empty">
+      <i class="fa-regular fa-user"></i>
+      <h3>Not following anyone</h3>
+      <p th:text="${user.username} + ' isn\'t following anyone yet.'">Not following anyone yet.</p>
+    </div>
+
+    <div th:each="follow : ${following}" class="user-row">
+
+      <a th:href="@{/users/{id}/profile(id=${follow.following.id})}">
+        <div class="avatar-ring">
+          <div class="avatar-inner"
+               th:text="${#strings.substring(follow.following.username, 0, 1).toUpperCase()}">A</div>
+        </div>
+      </a>
+
+      <div class="user-info">
+        <a th:href="@{/users/{id}/profile(id=${follow.following.id})}"
+           th:text="${follow.following.username}">username</a>
+        <div class="user-sub"
+             th:text="${follow.following.bio != null && !#strings.isEmpty(follow.following.bio) ? follow.following.bio : 'Instagram user'}">bio</div>
+      </div>
+
+      <!--
+          Unfollow button: only shown to the OWNER of the profile.
+          Reuses the existing toggleFollow endpoint (which unfollows if already following).
+      -->
+      <form th:if="${isOwnProfile}"
+            th:action="@{/users/{targetId}/follow(targetId=${follow.following.id})}"
+            method="post" style="display:inline">
+        <button class="btn-unfollow" type="submit">Following</button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

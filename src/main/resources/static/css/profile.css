@@ -301,3 +301,13 @@ nav {
     margin-top: 14px;
     text-decoration: none;
 }
+
+.stat-link {
+    text-decoration: none;
+    color: var(--text);
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.stat-link:hover {
+    opacity: 0.75;
+}

@@ -75,15 +75,15 @@
                     <span class="stat-label">posts</span>
                 </div>
 
-                <div class="stat">
+                <a class="stat stat-link" th:href="@{/users/{id}/followers(id=${user.id})}">
                     <span class="stat-num" th:text="${followersCount}">0</span>
                     <span class="stat-label">followers</span>
-                </div>
+                </a>
 
-                <div class="stat">
+                <a class="stat stat-link" th:href="@{/users/{id}/following(id=${user.id})}">
                     <span class="stat-num" th:text="${followingCount}">0</span>
                     <span class="stat-label">following</span>
-                </div>
+                </a>
             </div>
 
             <div class="profile-bio">

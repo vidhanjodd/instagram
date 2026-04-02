@@ -16,26 +16,29 @@
 <nav>
     <a class="nav-logo" th:href="@{/posts}">Instagram</a>
 
-    <div class="nav-icons" style="display: flex; align-items: center; gap: 20px; font-size: 24px;">
+    <div class="search-wrap" id="searchWrap">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Search" autocomplete="off"/>
+        </div>
+        <div class="search-dropdown" id="searchDropdown"></div>
+    </div>
 
+    <div class="nav-icons" style="display: flex; align-items: center; gap: 20px; font-size: 24px;">
         <a th:href="@{/posts}" title="Home" style="color: inherit; text-decoration: none;">
             <i class="fa-solid fa-house"></i>
         </a>
-
         <a th:href="@{/posts/create}" title="New Post" style="color: inherit; text-decoration: none;">
             <i class="fa-regular fa-square-plus"></i>
         </a>
-
         <a th:href="@{/users/{id}/profile(id=${currentUser.id})}" title="Profile" style="color: inherit; text-decoration: none;">
             <i class="fa-regular fa-circle-user"></i>
         </a>
-
         <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">
             <button type="submit" title="Logout" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; font-size: 24px;">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </button>
         </form>
-
     </div>
 </nav>
 
@@ -174,6 +177,85 @@
         });
 
     });
+    (function () {
+        const input = document.getElementById('searchInput');
+        const dropdown = document.getElementById('searchDropdown');
+
+        if (!input || !dropdown) return;
+
+        let debounceTimer;
+
+        input.addEventListener('input', function () {
+            const query = this.value.trim();
+
+            clearTimeout(debounceTimer);
+            dropdown.innerHTML = '';
+
+            if (query.length === 0) {
+                dropdown.classList.remove('open');
+                return;
+            }
+
+            // Debounce: wait 300ms after user stops typing
+            debounceTimer = setTimeout(() => {
+                fetch('/users/search?query=' + encodeURIComponent(query), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(res => res.json())
+                .then(users => {
+                    dropdown.innerHTML = '';
+
+                    if (users.length === 0) {
+                        dropdown.innerHTML = '<div class="search-no-results">No users found</div>';
+                    } else {
+                        users.forEach(user => {
+                            const initial = user.username.charAt(0).toUpperCase();
+                            const item = document.createElement('a');
+                            item.href = `/users/${user.id}/profile`;
+                            item.className = 'search-result-item';
+                            item.innerHTML = `
+                                <div class="search-result-avatar">
+                                    <div class="search-result-avatar-inner">${initial}</div>
+                                </div>
+                                <div>
+                                    <div class="search-result-username">${escapeHtml(user.username)}</div>
+                                </div>
+                            `;
+                            dropdown.appendChild(item);
+                        });
+                    }
+
+                    dropdown.classList.add('open');
+                })
+                .catch(() => {
+                    // silently fail
+                });
+            }, 300);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('searchWrap').contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        // Close on Escape key
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                dropdown.classList.remove('open');
+                input.blur();
+            }
+        });
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    })();
 </script>
 </body>
 </html>
