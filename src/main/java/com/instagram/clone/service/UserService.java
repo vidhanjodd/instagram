@@ -3,7 +3,10 @@ package com.instagram.clone.service;
 import com.instagram.clone.dto.UserRegisterRequest;
 import com.instagram.clone.dto.UserRegisterResponse;
 import com.instagram.clone.entity.User;
+import com.instagram.clone.repository.CommentRepository;
+import com.instagram.clone.repository.PostRepository;
 import com.instagram.clone.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +21,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
 
     public User register(UserRegisterRequest request) {
 
@@ -42,11 +47,12 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found");
-        }
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id).orElseThrow(()-> new RuntimeException("user not found"));
+        commentRepository.deleteAllByUserId(id);
+        postRepository.deleteAllByUserId(id);
+        userRepository.delete(user);
     }
 
     public UserRegisterResponse updateBio(Long userId, String bio) {
