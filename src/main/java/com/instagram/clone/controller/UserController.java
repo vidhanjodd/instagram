@@ -46,7 +46,7 @@ public class UserController {
             return "redirect:/login";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
-            return "users/register";
+            return "profilepage/register";
         }
     }
 
