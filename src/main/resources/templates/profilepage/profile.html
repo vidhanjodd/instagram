@@ -323,6 +323,26 @@
         </div>
     </div>
 
+    <div th:if="${user.id != currentUser.id}" style="display: inline-block;">
+
+    <span th:with="isFollowing=${user.followers != null and user.followers.![follower.id].contains(currentUser.id)}">
+
+        <form th:action="@{/users/{id}/follow(id=${user.id})}" method="post" style="display:inline">
+
+            <button th:if="${isFollowing}" type="submit"
+                    style="background-color: #efefef; color: #000; border: none; padding: 7px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; transition: background-color 0.2s;">
+                Following
+            </button>
+
+            <button th:unless="${isFollowing}" type="submit"
+                    style="background-color: #0095f6; color: #fff; border: none; padding: 7px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; transition: background-color 0.2s;">
+                Follow
+            </button>
+
+        </form>
+    </span>
+    </div>
+
     <!-- TABS -->
     <div class="profile-tabs">
         <div class="tab active"><i class="fa-solid fa-table-cells"></i> Posts</div>

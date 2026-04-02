@@ -43,6 +43,14 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLikes;
 
+    // People who follow this user
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> followers;
+
+    // People this user is following
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> following;
+
     @PrePersist
     protected void onCreate(){
         this.createdAt = LocalDateTime.now();
