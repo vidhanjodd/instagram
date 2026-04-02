@@ -21,7 +21,7 @@ public class UserController {
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
         model.addAttribute("user", new UserRegisterRequest());
-        return "users/register";
+        return "profilepage/register";
     }
 
     // Handle registration submission
@@ -42,7 +42,7 @@ public class UserController {
         User user = userService.getUserById(id);
         model.addAttribute("user", user);
         model.addAttribute("posts", postService.getPostsByUserId(id));
-        return "users/profile";
+        return "profilepage/profile";
     }
 
     // Show edit bio form
@@ -50,7 +50,7 @@ public class UserController {
     public String showEditBio(@PathVariable Long id, Model model) {
         User user = userService.getUserById(id);
         model.addAttribute("user", user);
-        return "users/edit-bio";
+        return "profilepage/edit-bio";
     }
 
     // Handle bio update

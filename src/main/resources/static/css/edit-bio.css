@@ -1,0 +1,116 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --bg: #000; --surface: #0a0a0a; --border: #2a2a2a;
+    --text: #f5f5f5; --muted: #8e8e8e;
+    --btn: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+    --input-bg: #121212;
+}
+body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+
+nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    height: 54px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+}
+.nav-back { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; text-decoration: none; }
+.nav-title { font-size: 16px; font-weight: 600; }
+.nav-save { background: none; border: none; color: #4fa3e8; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; }
+.nav-save:hover { color: #fff; }
+
+.page { padding: 74px 0 40px; max-width: 480px; margin: 0 auto; padding-left: 20px; padding-right: 20px; animation: fadeIn 0.4s ease both; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* AVATAR SECTION */
+.avatar-section {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 30px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+}
+.avatar-ring {
+    width: 96px; height: 96px; border-radius: 50%;
+    background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045);
+    padding: 2.5px; margin-bottom: 14px;
+}
+.avatar-inner {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: #1a1a1a; border: 2.5px solid var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px;
+}
+.change-photo-btn {
+    background: none; border: none; color: #4fa3e8;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.change-photo-btn:hover { color: #fff; }
+
+/* FORM FIELDS */
+.form-section { padding: 0; }
+
+.form-field {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+.form-field label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.form-field input,
+.form-field textarea {
+    width: 100%; background: none; border: none; outline: none;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px;
+    padding: 0; resize: none;
+}
+.form-field input::placeholder,
+.form-field textarea::placeholder { color: var(--muted); }
+.form-field textarea { min-height: 80px; line-height: 1.5; }
+.bio-footer { display: flex; justify-content: flex-end; margin-top: 6px; }
+.bio-count { font-size: 11px; color: var(--muted); }
+
+/* SUBMIT BUTTON (mobile style) */
+.submit-section { padding: 24px 0; }
+.btn-submit {
+    width: 100%; padding: 12px;
+    background: var(--btn);
+    border: none; border-radius: 10px;
+    color: #fff; font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.3px;
+}
+.btn-submit:hover { opacity: 0.88; }
+.btn-submit:active { transform: scale(0.98); }
+
+.danger-zone {
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+}
+.btn-delete-account {
+    background: none; border: none; color: #e1306c;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer;
+}
+.btn-delete-account:hover { text-decoration: underline; }
+
+.private-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+}
+.toggle-label { font-size: 15px; }
+.toggle-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.toggle-switch {
+    width: 44px; height: 24px; border-radius: 12px;
+    background: var(--border); position: relative; cursor: pointer;
+    transition: background 0.2s; flex-shrink: 0;
+}
+.toggle-switch.on { background: #0095f6; }
+.toggle-switch::after {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #fff; top: 3px; left: 3px;
+    transition: transform 0.2s;
+}
+.toggle-switch.on::after { transform: translateX(20px); }
