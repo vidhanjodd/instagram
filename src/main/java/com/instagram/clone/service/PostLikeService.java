@@ -11,33 +11,39 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 public class PostLikeService {
 
     private final PostLikeRepository postLikeRepository;
-    private final UserRepository userRepository;
+    private final UserRepository userRepository; // Added repository here
     private final PostRepository postRepository;
 
-    @Transactional
-    public void toggleLike(Long userId, Long postId) {
-        User user = userRepository.findById(userId)
+    // Inside com.instagram.clone.service.PostLikeService
+
+    public void toggleLike(String username, Long postId) {
+        // 1. Fetch the user from the repository using the username from SecurityContext
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+        // 2. Check if the like already exists for this specific User and Post
+        boolean alreadyLiked = postLikeRepository.existsByUserIdAndPostId(user.getId(), postId);
 
-        Optional<PostLike> existingLike = postLikeRepository.findByUserAndPost(user, post);
-
-        if (existingLike.isPresent()) {
-            postLikeRepository.delete(existingLike.get());
+        if (alreadyLiked) {
+            // 3a. UNLIKE: If it exists, delete the record
+            postLikeRepository.deleteByUserIdAndPostId(user.getId(), postId);
         } else {
-            PostLike newLike = PostLike.builder()
+            // 3b. LIKE: If it doesn't exist, find the post and create a new Like record
+            Post post = postRepository.findById(postId)
+                    .orElseThrow(() -> new RuntimeException("Post not found"));
+
+            // Create the Like entity (Assuming your PostLike entity uses @Builder or a constructor)
+            PostLike postLike = PostLike.builder()
                     .user(user)
                     .post(post)
                     .build();
-            postLikeRepository.save(newLike);
+
+            postLikeRepository.save(postLike);
         }
     }
 }

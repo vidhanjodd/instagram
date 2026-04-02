@@ -44,24 +44,33 @@ public class PostController {
         return "homepage/create";
     }
 
+    @PostMapping("/{postId}/delete")
+    public String deletePost(@PathVariable Long postId, Authentication authentication) {
+        Post post = postService.getPostById(postId);
+
+        if (!post.getUser().getUsername().equals(authentication.getName())) {
+            return "redirect:/posts?error=unauthorized";
+        }
+
+        postService.deletePost(postId);
+        return "redirect:/posts";
+    }
+
     @PostMapping("/create")
     public String createPost(@RequestParam("file") MultipartFile file,
                              @RequestParam("caption") String caption,
-                             @RequestParam("userId") Long userId,
+                             Authentication authentication,
                              Model model) {
         try {
-            postService.createPost(file, caption, userId);
+            User user = userRepository.findByUsername(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            postService.createPost(file, caption, user.getId());
             return "redirect:/posts";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             return "homepage/create";
         }
-    }
-
-    @PostMapping("/{postId}/delete")
-    public String deletePost(@PathVariable Long postId) {
-        postService.deletePost(postId);
-        return "redirect:/posts";
     }
 
     @GetMapping("/{postId}")
@@ -74,12 +83,11 @@ public class PostController {
         User currentUser = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Load only parent-level comments — replies are loaded lazily via JS
         List<CommentResponse> comments = commentService.getCommentsForPost(postId);
 
         model.addAttribute("post", post);
         model.addAttribute("currentUser", currentUser);
-        model.addAttribute("comments", comments); // separate from post.comments
+        model.addAttribute("comments", comments);
 
         return "homepage/post-details";
     }

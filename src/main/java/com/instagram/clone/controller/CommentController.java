@@ -32,6 +32,7 @@ import com.instagram.clone.dto.CommentRequest;
 import com.instagram.clone.dto.CommentResponse;
 import com.instagram.clone.service.CommentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -49,14 +50,12 @@ public class CommentController {
     @PostMapping("/add")
     public String create(@ModelAttribute CommentRequest request) {
 
-        // Route the request based on the presence of a parentId
         if (request.getParentId() == null) {
             commentService.createTopLevelComment(request);
         } else {
             commentService.addReply(request);
         }
 
-        // Redirect back to the post or wherever you need the user to go
         return "redirect:/posts/" + request.getPostId();
     }
 
@@ -66,6 +65,12 @@ public class CommentController {
     public ResponseEntity<String> deleteComment(@PathVariable Long commentId,
                                                 Authentication authentication) {
         try {
+            CommentResponse comment = commentService.getCommentById(commentId);
+
+            if (!comment.getUsername().equals(authentication.getName())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete your own comments");
+            }
+
             commentService.deleteComment(commentId);
             return ResponseEntity.ok("deleted");
         } catch (Exception e) {

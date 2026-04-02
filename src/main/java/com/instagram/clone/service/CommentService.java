@@ -22,7 +22,6 @@ public class CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
 
-    // 1. Creates a top-level comment (no parent)
     public void createTopLevelComment(CommentRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -113,7 +112,6 @@ public class CommentService {
                 .build();
     }
 
-    // Maps a reply comment — simple flat mapping, no nested replies
     private CommentResponse mapToBasicResponse(Comment comment) {
         return CommentResponse.builder()
                 .id(comment.getId())
@@ -124,5 +122,12 @@ public class CommentService {
                 .replyCount(0)
                 .replies(Collections.emptyList())
                 .build();
+    }
+
+    public CommentResponse getCommentById(Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        return mapToResponseWithReplyCount(comment);
     }
 }

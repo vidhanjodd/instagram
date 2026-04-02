@@ -5,6 +5,7 @@ import com.instagram.clone.entity.User;
 import com.instagram.clone.service.PostService;
 import com.instagram.clone.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -45,7 +46,6 @@ public class UserController {
         return "profilepage/profile";
     }
 
-    // Show edit bio form
     @GetMapping("/{id}/edit")
     public String showEditBio(@PathVariable Long id, Model model) {
         User user = userService.getUserById(id);
@@ -53,17 +53,28 @@ public class UserController {
         return "profilepage/edit-bio";
     }
 
-    // Handle bio update
     @PostMapping("/{id}/bio")
     public String updateBio(@PathVariable Long id,
-                            @RequestParam String bio) {
+                            @RequestParam String bio,
+                            Authentication authentication) {
+        User userToUpdate = userService.getUserById(id);
+
+        if (!userToUpdate.getUsername().equals(authentication.getName())) {
+            return "redirect:/users/" + id + "/profile?error=unauthorized";
+        }
+
         userService.updateBio(id, bio);
         return "redirect:/users/" + id + "/profile";
     }
 
-    // Delete user
     @PostMapping("/{id}/delete")
-    public String deleteUser(@PathVariable Long id) {
+    public String deleteUser(@PathVariable Long id, Authentication authentication) {
+        User user = userService.getUserById(id);
+
+        if (!user.getUsername().equals(authentication.getName())) {
+            return "redirect:/login?error=unauthorized";
+        }
+
         userService.deleteUser(id);
         return "redirect:/login";
     }

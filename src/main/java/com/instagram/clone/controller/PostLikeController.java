@@ -2,6 +2,7 @@ package com.instagram.clone.controller;
 
 import com.instagram.clone.service.PostLikeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,10 +20,10 @@ public class PostLikeController {
     @PostMapping("/{postId}/like")
     public String togglePostLike(
             @PathVariable Long postId,
-            @RequestParam Long userId,
+            Authentication authentication,
             @RequestHeader(value = "Referer", required = false) String referer) {
 
-        postLikeService.toggleLike(userId, postId);
+        postLikeService.toggleLike(authentication.getName(), postId);
 
         if (referer != null) {
             return "redirect:" + referer;
