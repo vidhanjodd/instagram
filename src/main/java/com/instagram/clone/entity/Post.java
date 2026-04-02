@@ -26,9 +26,9 @@ public class Post {
 
     private String mediaUrl;
 
-    private String mediaType; // IMAGE or VIDEO
+    private String mediaType;
 
-    private String publicId; // from Cloudinary
+    private String publicId;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

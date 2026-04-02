@@ -22,8 +22,4 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "WHERE p.id = :postId")
     Optional<Post> getPostById(@Param("postId") Long postId); // CHANGED name
 
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM Post p WHERE p.user.id = :userId")
-    void deleteAllByUserId(@Param("userId") Long userId);
 }

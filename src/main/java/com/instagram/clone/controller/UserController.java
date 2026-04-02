@@ -65,6 +65,6 @@ public class UserController {
     @PostMapping("/{id}/delete")
     public String deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return "redirect:/login"; // Redirects to login page after they are deleted
+        return "redirect:/login";
     }
 }
