@@ -32,6 +32,10 @@ public class User {
 
     private boolean isPrivate = false;
 
+    private String profilePicUrl;
+
+    private String profilePicPublicId;
+
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

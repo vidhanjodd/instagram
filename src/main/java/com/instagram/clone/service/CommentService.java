@@ -39,7 +39,6 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    // 2. Creates a reply to an existing comment
     public void addReply(CommentRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -50,7 +49,6 @@ public class CommentService {
         Comment parentComment = commentRepository.findById(request.getParentId())
                 .orElseThrow(() -> new RuntimeException("Parent comment not found"));
 
-        // Tag the original commenter automatically
         String taggedContent;
 
         if (request.getReplyingToUsername() != null) {
@@ -69,8 +67,6 @@ public class CommentService {
         commentRepository.save(reply);
     }
 
-    // 3. Returns only top-level (parent) comments for a post
-    //    Replies are NOT loaded here — they are loaded on demand via getRepliesToComment()
     public List<CommentResponse> getCommentsForPost(Long postId) {
         List<Comment> topLevelComments = commentRepository.findByParentIsNullAndPostId(postId);
 
@@ -78,9 +74,6 @@ public class CommentService {
                 .map(this::mapToResponseWithReplyCount)
                 .toList();
     }
-
-    // 4. Returns direct replies for a parent comment (called when user clicks "View X replies")
-    //    Only ONE level deep — we load replies flat, just like Instagram
     public List<CommentResponse> getRepliesToComment(Long parentId) {
         List<Comment> replies = commentRepository.findByParentId(parentId);
 
@@ -88,16 +81,11 @@ public class CommentService {
                 .map(this::mapToBasicResponse)
                 .toList();
     }
-
-    // 5. Deletes a comment (and its replies cascade automatically due to orphanRemoval=true on Comment entity)
     public void deleteComment(Long commentId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
         commentRepository.delete(comment);
     }
-
-    // Maps a top-level comment — includes reply count but NOT the actual replies
-    // This is what we show initially in the popup (Instagram-style: lazy replies)
     private CommentResponse mapToResponseWithReplyCount(Comment comment) {
         int replyCount = (comment.getReplies() != null) ? comment.getReplies().size() : 0;
 
@@ -106,9 +94,10 @@ public class CommentService {
                 .username(comment.getUser().getUsername())
                 .userId(comment.getUser().getId())
                 .content(comment.getContent())
+                .profilePicUrl(comment.getUser().getProfilePicUrl())
                 .createdAt(comment.getCreatedAt())
                 .replyCount(replyCount)
-                .replies(Collections.emptyList()) // Replies are NOT sent initially
+                .replies(Collections.emptyList())
                 .build();
     }
 
@@ -118,6 +107,7 @@ public class CommentService {
                 .username(comment.getUser().getUsername())
                 .userId(comment.getUser().getId())
                 .content(comment.getContent())
+                .profilePicUrl(comment.getUser().getProfilePicUrl())
                 .createdAt(comment.getCreatedAt())
                 .replyCount(0)
                 .replies(Collections.emptyList())

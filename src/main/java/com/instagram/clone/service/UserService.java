@@ -11,8 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -23,6 +26,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final CloudinaryService cloudinaryService;
 
     public User register(UserRegisterRequest request) {
 
@@ -89,6 +93,39 @@ public class UserService {
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Transactional
+    public void uploadProfilePicture(Long userId, MultipartFile file) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        String contentType = file.getContentType();
+
+        List<String> allowedTypes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/webp");
+
+        if (contentType == null || !allowedTypes.contains(contentType)) {
+            throw new RuntimeException("Only image files are allowed (JPEG, PNG, GIF, WebP)");
+        }
+
+        long maxSizeBytes = 5 * 1024 * 1024;
+
+        if (file.getSize() > maxSizeBytes) {
+            throw new RuntimeException("Profile picture must be smaller than 5 MB");
+        }
+
+        if (file.isEmpty()) {
+            throw new RuntimeException("Please select a valid image file");
+        }
+        if (user.getProfilePicPublicId() != null) {
+            cloudinaryService.deleteFile(user.getProfilePicPublicId());
+        }
+        Map<String, Object> uploadResult = cloudinaryService.uploadProfilePicture(file);
+        String newUrl = uploadResult.get("secure_url").toString();
+        String newPublicId = uploadResult.get("public_id").toString();
+        user.setProfilePicUrl(newUrl);
+        user.setProfilePicPublicId(newPublicId);
+        userRepository.save(user);
     }
 
 

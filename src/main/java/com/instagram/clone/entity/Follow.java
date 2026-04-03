@@ -22,13 +22,11 @@ public class Follow {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // The user who is clicking the "Follow" button
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "follower_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User follower;
 
-    // The user who is being followed
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "following_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)

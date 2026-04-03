@@ -33,4 +33,20 @@ public class CloudinaryService {
             throw new RuntimeException("Failed to delete file from Cloudinary: " + e.getMessage());
         }
     }
+
+    public Map<String, Object> uploadProfilePicture(MultipartFile file) {
+        try {
+            return cloudinary.uploader().upload(
+                    file.getBytes(),
+
+                    ObjectUtils.asMap(
+                            "resource_type", "image",
+                            "folder", "profile_pics",
+                            "transformation", "w_400,h_400,c_fill,g_face"
+                    )
+            );
+        } catch (IOException e) {
+            throw new RuntimeException("Profile picture upload failed: " + e.getMessage());
+        }
+    }
 }

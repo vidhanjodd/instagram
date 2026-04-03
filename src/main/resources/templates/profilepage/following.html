@@ -45,8 +45,17 @@
 
       <a th:href="@{/users/{id}/profile(id=${follow.following.id})}">
         <div class="avatar-ring">
-          <div class="avatar-inner"
-               th:text="${#strings.substring(follow.following.username, 0, 1).toUpperCase()}">A</div>
+          <div class="avatar-inner">
+
+            <img th:if="${follow.following.profilePicUrl != null}"
+                 th:src="${follow.following.profilePicUrl}"
+                 style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+
+            <span th:unless="${follow.following.profilePicUrl != null}"
+                  th:text="${#strings.substring(follow.follower.username, 0, 1).toUpperCase()}">
+             </span>
+
+          </div>
         </div>
       </a>
 
@@ -58,8 +67,6 @@
       </div>
 
       <!--
-          Unfollow button: only shown to the OWNER of the profile.
-          Reuses the existing toggleFollow endpoint (which unfollows if already following).
       -->
       <form th:if="${isOwnProfile}"
             th:action="@{/users/{targetId}/follow(targetId=${follow.following.id})}"

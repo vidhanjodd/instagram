@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,14 +32,12 @@ public class UserController {
     private final FollowRepository followRepository;
 
 
-    // Show registration form
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
         model.addAttribute("user", new UserRegisterRequest());
         return "profilepage/register";
     }
 
-    // Handle registration submission
     @PostMapping("/register")
     public String register(@ModelAttribute UserRegisterRequest request, Model model) {
         try {
@@ -100,6 +99,31 @@ public class UserController {
 
         userService.deleteUser(id);
         return "redirect:/login";
+    }
+    @PostMapping("/{id}/profile-picture")
+    public String uploadProfilePicture(@PathVariable Long id,
+                                       @RequestParam("profilePic") MultipartFile file,
+                                       Authentication authentication,
+                                       Model model) {
+
+        User userToUpdate = userService.getUserById(id);
+        if (!userToUpdate.getUsername().equals(authentication.getName())) {
+            return "redirect:/users/" + id + "/profile?error=unauthorized";
+        }
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/users/" + id + "/edit";
+        }
+
+        try {
+            userService.uploadProfilePicture(id, file);
+            return "redirect:/users/" + id + "/edit?success=true";
+        } catch (Exception e) {
+            User user = userService.getUserById(id);
+            model.addAttribute("user", user);
+            model.addAttribute("picError", e.getMessage());
+            return "profilepage/edit-bio";
+        }
     }
     @GetMapping("/search")
     @ResponseBody

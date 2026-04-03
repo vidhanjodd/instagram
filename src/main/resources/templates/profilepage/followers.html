@@ -13,7 +13,6 @@
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
     <a class="nav-back" th:href="@{/users/{id}/profile(id=${user.id})}">
         <i class="fa-solid fa-arrow-left"></i>
@@ -23,7 +22,6 @@
 </nav>
 
 <div class="page">
-    <!-- TABS -->
     <div class="tabs">
         <a class="tab-link active"
            th:href="@{/users/{id}/followers(id=${user.id})}">
@@ -35,7 +33,6 @@
         </a>
     </div>
 
-    <!-- LIST -->
     <div class="user-list">
 
         <div th:if="${#lists.isEmpty(followers)}" class="empty">
@@ -46,15 +43,22 @@
 
         <div th:each="follow : ${followers}" class="user-row">
 
-            <!-- Avatar -->
             <a th:href="@{/users/{id}/profile(id=${follow.follower.id})}">
                 <div class="avatar-ring">
-                    <div class="avatar-inner"
-                         th:text="${#strings.substring(follow.follower.username, 0, 1).toUpperCase()}">A</div>
+                    <div class="avatar-inner">
+
+                        <img th:if="${follow.follower.profilePicUrl != null}"
+                             th:src="${follow.follower.profilePicUrl}"
+                             style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+
+                        <span th:unless="${follow.follower.profilePicUrl != null}"
+                              th:text="${#strings.substring(follow.follower.username, 0, 1).toUpperCase()}">
+                         </span>
+
+                    </div>
                 </div>
             </a>
 
-            <!-- Username -->
             <div class="user-info">
                 <a th:href="@{/users/{id}/profile(id=${follow.follower.id})}"
                    th:text="${follow.follower.username}">username</a>
@@ -62,10 +66,6 @@
                      th:text="${follow.follower.bio != null && !#strings.isEmpty(follow.follower.bio) ? follow.follower.bio : 'Instagram user'}">bio</div>
             </div>
 
-            <!--
-                Remove button: only shown to the OWNER of this profile.
-                Calls POST /users/{followerId}/remove-follower
-            -->
             <form th:if="${isOwnProfile}"
                   th:action="@{/users/{followerId}/remove-follower(followerId=${follow.follower.id})}"
                   method="post" style="display:inline">

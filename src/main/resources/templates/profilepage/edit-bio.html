@@ -15,12 +15,60 @@
 </nav>
 
 <div class="page">
-    <!-- Avatar -->
+
+    <div th:if="${param.success}"
+         style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);
+                border-radius:8px;padding:10px 16px;font-size:13px;color:#34d399;
+                margin-bottom:16px;text-align:center;">
+        Profile picture updated successfully!
+    </div>
     <div class="avatar-section">
-        <div class="avatar-ring">
-            <div class="avatar-inner" th:text="${#strings.substring(user.username,0,1).toUpperCase()}">A</div>
-        </div>
-        <button class="change-photo-btn" type="button">Change profile photo</button>
+
+        <div th:if="${picError}" class="pic-error" th:text="${picError}"></div>
+        <form class="pic-upload-form"
+              th:action="@{/users/{id}/profile-picture(id=${user.id})}"
+              method="post"
+              enctype="multipart/form-data"
+              id="picForm">
+
+            <div class="avatar-ring">
+                <div class="avatar-inner">
+                    <img th:if="${user.profilePicUrl != null}"
+                         th:src="${user.profilePicUrl}"
+                         id="avatarPreview"
+                         alt="Profile picture"/>
+                    <img th:unless="${user.profilePicUrl != null}"
+                         id="avatarPreview"
+                         src=""
+                         alt=""
+                         style="display:none;"/>
+                    <span th:unless="${user.profilePicUrl != null}"
+                          id="letterFallback"
+                          th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">A</span>
+
+                </div>
+            </div>
+            <input type="file"
+                   id="picInput"
+                   name="profilePic"
+                   accept="image/jpeg, image/png, image/gif, image/webp"/>
+
+            <span id="previewLabel" class="avatar-preview-label" style="display:none;">
+                Preview — click "Change photo" to confirm
+            </span>
+            <button type="button"
+                    class="change-photo-btn"
+                    onclick="document.getElementById('picInput').click()">
+                Change profile photo
+            </button>
+            <button type="submit"
+                    id="uploadBtn"
+                    class="change-photo-btn"
+                    style="display:none; color: #4fa3e8; font-weight: 700; margin-top: 6px;">
+                Save photo
+            </button>
+
+        </form>
     </div>
 
     <!-- Form -->
@@ -77,6 +125,34 @@
     function updateBioCount(el) {
         document.getElementById('bioCount').textContent = el.value.length + ' / 150';
     }
+
+    document.getElementById('picInput').addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const maxBytes = 5 * 1024 * 1024; // 5 MB in bytes
+        if (file.size > maxBytes) {
+            alert('This image is larger than 5 MB. Please choose a smaller file.');
+            this.value = ''; // Reset the file input so they must pick again
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+
+            const preview = document.getElementById('avatarPreview');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+
+            const letterFallback = document.getElementById('letterFallback');
+            if (letterFallback) letterFallback.style.display = 'none';
+            document.getElementById('previewLabel').style.display = 'block';
+            document.getElementById('uploadBtn').style.display = 'inline';
+        };
+
+        reader.readAsDataURL(file);
+    });
 </script>
 </body>
 </html>

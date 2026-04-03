@@ -27,19 +27,15 @@ public class PostService {
 
     public Post createPost(MultipartFile file, String caption, Long userId) {
 
-        // 1. Upload to Cloudinary
         Map<String, Object> uploadResult = cloudinaryService.uploadFile(file);
 
-        // 2. Extract important fds
         String mediaUrl = uploadResult.get("secure_url").toString();
         String publicId = uploadResult.get("public_id").toString();
         String resourceType = uploadResult.get("resource_type").toString();
 
-        // 3. Decide media type
         String mediaType = resourceType.equals("video") ? "VIDEO" : "IMAGE";
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User does not exist"));
 
-        // 4. Create Post object
         Post post = Post.builder()
                 .caption(caption)
                 .mediaUrl(mediaUrl)
@@ -49,7 +45,6 @@ public class PostService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        // 5. Save to DB
         return postRepository.save(post);
     }
 
@@ -61,7 +56,6 @@ public class PostService {
         return postRepository.findByUser_Id(userId);
     }
 
-    // CHANGED: added this method for post details page
     public Post getPostById(Long postId) {
         return postRepository.getPostById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));

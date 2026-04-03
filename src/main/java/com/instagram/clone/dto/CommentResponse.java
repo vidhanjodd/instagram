@@ -14,5 +14,6 @@ public class CommentResponse {
     private String content;
     private LocalDateTime createdAt;
     private int replyCount;
+    private String profilePicUrl;
     private List<CommentResponse> replies;
 }
