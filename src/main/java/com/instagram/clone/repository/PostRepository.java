@@ -21,5 +21,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "LEFT JOIN FETCH c.user " +
             "WHERE p.id = :postId")
     Optional<Post> getPostById(@Param("postId") Long postId); // CHANGED name
+    List<Post> findAllByOrderByCreatedAtDesc();
 
 }

@@ -215,3 +215,90 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     color: #f5f5f5;
 }
 @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
+
+
+     /* Instagram-style Delete Modal */
+ .modal-overlay {
+     display: none;
+     position: fixed;
+     inset: 0;
+     background: rgba(0, 0, 0, 0.65);
+     z-index: 9999;
+     justify-content: center;
+     align-items: center;
+ }
+.modal-overlay.active {
+    display: flex;
+}
+.modal-box {
+    background: #fff;
+    border-radius: 16px;
+    width: 400px;
+    max-width: 90vw;
+    overflow: hidden;
+    animation: modalPop 0.2s ease;
+}
+@keyframes modalPop {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+.modal-title {
+    text-align: center;
+    padding: 20px 16px 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #262626;
+    border-bottom: 1px solid #efefef;
+}
+.modal-subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #8e8e8e;
+    padding: 0 16px 16px;
+    border-bottom: 1px solid #efefef;
+}
+.modal-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 1px solid #efefef;
+    transition: background 0.15s;
+}
+.modal-btn:last-child {
+    border-bottom: none;
+}
+.modal-btn.delete {
+    color: #ed4956;
+    font-weight: 700;
+}
+.modal-btn.cancel {
+    color: #262626;
+}
+.modal-btn:hover {
+    background: #fafafa;
+}
+
+/* Three-dots button */
+.post-more {
+    background: white;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #262626;
+    padding: 4px 8px;
+    border-radius: 50%;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+.post-more:hover {
+    background: #f0f0f0;
+}
