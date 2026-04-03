@@ -50,8 +50,6 @@ public class UserController {
         }
     }
 
-    // View user profile
-    // View user profile
     @GetMapping("/{id}/profile")
     public String viewProfile(@PathVariable Long id, Model model, Authentication authentication) {
         User profileUser = userService.getUserById(id);

@@ -13,24 +13,16 @@
 </head>
 <body>
 
-<!-- NAVBAR -->
 <nav class="navbar">
     <a class="nav-back" th:href="@{/posts}">← Back</a>
     <a class="nav-logo" th:href="@{/posts}">Instagram</a>
     <span></span>
 </nav>
 
-<!--
-  PAGE OVERLAY
-  This dark overlay mimics Instagram's behavior of showing the post
-  as a dialog/modal on top of the feed. Clicking the overlay (outside
-  the card) navigates the user back to the feed.
--->
 <div class="page-overlay" onclick="goBack(event)">
 
     <div class="post-card" onclick="event.stopPropagation()">
 
-        <!-- LEFT: MEDIA -->
         <div class="post-left">
             <img th:if="${post.mediaType == 'IMAGE'}"
                  class="post-media"
@@ -42,10 +34,8 @@
                    controls></video>
         </div>
 
-        <!-- RIGHT: COMMENT PANEL -->
         <div class="post-right">
 
-            <!-- Panel Header: post author -->
             <div class="panel-header">
                 <div class="panel-header-left">
                     <div class="post-avatar"
@@ -54,10 +44,8 @@
                 </div>
             </div>
 
-            <!-- Scrollable comments area -->
             <div class="comments-scroll" id="commentsScroll">
 
-                <!-- Caption row (shown as first "comment" like Instagram) -->
                 <div class="caption-row" th:if="${post.caption != null and !#strings.isEmpty(post.caption)}">
                     <div class="small-avatar"
                          th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">A</div>
@@ -67,31 +55,14 @@
                     </div>
                 </div>
 
-                <!-- NO COMMENTS state -->
                 <div th:if="${#lists.isEmpty(comments)}" class="no-comments">
                     <strong>No comments yet.</strong>
                     Start the conversation.
                 </div>
 
-                <!--
-                  COMMENTS LIST
-                  We iterate over 'comments' from the model — these are ONLY parent-level comments.
-                  Replies are NOT included here. They are loaded lazily when the user clicks
-                  "View X replies". This is exactly how Instagram works.
-
-                  We pass the currentUser's ID as a data attribute on the container
-                  so JavaScript can compare it to each comment's userId and show/hide the delete button.
-                -->
                 <div id="commentsList"
                      th:attr="data-current-user-id=${currentUser.id}">
 
-                    <!--
-                      th:each iterates the parent comments.
-                      Each comment block has:
-                        - data-comment-id: the comment's DB id
-                        - data-user-id: the comment author's id (to compare with currentUser)
-                        - data-reply-count: how many replies exist (shown in the "View replies" button)
-                    -->
                     <div class="comment-item"
                          th:each="comment : ${comments}"
                          th:id="'comment-' + ${comment.id}"
@@ -107,37 +78,26 @@
                             </div>
 
                             <div class="comment-meta">
-                                <!-- Timestamp -->
                                 <span class="comment-time"
                                       th:text="${#temporals.format(comment.createdAt, 'MMM d')}">Jan 1</span>
 
-                                <!-- Reply button -->
                                 <button class="reply-btn"
                                         th:attr="data-comment-id=${comment.id}, data-username=${comment.username}">
                                     Reply
                                 </button>
 
-                                <!--
-                                  Delete button — hidden by default.
-                                  JavaScript will make it visible if comment.userId == currentUser.id
-                                -->
                                 <button class="delete-btn"
                                         th:attr="data-comment-id=${comment.id}">
                                     Delete
                                 </button>
                             </div>
 
-                            <!--
-                              "View X replies" button — only shown if there are replies.
-                              When clicked, JS calls GET /comments/replies/{id} and renders them below.
-                            -->
                             <button class="view-replies-btn"
                                     th:if="${comment.replyCount > 0}"
                                     th:attr="data-comment-id=${comment.id}, data-reply-count=${comment.replyCount}">
                                 View <span th:text="${comment.replyCount}">0</span> replies
                             </button>
 
-                            <!-- Replies are injected here by JavaScript -->
                             <div class="replies-list"
                                  th:id="'replies-' + ${comment.id}"
                                  style="display:none;"></div>
@@ -147,40 +107,42 @@
                 </div>
             </div>
 
-            <!-- FOOTER: actions + comment input -->
-            <div class="panel-footer">
-                <button class="action-btn" title="Like">
-                    <i class="fa-regular fa-heart"></i>
-                </button>
+            <div class="panel-footer" style="padding: 0; padding-bottom: 12px;">
 
-                <button class="action-btn" title="Comment">
-                    <i class="fa-regular fa-comment"></i>
-                </button>
+                <div class="post-actions">
 
-                <button class="action-btn" title="Share">
-                    <i class="fa-regular fa-paper-plane"></i>
-                </button>
+                    <form id="likeForm" th:action="@{/posts/{postId}/like(postId=${post.id})}" method="post" style="display: inline;">
+                        <button type="submit" class="action-btn" title="Like" style="padding: 0;">
+                            <span th:with="isLiked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}">
+                                <i id="likeIcon"
+                                   th:class="${isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"
+                                   th:style="${isLiked ? 'color: #ff3040;' : ''}"></i>
+                            </span>
+                        </button>
+                    </form>
 
-                <div class="post-time" th:text="${#temporals.format(post.createdAt, 'MMMM d, yyyy')}">
+                    <button class="action-btn" title="Comment" style="padding: 0;">
+                        <i class="fa-regular fa-comment"></i>
+                    </button>
+
+                    <button class="action-btn" title="Share" style="padding: 0;">
+                        <i class="fa-regular fa-paper-plane"></i>
+                    </button>
+                </div>
+
+                <div id="likeCountDisplay" style="font-weight: 600; font-size: 14px; margin-bottom: 4px; padding: 0 16px;"
+                     th:text="${post.likes != null and #lists.size(post.likes) > 0 ? #lists.size(post.likes) + ' likes' : ''}">
+                </div>
+
+                <div class="post-time" th:text="${#temporals.format(post.createdAt, 'MMMM d, yyyy')}" style="padding: 0 16px 6px;">
                     January 1, 2024
                 </div>
 
-                <!--
-                  "Replying to @user" indicator bar.
-                  Shown above the input when a reply is being written.
-                  Hidden by default. Shown/hidden by JS.
-                -->
-                <div id="reply-info" class="hidden">
+                <div id="reply-info" class="hidden" style="padding: 6px 16px;">
                     <span>Replying to <span id="reply-username-label">@user</span></span>
-                    <button id="cancel-reply-btn" title="Cancel reply">✕</button>
+                    <button id="cancel-reply-btn" title="Cancel reply" style="background: none; border: none; color: #8e8e8e; cursor: pointer;">✕</button>
                 </div>
 
-                <!--
-                  COMMENT FORM
-                  Standard HTML form POST — Spring MVC handles it on the server.
-                  parentId is empty by default (top-level comment).
-                  When replying, JS fills in parentId before submission.
-                -->
                 <form class="comment-form"
                       th:action="@{/comments/add}"
                       method="POST"
@@ -202,56 +164,69 @@
                 </form>
             </div>
 
-        </div><!-- end .post-right -->
-    </div><!-- end .post-card -->
-</div><!-- end .page-overlay -->
-
+        </div>
+    </div>
+</div>
 
 <script th:inline="javascript">
-    /*
-     * currentUserId is passed from Thymeleaf inline so JavaScript can compare
-     * comment author IDs with the logged-in user to decide whether to show the delete button.
-     */
-    const currentUserId = /*[[${currentUser.id}]]*/ 0;
+    const currentUserId = [[${currentUser.id}]];
 
-    // ── ON LOAD: show/hide delete buttons based on ownership ──────────────────
     document.addEventListener('DOMContentLoaded', function () {
         initComments();
 
-        // Enable/disable "Post" button based on whether input has text
         const input = document.getElementById('commentInput');
         input.addEventListener('input', function () {
             document.getElementById('submitBtn').disabled = !this.value.trim();
         });
+
+        const likeForm = document.getElementById('likeForm');
+        if (likeForm) {
+            likeForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-XSRF-TOKEN': getCsrfToken(),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    const icon = document.getElementById('likeIcon');
+                    if (data.liked) {
+                        icon.className = 'fa-solid fa-heart';
+                        icon.style.color = '#ff3040';
+                    } else {
+                        icon.className = 'fa-regular fa-heart';
+                        icon.style.color = '';
+                    }
+
+                    const countDisplay = document.getElementById('likeCountDisplay');
+                    if (data.likeCount > 0) {
+                        countDisplay.textContent = data.likeCount + (data.likeCount === 1 ? ' like' : ' likes');
+                    } else {
+                        countDisplay.textContent = '';
+                    }
+                })
+                .catch(function(error) {
+                    console.error(error);
+                });
+            });
+        }
     });
 
-    /*
-     * initComments()
-     * Runs once on page load for all parent comments already rendered by Thymeleaf.
-     * - Shows delete button if comment belongs to current user
-     * - Wires up "Reply" button click
-     * - Wires up "View replies" button click
-     * - Wires up "Delete" button click
-     */
     function initComments() {
         const list = document.getElementById('commentsList');
         if (!list) return;
 
-        // Process all comment items currently in the DOM
         list.querySelectorAll('.comment-item').forEach(wireCommentItem);
     }
 
-    /*
-     * wireCommentItem(item)
-     * Attaches event listeners and shows/hides delete button for ONE comment element.
-     * Called both at page load (for server-rendered comments) and after replies are
-     * dynamically injected (for reply items).
-     */
     function wireCommentItem(item) {
         const commentId = item.dataset.commentId;
         const userId = parseInt(item.dataset.userId);
 
-        // Show delete button only if this comment belongs to the logged-in user
         const deleteBtn = item.querySelector('.delete-btn');
         if (deleteBtn && userId === currentUserId) {
             deleteBtn.classList.add('visible');
@@ -260,7 +235,6 @@
             });
         }
 
-        // Wire "Reply" button
         const replyBtn = item.querySelector('.reply-btn');
         if (replyBtn) {
             replyBtn.addEventListener('click', function () {
@@ -268,7 +242,6 @@
             });
         }
 
-        // Wire "View replies" button (only exists on parent comments with replies)
         const viewRepliesBtn = item.querySelector('.view-replies-btn');
         if (viewRepliesBtn) {
             viewRepliesBtn.addEventListener('click', function () {
@@ -277,44 +250,26 @@
         }
     }
 
-    // ── REPLY LOGIC ───────────────────────────────────────────────────────────
-
-    /*
-     * prepareReply(commentId, username)
-     * Called when user clicks "Reply" on a comment.
-     * Shows the "Replying to @user" bar, fills the hidden parentId field,
-     * and focuses the input. Same UX as Instagram web.
-     */
    function prepareReply(commentId, username) {
-    let parentCommentId = commentId;
+        let parentCommentId = commentId;
+        const commentElement = document.querySelector('[data-comment-id="' + commentId + '"]');
+        const parentContainer = commentElement.closest('.comment-item');
 
-    //Check if clicked comment is a reply
-    const commentElement = document.querySelector('[data-comment-id="' + commentId + '"]');
+        if (parentContainer && parentContainer.closest('.replies-list')) {
+            const mainComment = parentContainer.closest('.replies-list').id.split('-')[1];
+            parentCommentId = mainComment;
+        }
 
-    // If this comment is inside replies, find its top parent
-    const parentContainer = commentElement.closest('.comment-item');
+        document.getElementById('parentIdField').value = parentCommentId;
+        document.getElementById('replyingToUsername').value = username;
+        document.getElementById('reply-username-label').textContent = '@' + username;
+        document.getElementById('reply-info').classList.add('active');
 
-    if (parentContainer && parentContainer.closest('.replies-list')) {
-        // We are inside replies → get parent comment id
-        const mainComment = parentContainer.closest('.replies-list').id.split('-')[1];
-        parentCommentId = mainComment;
+        const input = document.getElementById('commentInput');
+        input.placeholder = 'Reply to @' + username + '…';
+        input.focus();
     }
 
-    document.getElementById('parentIdField').value = parentCommentId;
-    document.getElementById('replyingToUsername').value = username;
-    document.getElementById('reply-username-label').textContent = '@' + username;
-    document.getElementById('reply-info').classList.add('active');
-
-    const input = document.getElementById('commentInput');
-    input.placeholder = 'Reply to @' + username + '…';
-    input.focus();
-}
-
-    /*
-     * cancelReply()
-     * Resets the form back to top-level comment mode.
-     * Called when user clicks ✕ on the "Replying to" bar.
-     */
     function cancelReply() {
         document.getElementById('parentIdField').value = '';
         document.getElementById('reply-info').classList.add('hidden');
@@ -327,24 +282,11 @@
 
     document.getElementById('cancel-reply-btn').addEventListener('click', cancelReply);
 
-    // ── VIEW REPLIES LOGIC ────────────────────────────────────────────────────
-
-    /*
-     * toggleReplies(btn, parentId)
-     * Called when user clicks "View X replies".
-     *
-     * First click: fetches replies from GET /comments/replies/{parentId} and renders them.
-     * Subsequent clicks: toggles the replies container visibility.
-     *
-     * This is the lazy-load mechanism — replies are only fetched when needed.
-     * The button text changes between "View X replies" and "Hide replies".
-     */
     function toggleReplies(btn, parentId) {
         const container = document.getElementById('replies-' + parentId);
         if (!container) return;
 
         if (container.dataset.loaded === 'true') {
-            // Already fetched — just toggle visibility
             if (container.style.display === 'none') {
                 container.style.display = 'block';
                 btn.innerHTML = 'Hide replies';
@@ -356,7 +298,6 @@
             return;
         }
 
-        // First load — fetch from server
         btn.textContent = 'Loading…';
 
         fetch('/comments/replies/' + parentId)
@@ -367,7 +308,6 @@
                 replies.forEach(function (reply) {
                     const replyEl = buildReplyElement(reply);
                     container.appendChild(replyEl);
-                    // Wire up delete/reply buttons on the new elements
                     wireCommentItem(replyEl);
                 });
 
@@ -376,17 +316,10 @@
                 btn.innerHTML = 'Hide replies';
             })
             .catch(function (err) {
-                console.error('Failed to load replies:', err);
                 btn.textContent = 'View ' + btn.dataset.replyCount + ' replies';
             });
     }
 
-    /*
-     * buildReplyElement(reply)
-     * Creates a DOM element for a reply comment from the JSON response.
-     * Replies look the same as parent comments but are placed inside .replies-list.
-     * No ladder effect — they are visually flat.
-     */
     function buildReplyElement(reply) {
         const initial = reply.username ? reply.username.charAt(0).toUpperCase() : '?';
         const isOwner = reply.userId === currentUserId;
@@ -418,67 +351,48 @@
         return item;
     }
 
-    // ── DELETE LOGIC ──────────────────────────────────────────────────────────
-
-    /*
-     * handleDelete(commentId, itemElement)
-     * Sends POST /comments/delete/{commentId} to the server.
-     * On success, removes the comment element from the DOM — NO page reload needed.
-     * This is the same UX as Instagram: comment disappears instantly.
-     */
     function handleDelete(commentId, itemElement) {
-    fetch('/comments/delete/' + commentId, {
-        method: 'POST',
-        headers: {
-            'X-XSRF-TOKEN': getCsrfToken()
-        }
-    })
-    .then(function (res) {
-        if (res.ok) {
-            //  Instant UI removal
-            itemElement.remove();
-
-            // Remove replies container if exists
-            const repliesContainer = document.getElementById('replies-' + commentId);
-            if (repliesContainer) repliesContainer.remove();
-            // Remove "view replies" button
-            const viewBtn = document.querySelector('[data-comment-id="' + commentId + '"].view-replies-btn');
-            if (viewBtn) viewBtn.remove();
-
-            //  FIX: ensure full UI consistency
-            setTimeout(() => location.reload(), 300);
-         } else {
-            alert('Could not delete comment. Please try again.');
+        fetch('/comments/delete/' + commentId, {
+            method: 'POST',
+            headers: {
+                'X-XSRF-TOKEN': getCsrfToken()
             }
         })
-    .catch(function () {
-        alert('Network error. Please try again.');
+        .then(function (res) {
+            if (res.ok) {
+                itemElement.remove();
+
+                const repliesContainer = document.getElementById('replies-' + commentId);
+                if (repliesContainer) repliesContainer.remove();
+                const viewBtn = document.querySelector('[data-comment-id="' + commentId + '"].view-replies-btn');
+                if (viewBtn) viewBtn.remove();
+
+                setTimeout(() => location.reload(), 300);
+            } else {
+                alert('Could not delete comment. Please try again.');
+            }
+        })
+        .catch(function () {
+            alert('Network error. Please try again.');
         });
     }
 
-
-    // ── HELPERS ───────────────────────────────────────────────────────────────
-
-    // Overlay click → go back to feed
     function goBack(event) {
         if (event.target === event.currentTarget) {
             window.location.href = '/posts';
         }
     }
 
-    // Get CSRF token from cookie (Spring Security sets it as XSRF-TOKEN cookie by default)
     function getCsrfToken() {
         return document.querySelector('meta[name="_csrf"]').getAttribute('content');
     }
 
-    // Simple XSS protection before injecting user content into innerHTML
     function escapeHtml(str) {
         const div = document.createElement('div');
         div.textContent = str || '';
         return div.innerHTML;
     }
 
-    // Format ISO date string (from JSON) into "Jan 1" style
     function formatDate(isoString) {
         if (!isoString) return '';
         try {
