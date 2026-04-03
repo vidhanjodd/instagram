@@ -1,3 +1,284 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org"-->
+<!--      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8"/>-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>-->
+<!--    <meta name="_csrf" th:content="${_csrf.token}" />-->
+<!--    <meta name="_csrf_header" th:content="${_csrf.headerName}" />-->
+<!--    <title>Instagram</title>-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>-->
+<!--    <link rel="stylesheet" th:href="@{/css/feed.css}"/>-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<nav>-->
+<!--    <a class="nav-logo" th:href="@{/posts}">Instagram</a>-->
+
+<!--    <div class="search-wrap" id="searchWrap">-->
+<!--        <div class="search-box">-->
+<!--            <i class="fa-solid fa-magnifying-glass search-icon"></i>-->
+<!--            <input type="text" id="searchInput" placeholder="Search" autocomplete="off"/>-->
+<!--        </div>-->
+<!--        <div class="search-dropdown" id="searchDropdown"></div>-->
+<!--    </div>-->
+
+<!--    <div class="nav-icons" style="display: flex; align-items: center; gap: 20px; font-size: 24px;">-->
+<!--        <a th:href="@{/posts}" title="Home" style="color: inherit; text-decoration: none;">-->
+<!--            <i class="fa-solid fa-house"></i>-->
+<!--        </a>-->
+<!--        <a th:href="@{/posts/create}" title="New Post" style="color: inherit; text-decoration: none;">-->
+<!--            <i class="fa-regular fa-square-plus"></i>-->
+<!--        </a>-->
+<!--        <a th:href="@{/users/{id}/profile(id=${currentUser.id})}" title="Profile" style="color: inherit; text-decoration: none;">-->
+<!--            <i class="fa-regular fa-circle-user"></i>-->
+<!--        </a>-->
+<!--        <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">-->
+<!--            <button type="submit" title="Logout" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; font-size: 24px;">-->
+<!--                <i class="fa-solid fa-arrow-right-from-bracket"></i>-->
+<!--            </button>-->
+<!--        </form>-->
+<!--    </div>-->
+<!--</nav>-->
+
+<!--<div class="layout">-->
+<!--    <main>-->
+
+<!--        <div class="post-card" th:each="post : ${posts}">-->
+
+<!--            <div class="post-header">-->
+<!--                <a class="post-user" th:href="@{/users/{id}/profile(id=${post.user.id})}">-->
+<!--                    <div class="post-avatar">-->
+<!--                        <div class="post-avatar-inner"-->
+<!--                             th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">A</div>-->
+<!--                    </div>-->
+<!--                    <div class="post-username" th:text="${post.user.username}">username</div>-->
+<!--                </a>-->
+<!--                <div class="post-header">-->
+<!--                    <span class="username" th:text="${post.user.username}">Username</span>-->
+
+<!--                    <button class="post-more" onclick="toggleMenu(this)">...</button>-->
+
+<!--                    <div class="post-options-menu" style="display: none; position: absolute; background: white; border: 1px solid #ccc;">-->
+<!--                        <form th:action="@{/posts/{id}/delete(id=${post.id})}" method="post">-->
+<!--                            <button type="submit" style="color: red; background: none; border: none; cursor: pointer;">-->
+<!--                                Delete Post-->
+<!--                            </button>-->
+<!--                        </form>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <img th:if="${post.mediaType == 'IMAGE'}"-->
+<!--                 class="post-media"-->
+<!--                 th:src="${post.mediaUrl}"-->
+<!--                 th:alt="${post.caption}"/>-->
+<!--            <video th:if="${post.mediaType == 'VIDEO'}"-->
+<!--                   class="post-media"-->
+<!--                   th:src="${post.mediaUrl}"-->
+<!--                   controls></video>-->
+
+<!--            <div class="post-actions">-->
+<!--                <button class="action-btn like-btn"-->
+<!--                        th:attr="data-post-id=${post.id},-->
+<!--                 data-liked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}"-->
+<!--                        style="background: none; border: none; padding: 0; cursor: pointer; margin-right: 12px;"-->
+<!--                        title="Like">-->
+
+<!--                    <i class="fa-heart like-icon"-->
+<!--                       th:classappend="${post.likes != null and post.likes.![user.id].contains(currentUser.id)} ? 'fa-solid' : 'fa-regular'"-->
+<!--                       style="font-size: 24px;"></i>-->
+
+<!--                </button>-->
+
+<!--                <a class="action-btn"-->
+<!--                   th:href="@{/posts/{postId}(postId=${post.id})}"-->
+<!--                   title="Comment" style="margin-right: 12px; color: inherit;">-->
+<!--                    <i class="fa-regular fa-comment" style="font-size: 24px;"></i>-->
+<!--                </a>-->
+
+<!--                <button class="action-btn" title="Share" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit;">-->
+<!--                    <i class="fa-regular fa-paper-plane" style="font-size: 24px;"></i>-->
+<!--                </button>-->
+
+<!--            </div>-->
+<!--            <div class="likes-count">-->
+<!--                <span th:id="'like-count-' + ${post.id}"-->
+<!--                      th:text="${post.likes.size()} + ' ' + (${post.likes.size()} == 1 ? 'like' : 'likes')"-->
+<!--                </span>-->
+<!--            </div>-->
+
+<!--            <div class="post-caption">-->
+<!--                <span class="cap-username" th:text="${post.user.username}">username</span>-->
+<!--                <span th:text="${post.caption}">Caption here</span>-->
+<!--            </div>-->
+
+<!--            <a class="view-comments"-->
+<!--               th:if="${not #lists.isEmpty(post.comments)}"-->
+<!--               th:href="@{/posts/{postId}(postId=${post.id})}"-->
+<!--               th:text="'View all ' + ${#lists.size(post.comments)} + ' comment' + (${#lists.size(post.comments) > 1} ? 's' : '')">-->
+<!--                View all comments-->
+<!--            </a>-->
+
+<!--            <div class="post-time" th:text="${post.createdAt}">2 hours ago</div>-->
+
+<!--            <form class="post-comment-bar" th:action="@{/comments/add}" method="POST">-->
+<!--                <span style="font-size:18px">☺</span>-->
+<!--                <input type="hidden" name="postId" th:value="${post.id}"/>-->
+<!--                <input type="hidden" name="userId" th:value="${currentUser.id}"/>-->
+<!--                <input class="comment-input"-->
+<!--                       type="text"-->
+<!--                       name="content"-->
+<!--                       placeholder="Add a comment…"-->
+<!--                       autocomplete="off"/>-->
+<!--                <button type="submit" class="post-btn">Post</button>-->
+<!--            </form>-->
+
+<!--        </div>-->
+
+<!--    </main>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    function toggleMenu(button) {-->
+<!--        const menu = button.nextElementSibling;-->
+<!--        if (menu.style.display === 'block') {-->
+<!--            menu.style.display = 'none';-->
+<!--        } else {-->
+<!--            document.querySelectorAll('.post-options-menu').forEach(m => m.style.display = 'none');-->
+<!--            menu.style.display = 'block';-->
+<!--        }-->
+<!--    }-->
+
+<!--    window.onclick = function(event) {-->
+<!--        if (!event.target.matches('.post-more')) {-->
+<!--            document.querySelectorAll('.post-options-menu').forEach(m => m.style.display = 'none');-->
+<!--        }-->
+<!--    }-->
+
+<!--    document.querySelectorAll('.like-btn').forEach(btn => {-->
+<!--        const icon = btn.querySelector('.like-icon');-->
+
+<!--        if (btn.dataset.liked == 'true' || btn.dataset.liked == true) {-->
+<!--            icon.classList.remove('fa-regular');-->
+<!--            icon.classList.add('fa-solid');-->
+<!--            icon.style.color = '#ff3040';-->
+<!--        }-->
+
+<!--        btn.addEventListener('click', function () {-->
+<!--            const postId = this.dataset.postId;-->
+<!--            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');-->
+<!--            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');-->
+
+<!--            fetch('/posts/' + postId + '/like', {-->
+<!--                method: 'POST',-->
+<!--                headers: {-->
+<!--                    [csrfHeader]: csrfToken-->
+<!--                }-->
+<!--            })-->
+<!--                .then(res => res.json())-->
+<!--                .then(data => {-->
+<!--                    if (data.liked) {-->
+<!--                        icon.classList.remove('fa-regular');-->
+<!--                        icon.classList.add('fa-solid');-->
+<!--                        icon.style.color = '#ff3040';-->
+<!--                    } else {-->
+<!--                        icon.classList.remove('fa-solid');-->
+<!--                        icon.classList.add('fa-regular');-->
+<!--                        icon.style.color = '';-->
+<!--                    }-->
+<!--                    const countEl = document.getElementById('like-count-' + postId);-->
+<!--                    if (countEl) {-->
+<!--                        const text = data.likeCount === 1 ? "like" : "likes";-->
+<!--                        countEl.textContent = data.likeCount + " " + text;-->
+<!--                    }-->
+<!--                })-->
+<!--                .catch(() => {-->
+<!--                    console.error("Like failed");-->
+<!--                });-->
+<!--        });-->
+<!--    });-->
+
+<!--    (function () {-->
+<!--        const input = document.getElementById('searchInput');-->
+<!--        const dropdown = document.getElementById('searchDropdown');-->
+
+<!--        if (!input || !dropdown) return;-->
+
+<!--        let debounceTimer;-->
+
+<!--        input.addEventListener('input', function () {-->
+<!--            const query = this.value.trim();-->
+<!--            clearTimeout(debounceTimer);-->
+<!--            dropdown.innerHTML = '';-->
+
+<!--            if (query.length === 0) {-->
+<!--                dropdown.classList.remove('open');-->
+<!--                return;-->
+<!--            }-->
+
+<!--            debounceTimer = setTimeout(() => {-->
+<!--                fetch('/users/search?query=' + encodeURIComponent(query), {-->
+<!--                    headers: { 'X-Requested-With': 'XMLHttpRequest' }-->
+<!--                })-->
+<!--                    .then(res => res.json())-->
+<!--                    .then(users => {-->
+<!--                        dropdown.innerHTML = '';-->
+<!--                        if (users.length === 0) {-->
+<!--                            dropdown.innerHTML = '<div class="search-no-results">No users found</div>';-->
+<!--                        } else {-->
+<!--                            users.forEach(user => {-->
+<!--                                const initial = user.username.charAt(0).toUpperCase();-->
+<!--                                const item = document.createElement('a');-->
+<!--                                item.href = `/users/${user.id}/profile`;-->
+<!--                                item.className = 'search-result-item';-->
+<!--                                item.innerHTML = `-->
+<!--                                <div class="search-result-avatar">-->
+<!--                                    <div class="search-result-avatar-inner">${initial}</div>-->
+<!--                                </div>-->
+<!--                                <div>-->
+<!--                                    <div class="search-result-username">${escapeHtml(user.username)}</div>-->
+<!--                                </div>-->
+<!--                            `;-->
+<!--                                dropdown.appendChild(item);-->
+<!--                            });-->
+<!--                        }-->
+<!--                        dropdown.classList.add('open');-->
+<!--                    })-->
+<!--                    .catch(() => {});-->
+<!--            }, 300);-->
+<!--        });-->
+
+<!--        document.addEventListener('click', function (e) {-->
+<!--            if (!document.getElementById('searchWrap').contains(e.target)) {-->
+<!--                dropdown.classList.remove('open');-->
+<!--            }-->
+<!--        });-->
+
+<!--        input.addEventListener('keydown', function (e) {-->
+<!--            if (e.key === 'Escape') {-->
+<!--                dropdown.classList.remove('open');-->
+<!--                input.blur();-->
+<!--            }-->
+<!--        });-->
+
+<!--        function escapeHtml(str) {-->
+<!--            return str-->
+<!--                .replace(/&/g, '&amp;')-->
+<!--                .replace(/</g, '&lt;')-->
+<!--                .replace(/>/g, '&gt;')-->
+<!--                .replace(/"/g, '&quot;');-->
+<!--        }-->
+<!--    })();-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
@@ -10,6 +291,94 @@
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" th:href="@{/css/feed.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+    <style>
+        /* Instagram-style Delete Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            width: 400px;
+            max-width: 90vw;
+            overflow: hidden;
+            animation: modalPop 0.2s ease;
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.92); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        .modal-title {
+            text-align: center;
+            padding: 20px 16px 12px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #262626;
+            border-bottom: 1px solid #efefef;
+        }
+        .modal-subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #8e8e8e;
+            padding: 0 16px 16px;
+            border-bottom: 1px solid #efefef;
+        }
+        .modal-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 1px solid #efefef;
+            transition: background 0.15s;
+        }
+        .modal-btn:last-child {
+            border-bottom: none;
+        }
+        .modal-btn.delete {
+            color: #ed4956;
+            font-weight: 700;
+        }
+        .modal-btn.cancel {
+            color: #262626;
+        }
+        .modal-btn:hover {
+            background: #fafafa;
+        }
+
+        /* Three-dots button */
+        .post-more {
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: #262626;
+            padding: 4px 8px;
+            border-radius: 50%;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+        .post-more:hover {
+            background: #f0f0f0;
+        }
+    </style>
 </head>
 <body>
 
@@ -55,7 +424,16 @@
                     </div>
                     <div class="post-username" th:text="${post.user.username}">username</div>
                 </a>
-                <button class="post-more">•••</button>
+
+                <!-- Three dots: only visible to the post owner -->
+                <button
+                        th:if="${post.user.id == currentUser.id}"
+                        class="post-more"
+                        th:attr="data-post-id=${post.id}"
+                        onclick="openDeleteModal(this)"
+                        title="Options">
+                    &#8943;
+                </button>
             </div>
 
             <img th:if="${post.mediaType == 'IMAGE'}"
@@ -73,11 +451,9 @@
                  data-liked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}"
                         style="background: none; border: none; padding: 0; cursor: pointer; margin-right: 12px;"
                         title="Like">
-
                     <i class="fa-heart like-icon"
                        th:classappend="${post.likes != null and post.likes.![user.id].contains(currentUser.id)} ? 'fa-solid' : 'fa-regular'"
                        style="font-size: 24px;"></i>
-
                 </button>
 
                 <a class="action-btn"
@@ -89,11 +465,11 @@
                 <button class="action-btn" title="Share" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit;">
                     <i class="fa-regular fa-paper-plane" style="font-size: 24px;"></i>
                 </button>
-
             </div>
+
             <div class="likes-count">
                 <span th:id="'like-count-' + ${post.id}"
-                      th:text="${post.likes.size()} + ' ' + (${post.likes.size()} == 1 ? 'like' : 'likes')"
+                      th:text="${post.likes.size()} + ' ' + (${post.likes.size()} == 1 ? 'like' : 'likes')">
                 </span>
             </div>
 
@@ -112,13 +488,13 @@
             <div class="post-time" th:text="${post.createdAt}">2 hours ago</div>
 
             <form class="post-comment-bar" th:action="@{/comments/add}" method="POST">
-                <span style="font-size:18px">☺</span>
+                <span style="font-size:18px">&#128512;</span>
                 <input type="hidden" name="postId" th:value="${post.id}"/>
                 <input type="hidden" name="userId" th:value="${currentUser.id}"/>
                 <input class="comment-input"
                        type="text"
                        name="content"
-                       placeholder="Add a comment…"
+                       placeholder="Add a comment?"
                        autocomplete="off"/>
                 <button type="submit" class="post-btn">Post</button>
             </form>
@@ -128,66 +504,99 @@
     </main>
 </div>
 
-<script>
-    document.querySelectorAll('.like-btn').forEach(btn => {
+<!-- Instagram-style Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <div class="modal-title">Delete post?</div>
+        <div class="modal-subtitle">Are you sure you want to delete this post?</div>
+        <form id="deleteForm" method="post">
+            <button type="submit" class="modal-btn delete">Delete</button>
+        </form>
+        <button class="modal-btn cancel" onclick="closeDeleteModal()">Cancel</button>
+    </div>
+</div>
 
+<script>
+    /* ── Delete Modal ── */
+    function openDeleteModal(btn) {
+        const postId = btn.dataset.postId;
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+
+        const form = document.getElementById('deleteForm');
+        form.action = '/posts/' + postId + '/delete';
+
+        // Remove old csrf input if exists
+        const old = form.querySelector('input[name="_csrf"]');
+        if (old) old.remove();
+
+        // Always use "_csrf" as the field name — Spring Security expects this
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        document.getElementById('deleteModal').classList.add('active');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('active');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('deleteModal').addEventListener('click', function (e) {
+        if (e.target === this) closeDeleteModal();
+    });
+
+    /* ── Like Button ── */
+    document.querySelectorAll('.like-btn').forEach(btn => {
         const icon = btn.querySelector('.like-icon');
 
-        // 🔥 INITIAL STATE FIX (VERY IMPORTANT)
-        if (btn.dataset.liked == 'true' || btn.dataset.liked == true) {
+        if (btn.dataset.liked === 'true') {
             icon.classList.remove('fa-regular');
             icon.classList.add('fa-solid');
             icon.style.color = '#ff3040';
         }
 
         btn.addEventListener('click', function () {
-
             const postId = this.dataset.postId;
             const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
             const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
             fetch('/posts/' + postId + '/like', {
                 method: 'POST',
-                headers: {
-                    [csrfHeader]:csrfToken
-                }
+                headers: { [csrfHeader]: csrfToken }
             })
-            .then(res => res.json())
-            .then(data => {
+                .then(res => res.json())
+                .then(data => {
                     if (data.liked) {
-                    icon.classList.remove('fa-regular');
-                    icon.classList.add('fa-solid');
-                    icon.style.color = '#ff3040';
-                } else {
-                    icon.classList.remove('fa-solid');
-                    icon.classList.add('fa-regular');
-                    icon.style.color = '';
-                }
+                        icon.classList.remove('fa-regular');
+                        icon.classList.add('fa-solid');
+                        icon.style.color = '#ff3040';
+                    } else {
+                        icon.classList.remove('fa-solid');
+                        icon.classList.add('fa-regular');
+                        icon.style.color = '';
+                    }
                     const countEl = document.getElementById('like-count-' + postId);
-                if (countEl) {
-                    const text = data.likeCount === 1 ? "like" : "likes";
-                    countEl.textContent = data.likeCount+" "+text;
-                }
-
-            })
-            .catch(() => {
-                console.error("Like failed");
-            });
-
+                    if (countEl) {
+                        countEl.textContent = data.likeCount + ' ' + (data.likeCount === 1 ? 'like' : 'likes');
+                    }
+                })
+                .catch(() => console.error("Like failed"));
         });
-
     });
+
+    /* ── Search ── */
     (function () {
         const input = document.getElementById('searchInput');
         const dropdown = document.getElementById('searchDropdown');
-
         if (!input || !dropdown) return;
 
         let debounceTimer;
 
         input.addEventListener('input', function () {
             const query = this.value.trim();
-
             clearTimeout(debounceTimer);
             dropdown.innerHTML = '';
 
@@ -196,24 +605,22 @@
                 return;
             }
 
-            // Debounce: wait 300ms after user stops typing
             debounceTimer = setTimeout(() => {
                 fetch('/users/search?query=' + encodeURIComponent(query), {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
-                .then(res => res.json())
-                .then(users => {
-                    dropdown.innerHTML = '';
-
-                    if (users.length === 0) {
-                        dropdown.innerHTML = '<div class="search-no-results">No users found</div>';
-                    } else {
-                        users.forEach(user => {
-                            const initial = user.username.charAt(0).toUpperCase();
-                            const item = document.createElement('a');
-                            item.href = `/users/${user.id}/profile`;
-                            item.className = 'search-result-item';
-                            item.innerHTML = `
+                    .then(res => res.json())
+                    .then(users => {
+                        dropdown.innerHTML = '';
+                        if (users.length === 0) {
+                            dropdown.innerHTML = '<div class="search-no-results">No users found</div>';
+                        } else {
+                            users.forEach(user => {
+                                const initial = user.username.charAt(0).toUpperCase();
+                                const item = document.createElement('a');
+                                item.href = `/users/${user.id}/profile`;
+                                item.className = 'search-result-item';
+                                item.innerHTML = `
                                 <div class="search-result-avatar">
                                     <div class="search-result-avatar-inner">${initial}</div>
                                 </div>
@@ -221,26 +628,21 @@
                                     <div class="search-result-username">${escapeHtml(user.username)}</div>
                                 </div>
                             `;
-                            dropdown.appendChild(item);
-                        });
-                    }
-
-                    dropdown.classList.add('open');
-                })
-                .catch(() => {
-                    // silently fail
-                });
+                                dropdown.appendChild(item);
+                            });
+                        }
+                        dropdown.classList.add('open');
+                    })
+                    .catch(() => {});
             }, 300);
         });
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', function (e) {
             if (!document.getElementById('searchWrap').contains(e.target)) {
                 dropdown.classList.remove('open');
             }
         });
 
-        // Close on Escape key
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 dropdown.classList.remove('open');
