@@ -22,5 +22,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "WHERE p.id = :postId")
     Optional<Post> getPostById(@Param("postId") Long postId);
     List<Post> findAllByOrderByCreatedAtDesc();
-
+    // In PostRepository.java - add this custom query
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.carouselMedia WHERE p.user.id = :userId ORDER BY p.createdAt DESC")
+    List<Post> findByUserIdWithMedia(@Param("userId") Long userId);
 }

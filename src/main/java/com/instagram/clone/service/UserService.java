@@ -1,3 +1,138 @@
+//package com.instagram.clone.service;
+//
+//import com.instagram.clone.dto.UserRegisterRequest;
+//import com.instagram.clone.dto.UserRegisterResponse;
+//import com.instagram.clone.entity.User;
+//import com.instagram.clone.repository.CommentRepository;
+//import com.instagram.clone.repository.PostRepository;
+//import com.instagram.clone.repository.UserRepository;
+//import jakarta.transaction.Transactional;
+//import lombok.RequiredArgsConstructor;
+//import org.springframework.boot.webmvc.autoconfigure.WebMvcProperties;
+//import org.springframework.security.crypto.password.PasswordEncoder;
+//import org.springframework.stereotype.Service;
+//import org.springframework.web.multipart.MultipartFile;
+//
+//import java.util.Arrays;
+//import java.util.List;
+//import java.util.Map;
+//import java.util.Optional;
+//
+//@Service
+//@RequiredArgsConstructor
+//public class UserService {
+//
+//    private final UserRepository userRepository;
+//    private final PasswordEncoder passwordEncoder;
+//    private final CommentRepository commentRepository;
+//    private final PostRepository postRepository;
+//    private final CloudinaryService cloudinaryService;
+//
+//    public User register(UserRegisterRequest request) {
+//
+//        userRepository.findByEmail(request.getEmail())
+//                .ifPresent(user -> {
+//                    throw new RuntimeException("Email already exists");
+//                });
+//
+//        userRepository.findByUsername(request.getUsername())
+//                .ifPresent(user -> {
+//                    throw new RuntimeException("Username already exists");
+//                });
+//
+//        User user = User.builder()
+//                .username(request.getUsername())
+//                .email(request.getEmail())
+//                .password(passwordEncoder.encode(request.getPassword()))
+//                .bio("")
+//                .isPrivate(false)
+//                .build();
+//
+//        return userRepository.save(user);
+//    }
+//
+//    @Transactional
+//    public void deleteUser(Long id) {
+//        User user = userRepository.findById(id).orElseThrow(()-> new RuntimeException("user not found"));
+//        userRepository.delete(user);
+//    }
+//
+//    public UserRegisterResponse updateBio(Long userId, String bio) {
+//
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        user.setBio(bio);
+//
+//        User savedUser = userRepository.save(user);
+//        return mapToResponse(savedUser);
+//    }
+//
+//    public List<UserRegisterResponse> getAllUsers() {
+//        return userRepository.findAll()
+//                .stream()
+//                .map(this::mapToResponse)
+//                .toList();
+//    }
+//
+//    private UserRegisterResponse mapToResponse(User user) {
+//        return UserRegisterResponse.builder()
+//                .id(user.getId())
+//                .username(user.getUsername())
+//                .email(user.getEmail())
+//                .bio(user.getBio())
+//                .isPrivate(user.isPrivate())
+//                .createdAt(user.getCreatedAt())
+//                .build();
+//    }
+//    public User getUserById(Long id) {
+//        return userRepository.findById(id)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//    }
+//
+//    public User getUserByUsername(String username) {
+//        return userRepository.findByUsername(username)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//    }
+//
+//    @Transactional
+//    public void uploadProfilePicture(Long userId, MultipartFile file) {
+//
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//        String contentType = file.getContentType();
+//
+//        List<String> allowedTypes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/webp");
+//
+//        if (contentType == null || !allowedTypes.contains(contentType)) {
+//            throw new RuntimeException("Only image files are allowed (JPEG, PNG, GIF, WebP)");
+//        }
+//
+//        long maxSizeBytes = 5 * 1024 * 1024;
+//
+//        if (file.getSize() > maxSizeBytes) {
+//            throw new RuntimeException("Profile picture must be smaller than 5 MB");
+//        }
+//
+//        if (file.isEmpty()) {
+//            throw new RuntimeException("Please select a valid image file");
+//        }
+//        if (user.getProfilePicPublicId() != null) {
+//            cloudinaryService.deleteFile(user.getProfilePicPublicId());
+//        }
+//        Map<String, Object> uploadResult = cloudinaryService.uploadProfilePicture(file);
+//        String newUrl = uploadResult.get("secure_url").toString();
+//        String newPublicId = uploadResult.get("public_id").toString();
+//        user.setProfilePicUrl(newUrl);
+//        user.setProfilePicPublicId(newPublicId);
+//        userRepository.save(user);
+//    }
+//
+//
+//}
+
+
+
 package com.instagram.clone.service;
 
 import com.instagram.clone.dto.UserRegisterRequest;
@@ -57,12 +192,29 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public UserRegisterResponse updateBio(Long userId, String bio) {
+    public UserRegisterResponse updateBio(Long userId, String bio, String websiteUrl) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         user.setBio(bio);
+
+        if (websiteUrl != null && !websiteUrl.isBlank()) {
+            String trimmed = websiteUrl.trim();
+            // Auto-prepend https:// if missing scheme
+            if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+                trimmed = "https://" + trimmed;
+            }
+            // Validate it is a real URL
+            try {
+                new java.net.URL(trimmed).toURI();
+            } catch (Exception e) {
+                throw new RuntimeException("Invalid URL: please enter a valid website link.");
+            }
+            user.setWebsiteUrl(trimmed);
+        } else {
+            user.setWebsiteUrl(null);
+        }
 
         User savedUser = userRepository.save(user);
         return mapToResponse(savedUser);

@@ -105,6 +105,38 @@ nav {
 
 .profile-bio .display-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
 .profile-bio .bio-text { font-size: 14px; line-height: 1.5; color: var(--text); white-space: pre-wrap; }
+.bio-link {
+    color: #e0f0ff;
+    text-decoration: none;
+    font-weight: 500;
+    word-break: break-all;
+}
+.bio-link:hover {
+    text-decoration: underline;
+    color: #ffffff;
+}
+.profile-website-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4fa3e8;
+    text-decoration: none;
+    word-break: break-all;
+}
+.profile-website-link::before {
+    content: '\f0c1';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.profile-website-link:hover {
+    text-decoration: underline;
+    color: #74b9e8;
+}
 
 /* TABS */
 .profile-tabs {
@@ -179,11 +211,11 @@ nav {
     .profile-stats { gap: 20px; }
 }
 
- .nav-icons {
-     display: flex;
-     align-items: center;
-     gap: 18px;
- }
+.nav-icons {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
 
 .nav-icons a,
 .nav-icons button {

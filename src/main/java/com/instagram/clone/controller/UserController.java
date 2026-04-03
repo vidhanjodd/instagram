@@ -78,14 +78,24 @@ public class UserController {
     @PostMapping("/{id}/bio")
     public String updateBio(@PathVariable Long id,
                             @RequestParam String bio,
-                            Authentication authentication) {
+                            @RequestParam(required = false) String websiteUrl,
+                            Authentication authentication,
+                            Model model) {
         User userToUpdate = userService.getUserById(id);
 
         if (!userToUpdate.getUsername().equals(authentication.getName())) {
             return "redirect:/users/" + id + "/profile?error=unauthorized";
         }
 
-        userService.updateBio(id, bio);
+        try {
+            userService.updateBio(id, bio, websiteUrl);
+        } catch (RuntimeException e) {
+            User user = userService.getUserById(id);
+            model.addAttribute("user", user);
+            model.addAttribute("urlError", e.getMessage());
+            return "profilepage/edit-bio";
+        }
+
         return "redirect:/users/" + id + "/profile";
     }
 

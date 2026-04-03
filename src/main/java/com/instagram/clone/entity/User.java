@@ -30,6 +30,8 @@ public class User {
 
     private String bio;
 
+    private String websiteUrl;
+
     private boolean isPrivate = false;
 
     private String profilePicUrl;

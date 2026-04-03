@@ -63,7 +63,7 @@ public class PostService {
     }
 
     public List<Post> getPostsByUserId(Long userId) {
-        return postRepository.findByUser_Id(userId);
+        return postRepository.findByUserIdWithMedia(userId);
     }
 
     public Post getPostById(Long postId) {
@@ -99,4 +99,5 @@ public class PostService {
         post.setCaption(caption);
         postRepository.save(post);
     }
+
 }

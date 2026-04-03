@@ -8,7 +8,6 @@
     <link rel="stylesheet" th:href="@{/css/profile.css}"/>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-
 </head>
 <body>
 <nav>
@@ -17,9 +16,6 @@
     <div style="font-size:15px; font-weight:600;" th:text="${user.username}">username</div>
 
     <div class="nav-icons">
-        <a href="/posts/create">
-            <i class="fa-solid fa-plus"></i>
-        </a>
         <a th:href="@{/posts}" title="Home">
             <i class="fa-solid fa-house"></i>
         </a>
@@ -66,7 +62,6 @@
                         <button th:if="${isFollowing}" type="submit" class="btn-edit">
                             Following
                         </button>
-
                         <button th:unless="${isFollowing}" type="submit" class="btn-follow">
                             Follow
                         </button>
@@ -94,9 +89,16 @@
             <div class="profile-bio">
                 <div class="display-name" th:text="${user.username}">username</div>
                 <div class="bio-text"
-                     th:text="${user.bio != null && !#strings.isEmpty(user.bio) ? user.bio : 'No bio yet.'}">
-                    Bio here
+                     id="bioText"
+                     th:attr="data-bio=${user.bio != null && !#strings.isEmpty(user.bio) ? user.bio : ''}">
                 </div>
+                <a th:if="${user.websiteUrl != null && !#strings.isEmpty(user.websiteUrl)}"
+                   th:href="${user.websiteUrl}"
+                   th:text="${user.websiteUrl.replaceAll('https?://', '')}"
+                   class="profile-website-link"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                </a>
             </div>
         </div>
     </div>
@@ -110,8 +112,9 @@
     <div class="posts-grid">
         <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">
             <div class="icon"><i class="fa-regular fa-image"></i></div>
-            <h3>No Posts Yet</h3>
-            <p>This user hasn’t shared any posts.</p>
+            <h3>Share Photos</h3>
+            <p>When you share photos, they will appear on your profile.</p>
+            <a th:href="@{/posts/create}" class="create-btn">+ Share your first photo</a>
         </div>
 
         <div class="grid-item"
@@ -119,21 +122,36 @@
              th:attr="data-post-url=@{/posts/{id}(id=${post.id})}"
              onclick="openPostModal(this)">
 
-            <div th:if="${!#lists.isEmpty(post.carouselMedia)}">
-                <img th:if="${post.carouselMedia[0].mediaType == 'IMAGE'}"
-                     th:src="${post.carouselMedia[0].mediaUrl}" th:alt="${post.caption}"/>
-                <video th:if="${post.carouselMedia[0].mediaType == 'VIDEO'}"
-                       th:src="${post.carouselMedia[0].mediaUrl}" muted></video>
-                <span th:if="${post.carouselMedia[0].mediaType == 'VIDEO'}" class="video-badge">
-                    <i class="fa-solid fa-play"></i>
-                </span>
-            </div>
+            <!-- IMAGE: first carousel item is IMAGE -->
+            <img th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'IMAGE'}"
+                 th:src="${post.carouselMedia[0].mediaUrl}"
+                 th:alt="${post.caption}"/>
+
+            <!-- VIDEO: first carousel item is VIDEO -->
+            <video th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
+                   th:src="${post.carouselMedia[0].mediaUrl}"
+                   muted></video>
+
+            <!-- Video play badge -->
+            <span th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
+                  class="video-badge">
+                <i class="fa-solid fa-play"></i>
+            </span>
+
+            <!-- Carousel badge if multiple media -->
+            <span th:if="${#lists.size(post.carouselMedia) > 1}" class="carousel-badge">
+                <i class="fa-solid fa-layer-group"></i>
+            </span>
 
             <div class="grid-overlay">
-                <span class="grid-stat"><i class="fa-solid fa-heart"></i>
-                    <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span></span>
-                <span class="grid-stat"><i class="fa-solid fa-comment"></i>
-                    <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span></span>
+                <span class="grid-stat">
+                    <i class="fa-solid fa-heart"></i>
+                    <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>
+                </span>
+                <span class="grid-stat">
+                    <i class="fa-solid fa-comment"></i>
+                    <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>
+                </span>
             </div>
         </div>
     </div>
@@ -141,62 +159,66 @@
 
 <div id="postModal" class="post-modal" onclick="closePostModal(event)">
     <div class="post-modal-content" onclick="event.stopPropagation()">
-
-        <button class="post-modal-close" type="button"
-                onclick="closePostModalDirect()" title="Close">
+        <button class="post-modal-close" type="button" onclick="closePostModalDirect()">
             <i class="fa-solid fa-xmark"></i>
         </button>
-
-        <div class="post-modal-loading" id="postModalLoading">
-            <div class="spinner"></div>
-        </div>
 
         <iframe id="postFrame"
                 class="post-frame"
                 src=""
-                onload="hideLoader()"
-                title="Post"></iframe>
+                frameborder="0">
+        </iframe>
     </div>
 </div>
 
 <script>
+    /* Bio renderer */
+    (function () {
+        const bioEl = document.getElementById('bioText');
+        if (!bioEl) return;
+        const raw = bioEl.getAttribute('data-bio') || '';
+        if (!raw.trim()) { bioEl.textContent = 'No bio yet.'; return; }
+        const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+        const parts = raw.split(urlRegex);
+        bioEl.innerHTML = '';
+        parts.forEach(function (part) {
+            if (/(https?:\/\/[^\s]+|www\.[^\s]+)/.test(part)) {
+                const a = document.createElement('a');
+                a.href = part.startsWith('http') ? part : 'https://' + part;
+                a.textContent = part;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.className = 'bio-link';
+                bioEl.appendChild(a);
+            } else {
+                bioEl.appendChild(document.createTextNode(part));
+            }
+        });
+    })();
+
     function openPostModal(element) {
         const postUrl = element.getAttribute('data-post-url');
-
-        const modal   = document.getElementById('postModal');
-        const frame   = document.getElementById('postFrame');
-        const loading = document.getElementById('postModalLoading');
-
-        loading.classList.remove('hidden'); // show spinner first
-        frame.src = postUrl;                // trigger iframe load
-        modal.classList.add('show');        // show the dark overlay
-        document.body.style.overflow = 'hidden'; // prevent background scroll
+        const modal = document.getElementById('postModal');
+        const frame = document.getElementById('postFrame');
+        frame.src = postUrl;
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
     }
-     function hideLoader() {
-        document.getElementById('postModalLoading').classList.add('hidden');
-    }
+
     function closePostModal(event) {
-        if (event.target.id === 'postModal') {
-            closePostModalDirect();
-        }
+        if (event.target.id === 'postModal') closePostModalDirect();
     }
 
     function closePostModalDirect() {
         const modal = document.getElementById('postModal');
         const frame = document.getElementById('postFrame');
-        const loading = document.getElementById('postModalLoading');
-
-
         modal.classList.remove('show');
         frame.src = '';
-        loading.classList.remove('hidden');
         document.body.style.overflow = 'auto';
     }
 
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            closePostModalDirect();
-        }
+        if (e.key === 'Escape') closePostModalDirect();
     });
 </script>
 </body>

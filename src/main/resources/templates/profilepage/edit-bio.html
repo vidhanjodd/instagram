@@ -6,6 +6,7 @@
     <title>Instagram · Edit Profile</title>
     <link rel="stylesheet" th:href="@{/css/edit-bio.css}"/>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 </head>
 <body>
 <nav>
@@ -94,6 +95,35 @@
             </div>
         </div>
 
+        <div class="form-field" id="websiteField">
+            <label>
+                <i class="fa-solid fa-link" style="font-size:11px; margin-right:4px;"></i>
+                Website
+            </label>
+            <div class="website-input-wrap">
+                <input type="text"
+                       name="websiteUrl"
+                       id="websiteInput"
+                       placeholder="Add a link"
+                       th:value="${user.websiteUrl}"
+                       autocomplete="off"
+                       oninput="validateUrl(this)"/>
+                <button type="button" class="url-clear-btn" id="urlClearBtn"
+                        onclick="clearUrl()"
+                        th:style="${user.websiteUrl != null and !#strings.isEmpty(user.websiteUrl)} ? '' : 'display:none'">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="url-error" id="urlErrorInline" style="display:none;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>Please enter a valid URL (e.g. https://example.com)</span>
+            </div>
+            <div class="url-error server-url-error"
+                 th:if="${urlError}"
+                 th:text="${urlError}">
+            </div>
+        </div>
+
         <div class="private-toggle">
             <div>
                 <div class="toggle-label">Private account</div>
@@ -125,6 +155,51 @@
     function updateBioCount(el) {
         document.getElementById('bioCount').textContent = el.value.length + ' / 150';
     }
+
+    /* ── URL validation ── */
+    function validateUrl(input) {
+        const val = input.value.trim();
+        const errorEl = document.getElementById('urlErrorInline');
+        const clearBtn = document.getElementById('urlClearBtn');
+
+        clearBtn.style.display = val.length > 0 ? 'flex' : 'none';
+
+        if (val.length === 0) {
+            errorEl.style.display = 'none';
+            input.classList.remove('input-error');
+            return;
+        }
+
+        const testVal = val.startsWith('http://') || val.startsWith('https://')
+            ? val : 'https://' + val;
+
+        try {
+            const url = new URL(testVal);
+            const valid = url.hostname.includes('.');
+            errorEl.style.display = valid ? 'none' : 'flex';
+            input.classList.toggle('input-error', !valid);
+        } catch {
+            errorEl.style.display = 'flex';
+            input.classList.add('input-error');
+        }
+    }
+
+    function clearUrl() {
+        const input = document.getElementById('websiteInput');
+        input.value = '';
+        input.classList.remove('input-error');
+        document.getElementById('urlErrorInline').style.display = 'none';
+        document.getElementById('urlClearBtn').style.display = 'none';
+        input.focus();
+    }
+
+    // Init clear button visibility on load
+    (function() {
+        const input = document.getElementById('websiteInput');
+        if (input && input.value.trim().length > 0) {
+            document.getElementById('urlClearBtn').style.display = 'flex';
+        }
+    })();
 
     document.getElementById('picInput').addEventListener('change', function () {
         const file = this.files[0];
