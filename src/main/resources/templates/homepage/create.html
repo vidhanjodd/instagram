@@ -18,7 +18,6 @@
     <div th:if="${error}" class="alert" style="color: red; padding: 10px; text-align: center;" th:text="${error}"></div>
 
     <form th:action="@{/posts/create}" method="post" enctype="multipart/form-data" id="postForm">
-        <input type="hidden" name="userId" th:value="${currentUserId}"/>
 
         <div class="modal">
             <div class="modal-header">
@@ -34,12 +33,18 @@
                 <button type="button" class="upload-btn" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">
                     Select from computer
                 </button>
-                <input type="file" id="fileInput" name="files" accept="image/*,video/*" multiple required
+                <input type="file" id="fileInput" name="files" accept="image/*,video/*" multiple
                        onchange="handleFiles(this)" style="display: none;"/>
             </div>
 
             <div id="previewCarousel" class="preview-carousel" style="display: none;"></div>
-
+            <div id="addMoreContainer" style="display:none; text-align:center; margin-top:10px;">
+                <button type="button"
+                        onclick="document.getElementById('fileInput').click()"
+                        class="upload-btn">
+                    + Add more
+                </button>
+            </div>
             <div class="details-section">
                 <div class="user-row">
                     <div class="user-avatar">
@@ -59,36 +64,63 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('.share-btn').disabled = true;
+    });
+    let selectedFiles = [];
+
     function handleFiles(input) {
-        const files = input.files;
+        const newFiles = Array.from(input.files);
         const maxFiles = 10;
 
-        if (files.length === 0) return;
-
-        if (files.length > maxFiles) {
-            alert('You can only upload a maximum of 10 media files.');
-            input.value = '';
+        if (selectedFiles.length + newFiles.length > maxFiles) {
+            alert('Max 10 files allowed');
             return;
         }
 
+        selectedFiles = [...selectedFiles, ...newFiles];
+        renderPreview();
+        input.value = '';
+    }
+
+    function renderPreview() {
         const area = document.getElementById('uploadArea');
         const carousel = document.getElementById('previewCarousel');
+        const addMore = document.getElementById('addMoreContainer');
+        if (selectedFiles.length === 0) {
+            area.style.display = 'flex';
+            carousel.style.display = 'none';
+            addMore.style.display = 'none';
+            document.querySelector('.share-btn').disabled = true;
+
+            return;
+        }
 
         area.style.display = 'none';
         carousel.style.display = 'flex';
+        addMore.style.display = 'block';
+        const shareBtn = document.querySelector('.share-btn');
+        shareBtn.disabled = selectedFiles.length === 0;
+        carousel.querySelectorAll('.slide-container').forEach(el => {
+        const media = el.querySelector('img, video');
+        if (media && media.src) {
+            URL.revokeObjectURL(media.src);
+        }
+         });
         carousel.innerHTML = '';
 
-        Array.from(files).forEach((file, index) => {
+        selectedFiles.forEach((file, index) => {
             const url = URL.createObjectURL(file);
 
             const wrapper = document.createElement('div');
             wrapper.className = 'slide-container';
 
+
             if (file.type.startsWith('image/')) {
                 const img = document.createElement('img');
                 img.src = url;
                 wrapper.appendChild(img);
-            } else if (file.type.startsWith('video/')) {
+            } else {
                 const vid = document.createElement('video');
                 vid.src = url;
                 vid.controls = true;
@@ -97,16 +129,53 @@
 
             const badge = document.createElement('span');
             badge.className = 'slide-badge';
-            badge.innerText = `${index + 1}/${files.length}`;
+            badge.innerText = `${index + 1}/${selectedFiles.length}`;
             wrapper.appendChild(badge);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.innerText = '✕';
+            removeBtn.className = 'remove-btn';
+            removeBtn.onclick = () => removeFile(index);
+            wrapper.appendChild(removeBtn);
 
             carousel.appendChild(wrapper);
         });
+
+        updateInputFiles();
+    }
+
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        renderPreview();
+    }
+
+    function updateInputFiles() {
+        const dataTransfer = new DataTransfer();
+
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+
+        document.getElementById('fileInput').files = dataTransfer.files;
     }
 
     function updateCount(el) {
         document.getElementById('charCount').textContent = el.value.length + ' / 2200';
     }
+
+    document.getElementById('postForm').addEventListener('submit', function (e) {
+        if (selectedFiles.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one file');
+        }
+    });
+
+    document.getElementById('postForm').addEventListener('formdata', function (e) {
+        const formData = e.formData;
+        formData.delete('files');
+
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
+    });
 </script>
 </body>
 </html>

@@ -27,10 +27,7 @@ public class PostService {
     private UserRepository userRepository;
 
     @Transactional
-    public Post createPost(List<MultipartFile> files, String caption, Long userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User does not exist"));
+    public Post createPost(List<MultipartFile> files, String caption, User user) {
 
         Post post = Post.builder()
                 .caption(caption)

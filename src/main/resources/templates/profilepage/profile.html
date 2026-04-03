@@ -17,6 +17,9 @@
     <div style="font-size:15px; font-weight:600;" th:text="${user.username}">username</div>
 
     <div class="nav-icons">
+        <a href="/posts/create">
+            <i class="fa-solid fa-plus"></i>
+        </a>
         <a th:href="@{/posts}" title="Home">
             <i class="fa-solid fa-house"></i>
         </a>
@@ -107,9 +110,8 @@
     <div class="posts-grid">
         <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">
             <div class="icon"><i class="fa-regular fa-image"></i></div>
-            <h3>Share Photos</h3>
-            <p>When you share photos, they will appear on your profile.</p>
-            <a th:href="@{/posts/create}" class="create-btn">+ Share your first photo</a>
+            <h3>No Posts Yet</h3>
+            <p>This user hasn’t shared any posts.</p>
         </div>
 
         <div class="grid-item"
@@ -117,17 +119,21 @@
              th:attr="data-post-url=@{/posts/{id}(id=${post.id})}"
              onclick="openPostModal(this)">
 
-            <img th:if="${post.mediaType == 'IMAGE'}"
-                 th:src="${post.mediaUrl}"
-                 th:alt="${post.caption}"/>
+            <div th:if="${!#lists.isEmpty(post.mediaList)}">
 
-            <video th:if="${post.mediaType == 'VIDEO'}"
-                   th:src="${post.mediaUrl}"
-                   muted></video>
+                <img th:if="${post.mediaList[0].mediaType == 'IMAGE'}"
+                     th:src="${post.mediaList[0].mediaUrl}"
+                     th:alt="${post.caption}"/>
 
-            <span th:if="${post.mediaType == 'VIDEO'}" class="video-badge">
-                <i class="fa-solid fa-play"></i>
-            </span>
+                <video th:if="${post.mediaList[0].mediaType == 'VIDEO'}"
+                       th:src="${post.mediaList[0].mediaUrl}"
+                       muted></video>
+
+                <span th:if="${post.mediaList[0].mediaType == 'VIDEO'}" class="video-badge">
+                    <i class="fa-solid fa-play"></i>
+                </span>
+
+            </div>
 
             <div class="grid-overlay">
                 <span class="grid-stat"><i class="fa-solid fa-heart"></i>
