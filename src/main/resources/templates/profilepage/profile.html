@@ -119,20 +119,14 @@
              th:attr="data-post-url=@{/posts/{id}(id=${post.id})}"
              onclick="openPostModal(this)">
 
-            <div th:if="${!#lists.isEmpty(post.mediaList)}">
-
-                <img th:if="${post.mediaList[0].mediaType == 'IMAGE'}"
-                     th:src="${post.mediaList[0].mediaUrl}"
-                     th:alt="${post.caption}"/>
-
-                <video th:if="${post.mediaList[0].mediaType == 'VIDEO'}"
-                       th:src="${post.mediaList[0].mediaUrl}"
-                       muted></video>
-
-                <span th:if="${post.mediaList[0].mediaType == 'VIDEO'}" class="video-badge">
+            <div th:if="${!#lists.isEmpty(post.carouselMedia)}">
+                <img th:if="${post.carouselMedia[0].mediaType == 'IMAGE'}"
+                     th:src="${post.carouselMedia[0].mediaUrl}" th:alt="${post.caption}"/>
+                <video th:if="${post.carouselMedia[0].mediaType == 'VIDEO'}"
+                       th:src="${post.carouselMedia[0].mediaUrl}" muted></video>
+                <span th:if="${post.carouselMedia[0].mediaType == 'VIDEO'}" class="video-badge">
                     <i class="fa-solid fa-play"></i>
                 </span>
-
             </div>
 
             <div class="grid-overlay">
@@ -147,29 +141,40 @@
 
 <div id="postModal" class="post-modal" onclick="closePostModal(event)">
     <div class="post-modal-content" onclick="event.stopPropagation()">
-        <button class="post-modal-close" type="button" onclick="closePostModalDirect()">
+
+        <button class="post-modal-close" type="button"
+                onclick="closePostModalDirect()" title="Close">
             <i class="fa-solid fa-xmark"></i>
         </button>
+
+        <div class="post-modal-loading" id="postModalLoading">
+            <div class="spinner"></div>
+        </div>
 
         <iframe id="postFrame"
                 class="post-frame"
                 src=""
-                frameborder="0">
-        </iframe>
+                onload="hideLoader()"
+                title="Post"></iframe>
     </div>
 </div>
 
 <script>
     function openPostModal(element) {
         const postUrl = element.getAttribute('data-post-url');
-        const modal = document.getElementById('postModal');
-        const frame = document.getElementById('postFrame');
 
-        frame.src = postUrl;
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
+        const modal   = document.getElementById('postModal');
+        const frame   = document.getElementById('postFrame');
+        const loading = document.getElementById('postModalLoading');
+
+        loading.classList.remove('hidden'); // show spinner first
+        frame.src = postUrl;                // trigger iframe load
+        modal.classList.add('show');        // show the dark overlay
+        document.body.style.overflow = 'hidden'; // prevent background scroll
     }
-
+     function hideLoader() {
+        document.getElementById('postModalLoading').classList.add('hidden');
+    }
     function closePostModal(event) {
         if (event.target.id === 'postModal') {
             closePostModalDirect();
@@ -179,9 +184,12 @@
     function closePostModalDirect() {
         const modal = document.getElementById('postModal');
         const frame = document.getElementById('postFrame');
+        const loading = document.getElementById('postModalLoading');
+
 
         modal.classList.remove('show');
         frame.src = '';
+        loading.classList.remove('hidden');
         document.body.style.overflow = 'auto';
     }
 

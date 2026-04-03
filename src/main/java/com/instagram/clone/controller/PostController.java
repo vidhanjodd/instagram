@@ -94,4 +94,14 @@ public class PostController {
         }
         return "redirect:/posts";
     }
+
+    @GetMapping("/posts/{id}")
+    public String getPostDetails(@PathVariable Long id, Model model) {
+        Post post = postService.getPostById(id);
+
+        model.addAttribute("post", post);
+        model.addAttribute("comments", post.getComments());
+
+        return "post-details";
+    }
 }
