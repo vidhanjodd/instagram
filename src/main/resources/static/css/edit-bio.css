@@ -114,3 +114,4 @@ nav {
     transition: transform 0.2s;
 }
 .toggle-switch.on::after { transform: translateX(20px); }
+
