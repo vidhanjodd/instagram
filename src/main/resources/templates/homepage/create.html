@@ -22,7 +22,7 @@
 
         <div class="modal">
             <div class="modal-header">
-                <span style="color:var(--muted); font-size:14px;">Crop</span>
+                <span style="color:var(--muted); font-size:14px;"></span>
                 <span class="modal-title">New post</span>
                 <button type="submit" class="share-btn">Share</button>
             </div>
@@ -45,13 +45,12 @@
                     <div class="user-avatar">
                         <div class="user-avatar-inner">👤</div>
                     </div>
-                    <div class="user-name" :authentication="name">username</div>
+                    <div class="user-name" th:text="${#authentication.name}">username</div>
                 </div>
                 <textarea class="caption-input" name="caption"
                           placeholder="Write a caption…" maxlength="2200"
                           oninput="updateCount(this)"></textarea>
                 <div class="caption-footer">
-                    <button type="button" class="emoji-btn">😊</button>
                     <span class="char-count" id="charCount">0 / 2200</span>
                 </div>
             </div>
