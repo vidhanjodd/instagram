@@ -24,14 +24,26 @@
     <div class="post-card" onclick="event.stopPropagation()">
 
         <div class="post-left">
-            <img th:if="${post.mediaType == 'IMAGE'}"
-                 class="post-media"
-                 th:src="${post.mediaUrl}"
-                 th:alt="${post.caption}"/>
-            <video th:if="${post.mediaType == 'VIDEO'}"
-                   class="post-media"
-                   th:src="${post.mediaUrl}"
-                   controls></video>
+            <th:block th:if="${post.carouselMedia != null and !#lists.isEmpty(post.carouselMedia)}">
+
+                <div th:with="firstMedia=${post.carouselMedia[0]}">
+
+                    <img th:if="${firstMedia.mediaType == 'IMAGE'}"
+                         class="post-media"
+                         th:src="${firstMedia.mediaUrl}"
+                         th:alt="${post.caption}"/>
+
+                    <video th:if="${firstMedia.mediaType == 'VIDEO'}"
+                           class="post-media"
+                           th:src="${firstMedia.mediaUrl}"
+                           controls></video>
+                </div>
+
+            </th:block>
+
+            <div th:unless="${post.carouselMedia != null and !#lists.isEmpty(post.carouselMedia)}" class="no-media">
+                <p>No media available</p>
+            </div>
         </div>
 
         <div class="post-right">

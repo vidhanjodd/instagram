@@ -102,6 +102,6 @@ public class PostController {
         model.addAttribute("post", post);
         model.addAttribute("comments", post.getComments());
 
-        return "post-details";
+        return "homepage/post-details";
     }
 }
