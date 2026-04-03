@@ -85,4 +85,12 @@ public class PostService {
             System.err.println("Cloudinary delete failed: " + e.getMessage());
         }
     }
+
+    @Transactional
+    public void updateCaption(Long postId, String caption) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        post.setCaption(caption);
+        postRepository.save(post);
+    }
 }

@@ -7,13 +7,16 @@ import com.instagram.clone.repository.UserRepository;
 import com.instagram.clone.service.CommentService;
 import com.instagram.clone.service.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/posts")
@@ -90,6 +93,18 @@ public class PostController {
         model.addAttribute("comments", comments);
 
         return "homepage/post-details";
+    }
+    @PostMapping("/{postId}/edit")
+    @ResponseBody
+    public ResponseEntity<?> editPostCaption(@PathVariable Long postId,
+                                             @RequestBody Map<String, String> body,
+                                             Authentication authentication) {
+        Post post = postService.getPostById(postId);
+        if (!post.getUser().getUsername().equals(authentication.getName())) {
+            return ResponseEntity.status(403).build();
+        }
+        postService.updateCaption(postId, body.get("caption"));
+        return ResponseEntity.ok().build();
     }
 
 }

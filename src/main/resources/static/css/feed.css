@@ -321,3 +321,187 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
        transform: scale(1.1);
 
 }
+
+.post-options-wrap {
+    position: relative;
+    margin-left: auto;
+}
+
+.grid-options-wrap {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+}
+
+.post-more,
+.grid-dots-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+/* Feed: dark bg, light text */
+.post-more {
+    color: #8e8e8e;
+}
+.post-more:hover {
+    color: #f5f5f5;
+    background: rgba(255,255,255,0.08);
+    transform: none; /* override old rule */
+}
+
+/* Profile grid: sits on top of image, always white */
+.grid-dots-btn {
+    color: #fff;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(4px);
+    font-size: 18px;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+.grid-dots-btn:hover {
+    background: rgba(0,0,0,0.65);
+}
+
+/* ── Dropdown panel (shared) ────────────────────────────────────── */
+.feed-dropdown,
+.grid-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #ffffff;
+    border: 1px solid #dbdbdb;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    z-index: 200;
+    min-width: 160px;
+    overflow: hidden;
+    animation: dropIn 0.15s ease;
+}
+
+.feed-dropdown.open,
+.grid-dropdown.open {
+    display: block;
+}
+
+@keyframes dropIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Dropdown items (shared) ────────────────────────────────────── */
+.feed-dropdown-item,
+.grid-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    color: #262626;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.12s;
+}
+
+.feed-dropdown-item:hover,
+.grid-dropdown-item:hover {
+    background: #fafafa;
+}
+
+.feed-dropdown-item + .feed-dropdown-item,
+.grid-dropdown-item + .grid-dropdown-item {
+    border-top: 1px solid #efefef;
+}
+
+/* Delete item: red */
+.feed-delete-btn,
+.grid-delete-btn {
+    color: #ed4956;
+    font-weight: 600;
+}
+.feed-delete-btn i,
+.grid-delete-btn i {
+    color: #ed4956;
+}
+
+/* ── Shared modal overlay ───────────────────────────────────────── */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.60);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+.modal-overlay.active {
+    display: flex;
+    animation: fadeIn 0.18s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Modal box ──────────────────────────────────────────────────── */
+.modal-box {
+    background: #fff;
+    border-radius: 16px;
+    width: 400px;
+    max-width: 92vw;
+    overflow: hidden;
+    animation: modalPop 0.18s ease;
+}
+@keyframes modalPop {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+
+.modal-title {
+    text-align: center;
+    padding: 20px 16px 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #262626;
+    border-bottom: 1px solid #efefef;
+}
+.modal-subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #8e8e8e;
+    padding: 10px 16px 14px;
+    border-bottom: 1px solid #efefef;
+}
+
+/* ── Modal buttons ──────────────────────────────────────────────── */
+.modal-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 1px solid #efefef;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s;
+}
+.modal-btn:last-child { border-bottom: none; }
+.modal-btn:hover { background: #fafafa; }
+
+.modal-delete { color: #ed4956; font-weight: 700; }
+.modal-save   { color: #0095f6; font-weight: 700; }
+.modal-cancel { color: #262626; }

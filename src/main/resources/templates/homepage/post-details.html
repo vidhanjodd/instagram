@@ -13,16 +13,10 @@
 </head>
 <body>
 
-<nav class="navbar">
-    <a class="nav-back" th:href="@{/posts}">← Back</a>
-    <a class="nav-logo" th:href="@{/posts}">Instagram</a>
-    <span></span>
-</nav>
+<div class="page-overlay">
+    <div class="post-card">
 
-<div class="page-overlay" onclick="goBack(event)">
-
-    <div class="post-card" onclick="event.stopPropagation()">
-
+        <!-- ── LEFT: Media ──────────────────────────────────── -->
         <div class="post-left">
             <img th:if="${post.mediaType == 'IMAGE'}"
                  class="post-media"
@@ -34,35 +28,52 @@
                    controls></video>
         </div>
 
+        <!-- ── RIGHT: Header + Scroll + Footer ─────────────── -->
         <div class="post-right">
 
+            <!-- HEADER -->
             <div class="panel-header">
-                <div class="panel-header-left">
-                    <div class="post-avatar"
-                         th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">A</div>
-                    <span class="post-username" th:text="${post.user.username}">username</span>
-                </div>
-            </div>
-
-            <div class="comments-scroll" id="commentsScroll">
 
                 <div class="caption-row" th:if="${post.caption != null and !#strings.isEmpty(post.caption)}">
                     <div class="small-avatar"
                          th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">A</div>
-                    <div class="caption-text">
-                        <strong th:text="${post.user.username}">username</strong>
-                        <span th:text="${post.caption}">Caption here</span>
+                    <div class="comment-body">
+                        <div class="comment-text">
+                            <strong th:text="${post.user.username}">username</strong>
+                            <span class="caption-text-span" th:text="${post.caption}">Caption here</span>
+                        </div>
+                        <div class="comment-meta">
+                            <span class="comment-time"
+                                  th:text="${#temporals.format(post.createdAt, 'MMM d')}">Jan 1</span>
+                        </div>
                     </div>
                 </div>
+                <!-- 3-dot: owner only -->
+                <div class="post-options-wrapper" th:if="${post.user.id == currentUser.id}">
+                    <button class="dots-btn" id="dotsBtn">&#8942;</button>
+                    <div class="options-dropdown" id="optionsDropdown">
+                        <button class="option-item option-edit" id="editPostBtn">
+                            <i class="fa-regular fa-pen-to-square"></i> Edit Caption
+                        </button>
+                        <button class="option-item option-delete" id="deletePostBtn">
+                            <i class="fa-regular fa-trash-can"></i> Delete Post
+                        </button>
+                    </div>
+                </div>
+            </div>
 
+            <!-- SCROLLABLE COMMENTS AREA -->
+            <div class="comments-scroll" id="commentsScroll">
+
+
+                <!-- No comments -->
                 <div th:if="${#lists.isEmpty(comments)}" class="no-comments">
-                    <strong>No comments yet.</strong>
-                    Start the conversation.
+                    <p class="no-comments-title">No comments yet.</p>
+                    <p class="no-comments-sub">Start the conversation.</p>
                 </div>
 
-                <div id="commentsList"
-                     th:attr="data-current-user-id=${currentUser.id}">
-
+                <!-- Comments -->
+                <div id="commentsList" th:attr="data-current-user-id=${currentUser.id}">
                     <div class="comment-item"
                          th:each="comment : ${comments}"
                          th:id="'comment-' + ${comment.id}"
@@ -76,90 +87,77 @@
                                 <strong th:text="${comment.username}">user</strong>
                                 <span th:text="${comment.content}">comment text</span>
                             </div>
-
                             <div class="comment-meta">
                                 <span class="comment-time"
                                       th:text="${#temporals.format(comment.createdAt, 'MMM d')}">Jan 1</span>
-
                                 <button class="reply-btn"
                                         th:attr="data-comment-id=${comment.id}, data-username=${comment.username}">
                                     Reply
                                 </button>
-
                                 <button class="delete-btn"
                                         th:attr="data-comment-id=${comment.id}">
                                     Delete
                                 </button>
                             </div>
-
                             <button class="view-replies-btn"
                                     th:if="${comment.replyCount > 0}"
                                     th:attr="data-comment-id=${comment.id}, data-reply-count=${comment.replyCount}">
                                 View <span th:text="${comment.replyCount}">0</span> replies
                             </button>
-
                             <div class="replies-list"
                                  th:id="'replies-' + ${comment.id}"
                                  style="display:none;"></div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
-            <div class="panel-footer" style="padding: 0; padding-bottom: 12px;">
+            <!-- FOOTER -->
+            <div class="panel-footer">
 
+                <!-- Action icons -->
                 <div class="post-actions">
-
-                    <form id="likeForm" th:action="@{/posts/{postId}/like(postId=${post.id})}" method="post" style="display: inline;">
-                        <button type="submit" class="action-btn" title="Like" style="padding: 0;">
+                    <form id="likeForm" th:action="@{/posts/{postId}/like(postId=${post.id})}" method="post">
+                        <button type="submit" class="action-btn" title="Like">
                             <span th:with="isLiked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}">
                                 <i id="likeIcon"
                                    th:class="${isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"
-                                   th:style="${isLiked ? 'color: #ff3040;' : ''}"></i>
+                                   th:style="${isLiked ? 'color:#ff3040;' : ''}"></i>
                             </span>
                         </button>
                     </form>
-
-                    <button class="action-btn" title="Comment" style="padding: 0;">
+                    <button class="action-btn" title="Comment"
+                            onclick="document.getElementById('commentInput').focus()">
                         <i class="fa-regular fa-comment"></i>
                     </button>
-
-                    <button class="action-btn" title="Share" style="padding: 0;">
+                    <button class="action-btn" title="Share">
                         <i class="fa-regular fa-paper-plane"></i>
                     </button>
                 </div>
 
-                <div id="likeCountDisplay" style="font-weight: 600; font-size: 14px; margin-bottom: 4px; padding: 0 16px;"
-                     th:text="${post.likes != null and #lists.size(post.likes) > 0 ? #lists.size(post.likes) + ' likes' : ''}">
-                </div>
+                <!-- Like count -->
+                <div class="like-count" id="likeCountDisplay"
+                     th:text="${post.likes != null and #lists.size(post.likes) > 0
+                               ? #lists.size(post.likes) + ' likes' : ''}"></div>
 
-                <div class="post-time" th:text="${#temporals.format(post.createdAt, 'MMMM d, yyyy')}" style="padding: 0 16px 6px;">
-                    January 1, 2024
-                </div>
+                <!-- Date -->
+                <div class="post-time"
+                     th:text="${#temporals.format(post.createdAt, 'MMMM d, yyyy')}">January 1, 2024</div>
 
-                <div id="reply-info" class="hidden" style="padding: 6px 16px;">
+                <!-- Reply indicator (hidden by default) -->
+                <div id="reply-info">
                     <span>Replying to <span id="reply-username-label">@user</span></span>
-                    <button id="cancel-reply-btn" title="Cancel reply" style="background: none; border: none; color: #8e8e8e; cursor: pointer;">✕</button>
+                    <button id="cancel-reply-btn">✕</button>
                 </div>
 
-                <form class="comment-form"
-                      th:action="@{/comments/add}"
-                      method="POST"
-                      id="commentForm">
-
+                <!-- Comment input -->
+                <form class="comment-form" th:action="@{/comments/add}" method="POST" id="commentForm">
                     <input type="hidden" name="postId" th:value="${post.id}"/>
                     <input type="hidden" name="userId" th:value="${currentUser.id}"/>
                     <input type="hidden" name="parentId" id="parentIdField" value=""/>
-                    <input type="hidden" name="replyingToUsername" id="replyingToUsername" />
-
-                    <input class="comment-input"
-                           id="commentInput"
-                           type="text"
-                           name="content"
-                           placeholder="Add a comment…"
-                           autocomplete="off"/>
-
+                    <input type="hidden" name="replyingToUsername" id="replyingToUsername"/>
+                    <input class="comment-input" id="commentInput" type="text"
+                           name="content" placeholder="Add a comment…" autocomplete="off"/>
                     <button type="submit" class="submit-btn" id="submitBtn" disabled>Post</button>
                 </form>
             </div>
@@ -168,103 +166,176 @@
     </div>
 </div>
 
+<!-- Edit Caption Modal -->
+<div id="editModal" class="modal-backdrop">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Edit Caption</h3>
+            <button class="modal-close-btn" id="modalCloseBtn">&#x2715;</button>
+        </div>
+        <textarea id="editCaptionInput" rows="4" placeholder="Write a caption…"></textarea>
+        <div class="modal-actions">
+            <button id="cancelEditBtn" class="modal-btn modal-cancel">Cancel</button>
+            <button id="saveEditBtn" class="modal-btn modal-save">Save</button>
+        </div>
+    </div>
+</div>
+
 <script th:inline="javascript">
     const currentUserId = [[${currentUser.id}]];
+    const postId        = [[${post.id}]];
+    let   postCaption   = [[${post.caption}]] || '';
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    }
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+    function formatDate(iso) {
+        if (!iso) return '';
+        try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+        catch(e) { return ''; }
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         initComments();
 
-        const input = document.getElementById('commentInput');
-        input.addEventListener('input', function () {
+        document.getElementById('commentInput').addEventListener('input', function () {
             document.getElementById('submitBtn').disabled = !this.value.trim();
         });
 
+        // Like AJAX
         const likeForm = document.getElementById('likeForm');
         if (likeForm) {
-            likeForm.addEventListener('submit', function(e) {
+            likeForm.addEventListener('submit', function (e) {
                 e.preventDefault();
-
                 fetch(this.action, {
                     method: 'POST',
-                    headers: {
-                        'X-XSRF-TOKEN': getCsrfToken(),
-                        'Accept': 'application/json'
-                    }
+                    headers: { 'X-XSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' }
                 })
-                .then(function(response) { return response.json(); })
-                .then(function(data) {
-                    const icon = document.getElementById('likeIcon');
-                    if (data.liked) {
-                        icon.className = 'fa-solid fa-heart';
-                        icon.style.color = '#ff3040';
-                    } else {
-                        icon.className = 'fa-regular fa-heart';
-                        icon.style.color = '';
-                    }
+                    .then(r => r.json())
+                    .then(data => {
+                        const icon = document.getElementById('likeIcon');
+                        icon.className   = data.liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+                        icon.style.color = data.liked ? '#ff3040' : '';
+                        const el = document.getElementById('likeCountDisplay');
+                        el.textContent = data.likeCount > 0
+                            ? data.likeCount + (data.likeCount === 1 ? ' like' : ' likes') : '';
+                    })
+                    .catch(console.error);
+            });
+        }
 
-                    const countDisplay = document.getElementById('likeCountDisplay');
-                    if (data.likeCount > 0) {
-                        countDisplay.textContent = data.likeCount + (data.likeCount === 1 ? ' like' : ' likes');
-                    } else {
-                        countDisplay.textContent = '';
-                    }
+        document.getElementById('cancel-reply-btn').addEventListener('click', cancelReply);
+
+        // 3-dot menu
+        const dotsBtn  = document.getElementById('dotsBtn');
+        const dropdown = document.getElementById('optionsDropdown');
+        if (dotsBtn) {
+            dotsBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
+            });
+            document.addEventListener('click', () => dropdown.classList.remove('open'));
+        }
+
+        // Delete post
+        const deletePostBtn = document.getElementById('deletePostBtn');
+        if (deletePostBtn) {
+            deletePostBtn.addEventListener('click', function () {
+                dropdown.classList.remove('open');
+                if (!confirm('Delete this post? This cannot be undone.')) return;
+                fetch('/posts/' + postId + '/delete', {
+                    method: 'POST', headers: { 'X-XSRF-TOKEN': getCsrfToken() }
                 })
-                .catch(function(error) {
-                    console.error(error);
-                });
+                    .then(res => { if (res.ok) window.location.href = '/posts'; else alert('Could not delete post.'); })
+                    .catch(() => alert('Network error.'));
+            });
+        }
+
+        // Edit caption
+        const editPostBtn   = document.getElementById('editPostBtn');
+        const editModal     = document.getElementById('editModal');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+        const saveEditBtn   = document.getElementById('saveEditBtn');
+        const editInput     = document.getElementById('editCaptionInput');
+
+        function openEditModal() {
+            dropdown.classList.remove('open');
+            editInput.value = postCaption;
+            editModal.classList.add('open');
+            editInput.focus();
+        }
+        function closeEditModal() { editModal.classList.remove('open'); }
+
+        if (editPostBtn)   editPostBtn.addEventListener('click', openEditModal);
+        if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditModal);
+        if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeEditModal);
+        editModal.addEventListener('click', e => { if (e.target === editModal) closeEditModal(); });
+
+        if (saveEditBtn) {
+            saveEditBtn.addEventListener('click', function () {
+                const newCaption = editInput.value.trim();
+                this.textContent = 'Saving…';
+                this.disabled    = true;
+                fetch('/posts/' + postId + '/edit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCsrfToken() },
+                    body: JSON.stringify({ caption: newCaption })
+                })
+                    .then(res => {
+                        if (res.ok) {
+                            postCaption = newCaption;
+                            const s = document.querySelector('.caption-text-span');
+                            if (s) s.textContent = newCaption;
+                            closeEditModal();
+                        } else { alert('Could not update caption.'); }
+                    })
+                    .catch(() => alert('Network error.'))
+                    .finally(() => { saveEditBtn.textContent = 'Save'; saveEditBtn.disabled = false; });
             });
         }
     });
 
+    // Comments
     function initComments() {
         const list = document.getElementById('commentsList');
         if (!list) return;
-
         list.querySelectorAll('.comment-item').forEach(wireCommentItem);
     }
 
     function wireCommentItem(item) {
         const commentId = item.dataset.commentId;
-        const userId = parseInt(item.dataset.userId);
+        const userId    = parseInt(item.dataset.userId);
 
         const deleteBtn = item.querySelector('.delete-btn');
         if (deleteBtn && userId === currentUserId) {
             deleteBtn.classList.add('visible');
-            deleteBtn.addEventListener('click', function () {
-                handleDelete(commentId, item);
-            });
+            deleteBtn.addEventListener('click', () => handleDelete(commentId, item));
         }
-
-        const replyBtn = item.querySelector('.reply-btn');
-        if (replyBtn) {
-            replyBtn.addEventListener('click', function () {
-                prepareReply(this.dataset.commentId, this.dataset.username);
-            });
-        }
-
-        const viewRepliesBtn = item.querySelector('.view-replies-btn');
-        if (viewRepliesBtn) {
-            viewRepliesBtn.addEventListener('click', function () {
-                toggleReplies(this, commentId);
-            });
-        }
+        item.querySelector('.reply-btn')?.addEventListener('click', function () {
+            prepareReply(this.dataset.commentId, this.dataset.username);
+        });
+        item.querySelector('.view-replies-btn')?.addEventListener('click', function () {
+            toggleReplies(this, commentId);
+        });
     }
 
-   function prepareReply(commentId, username) {
-        let parentCommentId = commentId;
-        const commentElement = document.querySelector('[data-comment-id="' + commentId + '"]');
-        const parentContainer = commentElement.closest('.comment-item');
-
-        if (parentContainer && parentContainer.closest('.replies-list')) {
-            const mainComment = parentContainer.closest('.replies-list').id.split('-')[1];
-            parentCommentId = mainComment;
+    function prepareReply(commentId, username) {
+        let parentId = commentId;
+        const el = document.querySelector('[data-comment-id="' + commentId + '"]');
+        const pc = el.closest('.comment-item');
+        if (pc?.closest('.replies-list')) {
+            parentId = pc.closest('.replies-list').id.split('-')[1];
         }
-
-        document.getElementById('parentIdField').value = parentCommentId;
+        document.getElementById('parentIdField').value      = parentId;
         document.getElementById('replyingToUsername').value = username;
         document.getElementById('reply-username-label').textContent = '@' + username;
         document.getElementById('reply-info').classList.add('active');
-
         const input = document.getElementById('commentInput');
         input.placeholder = 'Reply to @' + username + '…';
         input.focus();
@@ -272,64 +343,47 @@
 
     function cancelReply() {
         document.getElementById('parentIdField').value = '';
-        document.getElementById('reply-info').classList.add('hidden');
-
+        document.getElementById('reply-info').classList.remove('active');
         const input = document.getElementById('commentInput');
         input.placeholder = 'Add a comment…';
         input.value = '';
         document.getElementById('submitBtn').disabled = true;
     }
 
-    document.getElementById('cancel-reply-btn').addEventListener('click', cancelReply);
-
     function toggleReplies(btn, parentId) {
         const container = document.getElementById('replies-' + parentId);
         if (!container) return;
-
         if (container.dataset.loaded === 'true') {
-            if (container.style.display === 'none') {
-                container.style.display = 'block';
-                btn.innerHTML = 'Hide replies';
-            } else {
-                container.style.display = 'none';
-                const count = btn.dataset.replyCount;
-                btn.innerHTML = 'View ' + count + ' replies';
-            }
+            const hidden = container.style.display === 'none';
+            container.style.display = hidden ? 'block' : 'none';
+            btn.innerHTML = hidden ? 'Hide replies' : 'View ' + btn.dataset.replyCount + ' replies';
             return;
         }
-
         btn.textContent = 'Loading…';
-
         fetch('/comments/replies/' + parentId)
-            .then(function (res) { return res.json(); })
-            .then(function (replies) {
+            .then(r => r.json())
+            .then(replies => {
                 container.innerHTML = '';
-
-                replies.forEach(function (reply) {
-                    const replyEl = buildReplyElement(reply);
-                    container.appendChild(replyEl);
-                    wireCommentItem(replyEl);
+                replies.forEach(reply => {
+                    const el = buildReplyElement(reply);
+                    container.appendChild(el);
+                    wireCommentItem(el);
                 });
-
                 container.dataset.loaded = 'true';
-                container.style.display = 'block';
+                container.style.display  = 'block';
                 btn.innerHTML = 'Hide replies';
             })
-            .catch(function (err) {
-                btn.textContent = 'View ' + btn.dataset.replyCount + ' replies';
-            });
+            .catch(() => { btn.textContent = 'View ' + btn.dataset.replyCount + ' replies'; });
     }
 
     function buildReplyElement(reply) {
         const initial = reply.username ? reply.username.charAt(0).toUpperCase() : '?';
         const isOwner = reply.userId === currentUserId;
-
         const item = document.createElement('div');
         item.className = 'comment-item';
-        item.dataset.commentId = reply.id;
-        item.dataset.userId = reply.userId;
+        item.dataset.commentId  = reply.id;
+        item.dataset.userId     = reply.userId;
         item.dataset.replyCount = 0;
-
         item.innerHTML = `
             <div class="small-avatar">${initial}</div>
             <div class="comment-body">
@@ -339,68 +393,26 @@
                 </div>
                 <div class="comment-meta">
                     <span class="comment-time">${formatDate(reply.createdAt)}</span>
-                    <button class="reply-btn"
-                            data-comment-id="${reply.id}"
-                            data-username="${escapeHtml(reply.username)}">Reply</button>
-                    <button class="delete-btn ${isOwner ? 'visible' : ''}"
-                            data-comment-id="${reply.id}">Delete</button>
+                    <button class="reply-btn" data-comment-id="${reply.id}" data-username="${escapeHtml(reply.username)}">Reply</button>
+                    <button class="delete-btn ${isOwner ? 'visible' : ''}" data-comment-id="${reply.id}">Delete</button>
                 </div>
-            </div>
-        `;
-
+            </div>`;
         return item;
     }
 
     function handleDelete(commentId, itemElement) {
         fetch('/comments/delete/' + commentId, {
-            method: 'POST',
-            headers: {
-                'X-XSRF-TOKEN': getCsrfToken()
-            }
+            method: 'POST', headers: { 'X-XSRF-TOKEN': getCsrfToken() }
         })
-        .then(function (res) {
-            if (res.ok) {
-                itemElement.remove();
-
-                const repliesContainer = document.getElementById('replies-' + commentId);
-                if (repliesContainer) repliesContainer.remove();
-                const viewBtn = document.querySelector('[data-comment-id="' + commentId + '"].view-replies-btn');
-                if (viewBtn) viewBtn.remove();
-
-                setTimeout(() => location.reload(), 300);
-            } else {
-                alert('Could not delete comment. Please try again.');
-            }
-        })
-        .catch(function () {
-            alert('Network error. Please try again.');
-        });
-    }
-
-    function goBack(event) {
-        if (event.target === event.currentTarget) {
-            window.location.href = '/posts';
-        }
-    }
-
-    function getCsrfToken() {
-        return document.querySelector('meta[name="_csrf"]').getAttribute('content');
-    }
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str || '';
-        return div.innerHTML;
-    }
-
-    function formatDate(isoString) {
-        if (!isoString) return '';
-        try {
-            const d = new Date(isoString);
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        } catch (e) {
-            return '';
-        }
+            .then(res => {
+                if (res.ok) {
+                    itemElement.remove();
+                    document.getElementById('replies-' + commentId)?.remove();
+                    document.querySelector('[data-comment-id="' + commentId + '"].view-replies-btn')?.remove();
+                    setTimeout(() => location.reload(), 300);
+                } else { alert('Could not delete comment.'); }
+            })
+            .catch(() => alert('Network error.'));
     }
 </script>
 
