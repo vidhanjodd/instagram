@@ -41,7 +41,6 @@ public class PostService {
         for (int i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
 
-            // Upload to Cloudinary
             Map<String, Object> uploadResult = cloudinaryService.uploadFile(file);
 
             String mediaUrl = uploadResult.get("secure_url").toString();
@@ -49,19 +48,16 @@ public class PostService {
             String resourceType = uploadResult.get("resource_type").toString();
             String mediaType = resourceType.equals("video") ? "VIDEO" : "IMAGE";
 
-            // Create the PostMedia entity for this specific slide
             PostMedia postMedia = PostMedia.builder()
                     .mediaUrl(mediaUrl)
                     .publicId(publicId)
                     .mediaType(mediaType)
-                    .sortOrder(i) // i represents the slide index (0 to 9)
+                    .sortOrder(i)
                     .build();
 
-            // 3. Attach it to the post using the helper method we created in the entity
             post.addMedia(postMedia);
         }
 
-        // 4. Save the post. The CascadeType.ALL on carouselMedia will automatically save the PostMedia entities to the database.
         return postRepository.save(post);
     }
 
@@ -84,7 +80,6 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        // 1. Loop through all media attachments and delete them from Cloudinary
         for (PostMedia media : post.getCarouselMedia()) {
             try {
                 cloudinaryService.deleteFile(media.getPublicId());
@@ -93,7 +88,6 @@ public class PostService {
             }
         }
 
-        // 2. Delete the post from the database (CascadeType.ALL handles deleting the PostMedia rows)
         try {
             postRepository.delete(post);
         } catch (Exception e) {

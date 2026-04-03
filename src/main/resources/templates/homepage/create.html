@@ -15,7 +15,7 @@
 </nav>
 
 <div class="page">
-    <div th:if="${error}" class="alert" th:text="${error}"></div>
+    <div th:if="${error}" class="alert" style="color: red; padding: 10px; text-align: center;" th:text="${error}"></div>
 
     <form th:action="@{/posts/create}" method="post" enctype="multipart/form-data" id="postForm">
         <input type="hidden" name="userId" th:value="${currentUserId}"/>
@@ -30,22 +30,22 @@
             <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
                 <div class="upload-icon">🏞️</div>
                 <div class="upload-title">Drag photos and videos here</div>
-                <div class="upload-subtitle">Share moments with your followers</div>
+                <div class="upload-subtitle">Share up to 10 moments with your followers</div>
                 <button type="button" class="upload-btn" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">
                     Select from computer
                 </button>
-                <input type="file" id="fileInput" name="file" accept="image/*,video/*" required
-                       onchange="handleFile(this)"/>
+                <input type="file" id="fileInput" name="files" accept="image/*,video/*" multiple required
+                       onchange="handleFiles(this)" style="display: none;"/>
             </div>
-            <img id="preview" alt="preview"/>
-            <video id="previewVideo" controls></video>
+
+            <div id="previewCarousel" class="preview-carousel" style="display: none;"></div>
 
             <div class="details-section">
                 <div class="user-row">
                     <div class="user-avatar">
                         <div class="user-avatar-inner">👤</div>
                     </div>
-                    <div class="user-name" th:text="${#authentication.name}">username</div>
+                    <div class="user-name" th:text="${#authentication != null ? #authentication.name : 'username'}">username</div>
                 </div>
                 <textarea class="caption-input" name="caption"
                           placeholder="Write a caption…" maxlength="2200"
@@ -59,25 +59,49 @@
 </div>
 
 <script>
-    function handleFile(input) {
-        const file = input.files[0];
-        if (!file) return;
-        const url = URL.createObjectURL(file);
+    function handleFiles(input) {
+        const files = input.files;
+        const maxFiles = 10;
+
+        if (files.length === 0) return;
+
+        if (files.length > maxFiles) {
+            alert('You can only upload a maximum of 10 media files.');
+            input.value = '';
+            return;
+        }
+
         const area = document.getElementById('uploadArea');
-        const img = document.getElementById('preview');
-        const vid = document.getElementById('previewVideo');
+        const carousel = document.getElementById('previewCarousel');
 
         area.style.display = 'none';
+        carousel.style.display = 'flex';
+        carousel.innerHTML = '';
 
-        if (file.type.startsWith('image/')) {
-            img.src = url;
-            img.style.display = 'block';
-            vid.style.display = 'none';
-        } else {
-            vid.src = url;
-            vid.style.display = 'block';
-            img.style.display = 'none';
-        }
+        Array.from(files).forEach((file, index) => {
+            const url = URL.createObjectURL(file);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'slide-container';
+
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = url;
+                wrapper.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                const vid = document.createElement('video');
+                vid.src = url;
+                vid.controls = true;
+                wrapper.appendChild(vid);
+            }
+
+            const badge = document.createElement('span');
+            badge.className = 'slide-badge';
+            badge.innerText = `${index + 1}/${files.length}`;
+            wrapper.appendChild(badge);
+
+            carousel.appendChild(wrapper);
+        });
     }
 
     function updateCount(el) {

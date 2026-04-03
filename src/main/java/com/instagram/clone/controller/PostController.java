@@ -1,110 +1,106 @@
 package com.instagram.clone.controller;
 
-import com.instagram.clone.dto.CommentResponse;
 import com.instagram.clone.entity.Post;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.UserRepository;
-import com.instagram.clone.service.CommentService;
 import com.instagram.clone.service.PostService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/posts")
-@RequiredArgsConstructor
 public class PostController {
 
-    private final PostService postService;
-    private final UserRepository userRepository;
-    private final CommentService commentService;
+    @Autowired
+    private PostService postService;
 
+    // We need the UserRepository to fetch the full user details from the logged-in username
+    @Autowired
+    private UserRepository userRepository;
+
+    // Helper method to fetch the logged-in user
+    private User getCurrentUser(Principal principal) {
+        // Assuming your repository has findByUsername. If you log in with email, change this to findByEmail
+        return userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Logged in user not found in database"));
+    }
+
+    // 1. Show the main feed
     @GetMapping
-    public String getAllPosts(Model model, Authentication authentication) {
+    public String showFeed(Model model, Principal principal) {
         List<Post> posts = postService.getAllPosts();
-        model.addAttribute("posts", posts);
 
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        model.addAttribute("currentUser", user);
+        // Pass the posts and the missing currentUser to Thymeleaf
+        model.addAttribute("posts", posts);
+        model.addAttribute("currentUser", getCurrentUser(principal));
 
         return "homepage/feed";
     }
 
-    @GetMapping("/create")
-    public String showCreateForm(Model model, Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        model.addAttribute("currentUserId", user.getId());
+    // 2. Show the page/form to create a new post
+    @GetMapping("/new")
+    public String showCreatePostForm(Model model, Principal principal) {
+        // Your create.html expects ${currentUserId} for the hidden input field
+        model.addAttribute("currentUserId", getCurrentUser(principal).getId());
         return "homepage/create";
     }
 
-    @PostMapping("/{postId}/delete")
-    public String deletePost(@PathVariable Long postId, Authentication authentication) {
-        Post post = postService.getPostById(postId);
+    // 3. Handle the form submission from the create post page
+    @PostMapping("/create")
+    public String createPost(
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam(value = "caption", required = false) String caption,
+            @RequestParam("userId") Long userId,
+            RedirectAttributes redirectAttributes) {
 
-        if (!post.getUser().getUsername().equals(authentication.getName())) {
-            return "redirect:/posts?error=unauthorized";
+        if (files == null || files.isEmpty() || files.get(0).isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "At least one media file is required.");
+            return "redirect:/posts/new";
         }
 
-        postService.deletePost(postId);
-        return "redirect:/posts";
-    }
+        if (files.size() > 10) {
+            redirectAttributes.addFlashAttribute("error", "You can only upload a maximum of 10 media files.");
+            return "redirect:/posts/new";
+        }
 
-    @PostMapping("/create")
-    public String createPost(@RequestParam("file") MultipartFile file,
-                             @RequestParam("caption") String caption,
-                             Authentication authentication,
-                             Model model) {
         try {
-            User user = userRepository.findByUsername(authentication.getName())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            postService.createPost(file, caption, user.getId());
+            postService.createPost(files, caption, userId);
+            redirectAttributes.addFlashAttribute("success", "Post created successfully!");
             return "redirect:/posts";
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
-            return "homepage/create";
+            redirectAttributes.addFlashAttribute("error", "Error creating post: " + e.getMessage());
+            return "redirect:/posts/new";
         }
     }
 
-    @GetMapping("/{postId}")
-    public String getPostDetails(@PathVariable Long postId,
-                                 Model model,
-                                 Authentication authentication) {
+    // 4. Show a specific user's profile with their posts
+    @GetMapping("/user/{userId}")
+    public String showUserProfile(@PathVariable Long userId, Model model, Principal principal) {
+        List<Post> posts = postService.getPostsByUserId(userId);
+        model.addAttribute("posts", posts);
 
-        Post post = postService.getPostById(postId);
+        // Passing currentUser here as well, in case your profile.html needs it for follow/unfollow logic
+        model.addAttribute("currentUser", getCurrentUser(principal));
 
-        User currentUser = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        List<CommentResponse> comments = commentService.getCommentsForPost(postId);
-
-        model.addAttribute("post", post);
-        model.addAttribute("currentUser", currentUser);
-        model.addAttribute("comments", comments);
-
-        return "homepage/post-details";
+        return "profilepage/profile";
     }
-    @PostMapping("/{postId}/edit")
-    @ResponseBody
-    public ResponseEntity<?> editPostCaption(@PathVariable Long postId,
-                                             @RequestBody Map<String, String> body,
-                                             Authentication authentication) {
-        Post post = postService.getPostById(postId);
-        if (!post.getUser().getUsername().equals(authentication.getName())) {
-            return ResponseEntity.status(403).build();
+
+    // 5. Delete a post
+    @PostMapping("/{postId}/delete")
+    public String deletePost(@PathVariable Long postId, RedirectAttributes redirectAttributes) {
+        try {
+            postService.deletePost(postId);
+            redirectAttributes.addFlashAttribute("success", "Post deleted successfully.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "Error deleting post: " + e.getMessage());
         }
-        postService.updateCaption(postId, body.get("caption"));
-        return ResponseEntity.ok().build();
+        return "redirect:/posts";
     }
-
 }
