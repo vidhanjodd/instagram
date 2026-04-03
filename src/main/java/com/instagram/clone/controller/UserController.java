@@ -133,7 +133,6 @@ public class UserController {
         User profileUser = userService.getUserById(id);
         User loggedInUser = userService.getUserByUsername(authentication.getName());
 
-        // All Follow records where this user is being followed
         List<Follow> followers = followRepository.findAllByFollowing(profileUser);
 
         model.addAttribute("user", profileUser);
@@ -149,7 +148,6 @@ public class UserController {
         User profileUser = userService.getUserById(id);
         User loggedInUser = userService.getUserByUsername(authentication.getName());
 
-        // All Follow records where this user is the follower
         List<Follow> following = followRepository.findAllByFollower(profileUser);
 
         model.addAttribute("user", profileUser);
