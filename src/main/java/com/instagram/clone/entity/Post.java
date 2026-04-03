@@ -7,6 +7,7 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -24,23 +25,28 @@ public class Post {
 
     private String caption;
 
-    private String mediaUrl;
-
-    private String mediaType;
-
-    private String publicId;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    @Builder.Default
+    private List<PostMedia> carouselMedia = new ArrayList<>();
+
     @JsonIgnore
-    @OneToMany(mappedBy = "post" , cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> likes;
 
     private LocalDateTime createdAt;
+
+    public void addMedia(PostMedia media) {
+        carouselMedia.add(media);
+        media.setPost(this);
+    }
+
 }
