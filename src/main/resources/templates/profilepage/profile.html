@@ -220,10 +220,40 @@
     </div>
 
     <div class="profile-tabs">
-        <div class="tab active"><i class="fa-solid fa-table-cells"></i> Posts</div>
-        <div class="tab"><i class="fa-solid fa-film"></i> Reels</div>
-        <div class="tab"><i class="fa-regular fa-id-badge"></i> Tagged</div>
+        <button class="tab-btn active" onclick="showTab('posts', this)">
+            <i class="fa-solid fa-th"></i> POSTS
+        </button>
+
+        <button th:if="${#authentication.name == user.username}"
+                class="tab-btn"
+                onclick="showTab('saved', this)">
+            <i class="fa-regular fa-bookmark"></i> SAVED
+        </button>
     </div>
+
+    <div class="profile-content-container">
+
+        <div id="posts-content" class="posts-grid">
+            <div th:each="post : ${user.posts}" class="grid-item">
+                <a th:href="@{/posts/{id}(id=${post.id})}">
+                    <img th:src="${post.carouselMedia[0].mediaUrl}" alt="Post">
+                </a>
+            </div>
+        </div>
+
+        <div id="saved-content" class="posts-grid" style="display: none;">
+            <div th:each="savedItem : ${user.savedPosts}" class="grid-item">
+                <a th:href="@{/posts/{id}(id=${savedItem.post.id})}">
+                    <img th:src="${savedItem.post.carouselMedia[0].mediaUrl}" alt="Saved Post">
+                </a>
+            </div>
+            <div th:if="${#lists.isEmpty(user.savedPosts)}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8e8e8e;">
+                <i class="fa-regular fa-bookmark" style="font-size: 40px; margin-bottom: 10px;"></i>
+                <p>Save photos and videos that you want to see again.</p>
+            </div>
+        </div>
+    </div>
+
 
     <div class="posts-grid">
         <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">
@@ -328,9 +358,6 @@
         return h;
     }
 
-    /* ════════════════════════════════════════════════
-       BIO RENDERER
-    ════════════════════════════════════════════════ */
     (function () {
         const bioEl = document.getElementById('bioText');
         if (!bioEl) return;
@@ -348,9 +375,6 @@
         });
     })();
 
-    /* ════════════════════════════════════════════════
-       POST POPUP  (identical logic as feed.html)
-    ════════════════════════════════════════════════ */
     let ppMediaList = [], ppMediaIdx = 0, ppPostId = null, ppReplyId = null;
 
     function openPostPopup(postId) {
@@ -594,6 +618,43 @@
         try{ return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
         catch(e){return'';}
     }
+
+    function showTab(tabName) {
+        const postsContent = document.getElementById('posts-content'); // Ensure your main grid has this ID
+        const savedContent = document.getElementById('saved-content');
+        const buttons = document.querySelectorAll('.tab-btn');
+
+        if (tabName === 'posts') {
+            postsContent.style.display = 'grid';
+            savedContent.style.display = 'none';
+        } else {
+            postsContent.style.display = 'none';
+            savedContent.style.display = 'grid';
+        }
+
+        // Update active button state
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+    function showTab(tabName, btn) {
+        const postsContent = document.getElementById('posts-content');
+        const savedContent = document.getElementById('saved-content');
+        const buttons = document.querySelectorAll('.tab-btn');
+
+        // Toggle visibility
+        if (tabName === 'posts') {
+            postsContent.style.display = 'grid';
+            savedContent.style.display = 'none';
+        } else {
+            postsContent.style.display = 'none';
+            savedContent.style.display = 'grid';
+        }
+
+        // Update active button styling
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
 </script>
 </body>
 </html>
