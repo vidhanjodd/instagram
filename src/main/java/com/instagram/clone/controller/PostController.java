@@ -5,12 +5,19 @@ import com.instagram.clone.dto.CommentResponse;
 import com.instagram.clone.entity.Comment;
 import com.instagram.clone.entity.Post;
 import com.instagram.clone.entity.User;
+import com.instagram.clone.repository.CommentRepository;
+import com.instagram.clone.repository.PostRepository;
 import com.instagram.clone.repository.UserRepository;
 import com.instagram.clone.service.CommentService;
 import com.instagram.clone.service.PostService;
+import com.instagram.clone.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -37,18 +42,36 @@ public class PostController {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
     private User getCurrentUser(Principal principal) {
         return userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Logged in user not found in database"));
     }
 
     @GetMapping
-    public String showFeed(Model model, Principal principal) {
-        List<Post> posts = postService.getAllPosts();
+    public String showFeed(Model model, Principal principal, HttpServletRequest request, HttpServletResponse response) {
+        Optional<User> currentUserOpt = userRepository.findByUsername(principal.getName());
+        if (currentUserOpt.isEmpty()) {
+            new SecurityContextLogoutHandler().logout(request, response,
+                    SecurityContextHolder.getContext().getAuthentication());
+            return "redirect:/login";
+        }
+
+        List<Post> posts = postService.getAllPosts()
+                .stream()
+                .filter(p -> p.getUser() != null)
+                .collect(Collectors.toList());
 
         model.addAttribute("posts", posts);
-        model.addAttribute("currentUser", getCurrentUser(principal));
-
+        model.addAttribute("currentUser", currentUserOpt.get());
         return "homepage/feed";
     }
 
@@ -177,18 +200,17 @@ public class PostController {
             @RequestBody CommentRequest request,
             Authentication authentication) {
 
-        // Always resolve userId from the session — never trust the request body
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
         request.setUserId(user.getId());
 
+        CommentResponse response;
+
         if (request.getParentId() == null) {
-            commentService.createTopLevelComment(request);
-            List<CommentResponse> all = commentService.getCommentsForPost(request.getPostId());
-            return ResponseEntity.ok(all.get(all.size() - 1));
+            response = commentService.createTopLevelComment(request);
         } else {
-            commentService.addReply(request);
-            List<CommentResponse> replies = commentService.getRepliesToComment(request.getParentId());
-            return ResponseEntity.ok(replies.get(replies.size() - 1));
+            response = commentService.addReply(request);
         }
+
+        return ResponseEntity.ok(response);
     }
 }

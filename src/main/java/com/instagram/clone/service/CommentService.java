@@ -22,7 +22,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
 
-    public void createTopLevelComment(CommentRequest request) {
+    public CommentResponse createTopLevelComment(CommentRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -36,10 +36,11 @@ public class CommentService {
                 .parent(null)
                 .build();
 
-        commentRepository.save(comment);
+        Comment saved = commentRepository.save(comment);
+        return mapToBasicResponse(saved);
     }
 
-    public void addReply(CommentRequest request) {
+    public CommentResponse addReply(CommentRequest request) {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -49,22 +50,24 @@ public class CommentService {
         Comment parentComment = commentRepository.findById(request.getParentId())
                 .orElseThrow(() -> new RuntimeException("Parent comment not found"));
 
-        String taggedContent;
-
-        if (request.getReplyingToUsername() != null) {
-            taggedContent = "@" + request.getReplyingToUsername() + " " + request.getContent();
-        } else {
-            taggedContent = request.getContent();
+        Comment rootComment = parentComment;
+        while (rootComment.getParent() != null) {
+            rootComment = rootComment.getParent();
         }
+
+        String taggedContent = request.getReplyingToUsername() != null
+                ? "@" + request.getReplyingToUsername() + " " + request.getContent()
+                : request.getContent();
 
         Comment reply = Comment.builder()
                 .user(user)
                 .post(post)
                 .content(taggedContent)
-                .parent(parentComment)
+                .parent(rootComment)
                 .build();
 
-        commentRepository.save(reply);
+         Comment saved = commentRepository.save(reply);
+         return mapToBasicResponse(reply);
     }
 
     public List<CommentResponse> getCommentsForPost(Long postId) {

@@ -186,7 +186,16 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 .comment-line .com-username { font-weight: 600; margin-right: 6px; }
 /* ------------------------------------- */
 
-.view-comments { padding: 0 14px 4px; font-size: 13px; color: var(--muted); cursor: pointer; background: none; border: none; display: block; }
+.view-comments {
+    padding: 0 14px 4px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    display: block;
+    margin-bottom: 4px;
+}
 .post-time { padding: 2px 14px 10px; font-size: 10px; color: var(--muted); letter-spacing: 0.3px; text-transform: uppercase; }
 
 .post-comment-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border); }
