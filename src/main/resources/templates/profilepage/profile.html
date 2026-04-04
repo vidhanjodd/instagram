@@ -114,44 +114,44 @@
         </div>
     </div>
 
-    <div class="posts-grid">
-        <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">
-            <div class="icon"><i class="fa-regular fa-image"></i></div>
-            <h3>Share Photos</h3>
-            <p>When you share photos, they will appear on your profile.</p>
-            <a th:href="@{/posts/new}" class="create-btn">+ Share your first photo</a>
-        </div>
+<!--    <div class="posts-grid">-->
+<!--        <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">-->
+<!--            <div class="icon"><i class="fa-regular fa-image"></i></div>-->
+<!--            <h3>Share Photos</h3>-->
+<!--            <p>When you share photos, they will appear on your profile.</p>-->
+<!--            <a th:href="@{/posts/new}" class="create-btn">+ Share your first photo</a>-->
+<!--        </div>-->
 
-        <div class="grid-item"
-             th:each="post : ${posts}"
-             th:attr="data-post-id=${post.id}"
-             onclick="openPostPopup(this.dataset.postId)">
+<!--        <div class="grid-item"-->
+<!--             th:each="post : ${posts}"-->
+<!--             th:attr="data-post-id=${post.id}"-->
+<!--             onclick="openPostPopup(this.dataset.postId)">-->
 
-            <img th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'IMAGE'}"
-                 th:src="${post.carouselMedia[0].mediaUrl}" th:alt="${post.caption}"/>
+<!--            <img th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'IMAGE'}"-->
+<!--                 th:src="${post.carouselMedia[0].mediaUrl}" th:alt="${post.caption}"/>-->
 
-            <video th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
-                   th:src="${post.carouselMedia[0].mediaUrl}" muted></video>
+<!--            <video th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"-->
+<!--                   th:src="${post.carouselMedia[0].mediaUrl}" muted></video>-->
 
-            <span th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
-                  class="video-badge"><i class="fa-solid fa-play"></i></span>
+<!--            <span th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"-->
+<!--                  class="video-badge"><i class="fa-solid fa-play"></i></span>-->
 
-            <span th:if="${#lists.size(post.carouselMedia) > 1}" class="carousel-badge">
-                <i class="fa-solid fa-layer-group"></i>
-            </span>
+<!--            <span th:if="${#lists.size(post.carouselMedia) > 1}" class="carousel-badge">-->
+<!--                <i class="fa-solid fa-layer-group"></i>-->
+<!--            </span>-->
 
-            <div class="grid-overlay">
-                <span class="grid-stat">
-                    <i class="fa-solid fa-heart"></i>
-                    <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>
-                </span>
-                <span class="grid-stat">
-                    <i class="fa-solid fa-comment"></i>
-                    <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>
-                </span>
-            </div>
-        </div>
-    </div>
+<!--            <div class="grid-overlay">-->
+<!--                <span class="grid-stat">-->
+<!--                    <i class="fa-solid fa-heart"></i>-->
+<!--                    <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>-->
+<!--                </span>-->
+<!--                <span class="grid-stat">-->
+<!--                    <i class="fa-solid fa-comment"></i>-->
+<!--                    <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>-->
+<!--                </span>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
 </div>
 
 <!-- Post popup -->
