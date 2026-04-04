@@ -681,3 +681,43 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
             .pp-left { flex: 0 0 50vw; }
             .pp-right { flex: 1 1 auto; width: 100%; border-left: none; border-top: 1px solid #2a2a2a; }
         }
+
+
+/* Ensure the action bar is a single row with space between sides */
+.post-actions {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center;
+    padding: 12px 16px;
+    width: 100%;
+}
+
+/* Keep the left three icons close together */
+.left-actions {
+    display: flex;
+    gap: 16px;
+}
+
+/* Reset button styles to make icons look native */
+.action-btn {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    cursor: pointer;
+    color: #f5f5f5; /* Light color for dark theme */
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.action-btn:hover {
+    opacity: 0.7;
+}
+
+/* Ensure FontAwesome icons have consistent sizing */
+.action-btn i {
+    width: 24px;
+    text-align: center;
+}

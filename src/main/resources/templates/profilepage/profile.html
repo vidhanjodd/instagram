@@ -10,7 +10,6 @@
     <link rel="stylesheet" th:href="@{/css/profile.css}"/>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-
 </head>
 <body>
 <nav>
@@ -84,48 +83,74 @@
     </div>
 
     <div class="profile-tabs">
-        <div class="tab active"><i class="fa-solid fa-table-cells"></i> Posts</div>
-        <div class="tab"><i class="fa-solid fa-film"></i> Reels</div>
-        <div class="tab"><i class="fa-regular fa-id-badge"></i> Tagged</div>
+        <button class="tab-btn active" onclick="showTab('posts', this)" style="background: none; border: none; font: inherit; cursor: pointer;">
+            <i class="fa-solid fa-th"></i> POSTS
+        </button>
+
+        <button th:if="${#authentication.name == user.username}"
+                class="tab-btn"
+                onclick="showTab('saved', this)" style="background: none; border: none; font: inherit; cursor: pointer;">
+            <i class="fa-regular fa-bookmark"></i> SAVED
+        </button>
     </div>
 
-    <div class="posts-grid">
-        <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">
-            <div class="icon"><i class="fa-regular fa-image"></i></div>
-            <h3>Share Photos</h3>
-            <p>When you share photos, they will appear on your profile.</p>
-            <a th:href="@{/posts/new}" class="create-btn">+ Share your first photo</a>
-        </div>
+    <div class="profile-content-container">
 
-        <div class="grid-item"
-             th:each="post : ${posts}"
-             th:attr="data-post-id=${post.id}"
-             onclick="openPostPopup(this.dataset.postId)">
+        <div id="posts-content" class="posts-grid">
+            <div th:if="${#lists.isEmpty(posts)}" class="empty-grid" style="grid-column: 1 / -1;">
+                <div class="icon"><i class="fa-regular fa-image"></i></div>
+                <h3>Share Photos</h3>
+                <p>When you share photos, they will appear on your profile.</p>
+                <a th:href="@{/posts/new}" class="create-btn">+ Share your first photo</a>
+            </div>
 
-            <img th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'IMAGE'}"
-                 th:src="${post.carouselMedia[0].mediaUrl}" th:alt="${post.caption}"/>
+            <div class="grid-item"
+                 th:each="post : ${posts}"
+                 th:attr="data-post-id=${post.id}"
+                 onclick="openPostPopup(this.dataset.postId)">
 
-            <video th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
-                   th:src="${post.carouselMedia[0].mediaUrl}" muted></video>
+                <img th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'IMAGE'}"
+                     th:src="${post.carouselMedia[0].mediaUrl}" th:alt="${post.caption}"/>
 
-            <span th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
-                  class="video-badge"><i class="fa-solid fa-play"></i></span>
+                <video th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
+                       th:src="${post.carouselMedia[0].mediaUrl}" muted></video>
 
-            <span th:if="${#lists.size(post.carouselMedia) > 1}" class="carousel-badge">
-                <i class="fa-solid fa-layer-group"></i>
-            </span>
+                <span th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
+                      class="video-badge"><i class="fa-solid fa-play"></i></span>
 
-            <div class="grid-overlay">
-                <span class="grid-stat">
-                    <i class="fa-solid fa-heart"></i>
-                    <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>
+                <span th:if="${#lists.size(post.carouselMedia) > 1}" class="carousel-badge">
+                    <i class="fa-solid fa-layer-group"></i>
                 </span>
-                <span class="grid-stat">
-                    <i class="fa-solid fa-comment"></i>
-                    <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>
-                </span>
+
+                <div class="grid-overlay">
+                    <span class="grid-stat">
+                        <i class="fa-solid fa-heart"></i>
+                        <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>
+                    </span>
+                    <span class="grid-stat">
+                        <i class="fa-solid fa-comment"></i>
+                        <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>
+                    </span>
+                </div>
             </div>
         </div>
+
+        <div id="saved-content" class="posts-grid" style="display: none;">
+            <div th:if="${#lists.isEmpty(user.savedPosts)}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8e8e8e;">
+                <i class="fa-regular fa-bookmark" style="font-size: 40px; margin-bottom: 10px;"></i>
+                <p>Save photos and videos that you want to see again.</p>
+            </div>
+
+            <div th:each="savedItem : ${user.savedPosts}" class="grid-item" th:attr="data-post-id=${savedItem.post.id}" onclick="openPostPopup(this.dataset.postId)">
+                <img th:if="${not #lists.isEmpty(savedItem.post.carouselMedia) and savedItem.post.carouselMedia[0].mediaType == 'IMAGE'}"
+                     th:src="${savedItem.post.carouselMedia[0].mediaUrl}" th:alt="${savedItem.post.caption}"/>
+                <video th:if="${not #lists.isEmpty(savedItem.post.carouselMedia) and savedItem.post.carouselMedia[0].mediaType == 'VIDEO'}"
+                       th:src="${savedItem.post.carouselMedia[0].mediaUrl}" muted></video>
+                <span th:if="${not #lists.isEmpty(savedItem.post.carouselMedia) and savedItem.post.carouselMedia[0].mediaType == 'VIDEO'}" class="video-badge"><i class="fa-solid fa-play"></i></span>
+                <span th:if="${#lists.size(savedItem.post.carouselMedia) > 1}" class="carousel-badge"><i class="fa-solid fa-layer-group"></i></span>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -188,6 +213,26 @@
     }
 
     /* ════════════════════════════════════════════════
+       TAB LOGIC
+    ════════════════════════════════════════════════ */
+    function showTab(tabName, btn) {
+        const postsContent = document.getElementById('posts-content');
+        const savedContent = document.getElementById('saved-content');
+        const buttons = document.querySelectorAll('.tab-btn');
+
+        if (tabName === 'posts') {
+            postsContent.style.display = 'grid';
+            savedContent.style.display = 'none';
+        } else {
+            postsContent.style.display = 'none';
+            savedContent.style.display = 'grid';
+        }
+
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    /* ════════════════════════════════════════════════
        BIO RENDERER
     ════════════════════════════════════════════════ */
     (function () {
@@ -208,7 +253,7 @@
     })();
 
     /* ════════════════════════════════════════════════
-       POST POPUP  (identical logic as feed.html)
+       POST POPUP
     ════════════════════════════════════════════════ */
     let ppMediaList = [], ppMediaIdx = 0, ppPostId = null, ppReplyId = null;
 
@@ -334,17 +379,15 @@
                 <button class="pp-del-btn ${isOwner?'show':''}" data-id="${c.id}">Delete</button>
               </div>
               ${c.replyCount > 0
-                ? `<button class="pp-vr-btn" data-id="${c.id}" data-cnt="${c.replyCount}">
+            ? `<button class="pp-vr-btn" data-id="${c.id}" data-cnt="${c.replyCount}">
                      View ${c.replyCount} ${c.replyCount===1?'reply':'replies'}
                    </button>` : ''}
             </div>`;
-            el.querySelector('.pp-reply-btn').onclick = function() {
-    const repliesContainer = this.closest('.pp-replies');
-
-    const rootId = repliesContainer ? repliesContainer.id.replace('pp-r-', '') : this.dataset.id;
-
-    ppStartReply(rootId, this.dataset.un);
-};
+        el.querySelector('.pp-reply-btn').onclick = function() {
+            const repliesContainer = this.closest('.pp-replies');
+            const rootId = repliesContainer ? repliesContainer.id.replace('pp-r-', '') : this.dataset.id;
+            ppStartReply(rootId, this.dataset.un);
+        };
         const db = el.querySelector('.pp-del-btn');
         if (db) db.onclick = function(){ ppDelete(this.dataset.id, el); };
         const vr = el.querySelector('.pp-vr-btn');
@@ -391,49 +434,45 @@
                 const noC = scroll.querySelector('.pp-no-comments'); if (noC) noC.remove();
 
                 if (rid) {
-                ppLoadReplies(rid);
+                    ppLoadReplies(rid);
 
-                let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${rid}"]`);
+                    let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${rid}"]`);
 
-                if (!vrBtn) {
-                    const parentBody = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
+                    if (!vrBtn) {
+                        const parentBody = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
 
-                    if (parentBody) {
-                        vrBtn = document.createElement('button');
-                        vrBtn.className = 'pp-vr-btn';
-                        vrBtn.dataset.id = rid;
-                        vrBtn.dataset.cnt = 1;
+                        if (parentBody) {
+                            vrBtn = document.createElement('button');
+                            vrBtn.className = 'pp-vr-btn';
+                            vrBtn.dataset.id = rid;
+                            vrBtn.dataset.cnt = 1;
+                            vrBtn.textContent = 'Hide replies';
+                            vrBtn.onclick = function () { ppToggleReplies(this, rid); };
+                            parentBody.appendChild(vrBtn);
+                        }
+                    } else {
+                        const newCount = parseInt(vrBtn.dataset.cnt || '0') + 1;
+                        vrBtn.dataset.cnt = newCount;
                         vrBtn.textContent = 'Hide replies';
-
-                        vrBtn.onclick = function () {
-                            ppToggleReplies(this, rid);
-                        };
-
-                        parentBody.appendChild(vrBtn);
                     }
                 } else {
-                    const newCount = parseInt(vrBtn.dataset.cnt || '0') + 1;
-                    vrBtn.dataset.cnt = newCount;
-                    vrBtn.textContent = 'Hide replies';
+                    scroll.appendChild(buildCEl(nc));
+                    scroll.scrollTop = scroll.scrollHeight;
                 }
-            }
             }).catch(console.error);
     }
+
     function flattenReplies(replies) {
-    let result = [];
-
-    function dfs(list) {
-        list.forEach(r => {
-            result.push(r);
-            if (r.replies && r.replies.length) {
-                dfs(r.replies);
-            }
-        });
+        let result = [];
+        function dfs(list) {
+            list.forEach(r => {
+                result.push(r);
+                if (r.replies && r.replies.length) { dfs(r.replies); }
+            });
+        }
+        dfs(replies);
+        return result;
     }
-
-    dfs(replies);
-    return result;
-}
 
     function ppToggleReplies(btn, parentId) {
         let cont = document.getElementById('pp-r-'+parentId);
@@ -456,10 +495,10 @@
         btn.textContent = 'Loading…';
         fetch('/comments/replies/'+parentId).then(r=>r.json()).then(replies=>{
             cont.innerHTML = '';
-            replies.forEach(r => {
+            const flatReplies = flattenReplies(replies);
+            flatReplies.forEach(r => {
                 const el = buildCEl(r);
                 el.style.marginLeft = "0px";
-
                 cont.appendChild(el);
             });
             cont.dataset.loaded = 'true'; cont.style.display = 'block';
@@ -468,30 +507,25 @@
     }
 
     function ppDelete(id, el) {
-    fetch('/comments/delete/' + id, {
-        method: 'POST',
-        headers: secureHeaders(false)
-    })
-    .then(r => {
-        if (!r.ok) {
-            alert('Could not delete comment.');
-            return;
-        }
+        fetch('/comments/delete/' + id, {
+            method: 'POST',
+            headers: secureHeaders(false)
+        })
+            .then(r => {
+                if (!r.ok) { alert('Could not delete comment.'); return; }
 
-        const parentEl = el.closest('.pp-replies');
-        el.remove();
+                const parentEl = el.closest('.pp-replies');
+                el.remove();
 
-        if (parentEl && parentEl.children.length === 0) {
-            const parentCommentId = parentEl.id.replace('pp-r-', '');
-
-            parentEl.remove();
-
-            const vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentCommentId}"]`);
-            if (vrBtn) vrBtn.remove();
-        }
-    })
-    .catch(console.error);
-}
+                if (parentEl && parentEl.children.length === 0) {
+                    const parentCommentId = parentEl.id.replace('pp-r-', '');
+                    parentEl.remove();
+                    const vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentCommentId}"]`);
+                    if (vrBtn) vrBtn.remove();
+                }
+            })
+            .catch(console.error);
+    }
 
     function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
     function fmtDate(iso){
@@ -501,34 +535,31 @@
     }
 
     function ppLoadReplies(parentId) {
-    let cont = document.getElementById('pp-r-' + parentId);
+        let cont = document.getElementById('pp-r-' + parentId);
 
-    if (!cont) {
-        cont = document.createElement('div');
-        cont.className = 'pp-replies';
-        cont.id = 'pp-r-' + parentId;
+        if (!cont) {
+            cont = document.createElement('div');
+            cont.className = 'pp-replies';
+            cont.id = 'pp-r-' + parentId;
+            const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
+            if (!parentBody) return;
+            parentBody.appendChild(cont);
+        }
 
-        const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
-        if (!parentBody) return;
-
-        parentBody.appendChild(cont);
-    }
-
-    fetch('/comments/replies/' + parentId)
-        .then(r => r.json())
-        .then(replies => {
-            cont.innerHTML = '';
-
-            replies.forEach(r => {
-                const el = buildCEl(r);
-                el.style.marginLeft = "0px"; // keep flat
-                cont.appendChild(el);
+        fetch('/comments/replies/' + parentId)
+            .then(r => r.json())
+            .then(replies => {
+                cont.innerHTML = '';
+                const flatReplies = flattenReplies(replies);
+                flatReplies.forEach(r => {
+                    const el = buildCEl(r);
+                    el.style.marginLeft = "0px"; // keep flat
+                    cont.appendChild(el);
+                });
+                cont.style.display = 'block';
+                cont.dataset.loaded = 'true';
             });
-
-            cont.style.display = 'block';
-            cont.dataset.loaded = 'true';
-        });
-}
+    }
 </script>
 </body>
 </html>
