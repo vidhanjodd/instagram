@@ -6,7 +6,6 @@
     <title th:text="${user != null ? user.username + ' • Instagram' : 'Instagram'}">Profile • Instagram</title>
     <meta name="_csrf"        th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-
     <link rel="stylesheet" th:href="@{/css/profile.css}"/>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
@@ -83,77 +82,79 @@
     </div>
 
     <div class="profile-tabs">
-        <button class="tab-btn active" onclick="showTab('posts', this)" style="background: none; border: none; font: inherit; cursor: pointer;">
+        <button class="tab-btn active" onclick="showTab('posts', this)">
             <i class="fa-solid fa-th"></i> POSTS
         </button>
-
         <button th:if="${#authentication.name == user.username}"
                 class="tab-btn"
-                onclick="showTab('saved', this)" style="background: none; border: none; font: inherit; cursor: pointer;">
+                onclick="showTab('saved', this)">
             <i class="fa-regular fa-bookmark"></i> SAVED
         </button>
     </div>
 
     <div class="profile-content-container">
-
         <div id="posts-content" class="posts-grid">
-            <div th:if="${#lists.isEmpty(posts)}" class="empty-grid" style="grid-column: 1 / -1;">
-                <div class="icon"><i class="fa-regular fa-image"></i></div>
-                <h3>Share Photos</h3>
-                <p>When you share photos, they will appear on your profile.</p>
-                <a th:href="@{/posts/new}" class="create-btn">+ Share your first photo</a>
-            </div>
-
-            <div class="grid-item"
-                 th:each="post : ${posts}"
-                 th:attr="data-post-id=${post.id}"
-                 onclick="openPostPopup(this.dataset.postId)">
-
-                <img th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'IMAGE'}"
-                     th:src="${post.carouselMedia[0].mediaUrl}" th:alt="${post.caption}"/>
-
-                <video th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
-                       th:src="${post.carouselMedia[0].mediaUrl}" muted></video>
-
-                <span th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
-                      class="video-badge"><i class="fa-solid fa-play"></i></span>
-
-                <span th:if="${#lists.size(post.carouselMedia) > 1}" class="carousel-badge">
-                    <i class="fa-solid fa-layer-group"></i>
-                </span>
-
-                <div class="grid-overlay">
-                    <span class="grid-stat">
-                        <i class="fa-solid fa-heart"></i>
-                        <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>
-                    </span>
-                    <span class="grid-stat">
-                        <i class="fa-solid fa-comment"></i>
-                        <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>
-                    </span>
-                </div>
+            <div th:each="post : ${user.posts}" class="grid-item">
+                <a th:href="@{/posts/{id}(id=${post.id})}">
+                    <img th:src="${post.carouselMedia[0].mediaUrl}" alt="Post">
+                </a>
             </div>
         </div>
 
         <div id="saved-content" class="posts-grid" style="display: none;">
+            <div th:each="savedItem : ${user.savedPosts}" class="grid-item">
+                <a th:href="@{/posts/{id}(id=${savedItem.post.id})}">
+                    <img th:src="${savedItem.post.carouselMedia[0].mediaUrl}" alt="Saved Post">
+                </a>
+            </div>
             <div th:if="${#lists.isEmpty(user.savedPosts)}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8e8e8e;">
                 <i class="fa-regular fa-bookmark" style="font-size: 40px; margin-bottom: 10px;"></i>
                 <p>Save photos and videos that you want to see again.</p>
             </div>
+        </div>
+    </div>
 
-            <div th:each="savedItem : ${user.savedPosts}" class="grid-item" th:attr="data-post-id=${savedItem.post.id}" onclick="openPostPopup(this.dataset.postId)">
-                <img th:if="${not #lists.isEmpty(savedItem.post.carouselMedia) and savedItem.post.carouselMedia[0].mediaType == 'IMAGE'}"
-                     th:src="${savedItem.post.carouselMedia[0].mediaUrl}" th:alt="${savedItem.post.caption}"/>
-                <video th:if="${not #lists.isEmpty(savedItem.post.carouselMedia) and savedItem.post.carouselMedia[0].mediaType == 'VIDEO'}"
-                       th:src="${savedItem.post.carouselMedia[0].mediaUrl}" muted></video>
-                <span th:if="${not #lists.isEmpty(savedItem.post.carouselMedia) and savedItem.post.carouselMedia[0].mediaType == 'VIDEO'}" class="video-badge"><i class="fa-solid fa-play"></i></span>
-                <span th:if="${#lists.size(savedItem.post.carouselMedia) > 1}" class="carousel-badge"><i class="fa-solid fa-layer-group"></i></span>
-            </div>
+    <div class="posts-grid">
+        <div th:if="${#lists.isEmpty(posts)}" class="empty-grid">
+            <div class="icon"><i class="fa-regular fa-image"></i></div>
+            <h3>Share Photos</h3>
+            <p>When you share photos, they will appear on your profile.</p>
+            <a th:href="@{/posts/new}" class="create-btn">+ Share your first photo</a>
         </div>
 
+        <div class="grid-item"
+             th:each="post : ${posts}"
+             th:attr="data-post-id=${post.id}"
+             onclick="openPostPopup(this.dataset.postId)">
+
+            <img th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'IMAGE'}"
+                 th:src="${post.carouselMedia[0].mediaUrl}" th:alt="${post.caption}"/>
+
+            <video th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
+                   th:src="${post.carouselMedia[0].mediaUrl}" muted></video>
+
+            <span th:if="${not #lists.isEmpty(post.carouselMedia) and post.carouselMedia[0].mediaType == 'VIDEO'}"
+                  class="video-badge"><i class="fa-solid fa-play"></i></span>
+
+            <span th:if="${#lists.size(post.carouselMedia) > 1}" class="carousel-badge">
+                <i class="fa-solid fa-layer-group"></i>
+            </span>
+
+            <div class="grid-overlay">
+                <span class="grid-stat">
+                    <i class="fa-solid fa-heart"></i>
+                    <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>
+                </span>
+                <span class="grid-stat">
+                    <i class="fa-solid fa-comment"></i>
+                    <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>
+                </span>
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- Post popup -->
 <div id="ppOverlay" class="pp-overlay" onclick="if(event.target===this)closePP()">
     <div class="pp-card">
         <div class="pp-left" id="ppLeft">
@@ -201,7 +202,6 @@
 </div>
 
 <script th:inline="javascript">
-    /* ── CSRF ── */
     const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
     const currentUserId = /*[[${currentUser.id}]]*/ null;
@@ -212,29 +212,7 @@
         return h;
     }
 
-    /* ════════════════════════════════════════════════
-       TAB LOGIC
-    ════════════════════════════════════════════════ */
-    function showTab(tabName, btn) {
-        const postsContent = document.getElementById('posts-content');
-        const savedContent = document.getElementById('saved-content');
-        const buttons = document.querySelectorAll('.tab-btn');
-
-        if (tabName === 'posts') {
-            postsContent.style.display = 'grid';
-            savedContent.style.display = 'none';
-        } else {
-            postsContent.style.display = 'none';
-            savedContent.style.display = 'grid';
-        }
-
-        buttons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-
-    /* ════════════════════════════════════════════════
-       BIO RENDERER
-    ════════════════════════════════════════════════ */
+    /* ── Bio renderer ── */
     (function () {
         const bioEl = document.getElementById('bioText');
         if (!bioEl) return;
@@ -252,9 +230,7 @@
         });
     })();
 
-    /* ════════════════════════════════════════════════
-       POST POPUP
-    ════════════════════════════════════════════════ */
+    /* ── Post popup ── */
     let ppMediaList = [], ppMediaIdx = 0, ppPostId = null, ppReplyId = null;
 
     function openPostPopup(postId) {
@@ -264,7 +240,6 @@
         document.body.style.overflow = 'hidden';
         document.getElementById('ppScroll').innerHTML =
             '<div class="pp-spin-wrap"><div class="pp-spinner"></div></div>';
-
         fetch('/posts/' + postId + '/data')
             .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
             .then(renderPopup)
@@ -303,9 +278,11 @@
         const next = document.querySelector('.pp-next');
         const m = ppMediaList[ppMediaIdx];
         if (!m) { wrap.innerHTML = '<p style="color:#8e8e8e">No media</p>'; return; }
-        wrap.innerHTML = m.mediaType === 'IMAGE'
-            ? `<img src="${esc(m.mediaUrl)}" style="width:100%;height:100%;object-fit:contain;" alt=""/>`
-            : `<video src="${esc(m.mediaUrl)}" controls style="width:100%;height:100%;object-fit:contain;"></video>`;
+        if (m.mediaType === 'IMAGE') {
+            wrap.innerHTML = `<img src="${esc(m.mediaUrl)}" style="width:100%;height:100%;object-fit:contain;" alt=""/>`;
+        } else {
+            wrap.innerHTML = `<video src="${esc(m.mediaUrl)}" controls style="width:100%;height:100%;object-fit:contain;"></video>`;
+        }
         dots.innerHTML = '';
         ppMediaList.forEach((_, i) => {
             const d = document.createElement('div');
@@ -327,14 +304,16 @@
         const icon = document.getElementById('ppLikeIcon');
         icon.className = liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
         icon.style.color = liked ? '#ff3040' : '';
-        document.getElementById('ppLikeCount').textContent =
-            count > 0 ? count + (count === 1 ? ' like' : ' likes') : '';
+        const el = document.getElementById('ppLikeCount');
+        el.textContent = count > 0 ? count + (count === 1 ? ' like' : ' likes') : '';
     }
 
     function ppLike() {
         if (!ppPostId) return;
         fetch('/posts/' + ppPostId + '/like', { method: 'POST', headers: secureHeaders(false) })
-            .then(r => r.json()).then(d => renderLike(d.liked, d.likeCount)).catch(console.error);
+            .then(r => r.json())
+            .then(d => renderLike(d.liked, d.likeCount))
+            .catch(console.error);
     }
 
     function renderComments(d) {
@@ -347,28 +326,29 @@
                 `<div class="pp-caption-text"><strong>${esc(d.user.username)}</strong>${esc(d.caption)}</div>`;
             scroll.appendChild(cap);
         }
-        if (!d.comments || !d.comments.length) {
-            scroll.insertAdjacentHTML('beforeend','<div class="pp-no-comments">No comments yet.</div>');
+        if (!d.comments || d.comments.length === 0) {
+            scroll.insertAdjacentHTML('beforeend', '<div class="pp-no-comments">No comments yet.</div>');
             return;
         }
         d.comments.forEach(c => scroll.appendChild(buildCEl(c)));
     }
 
     function buildAvHtml(u) {
-        return u.profilePicUrl
-            ? `<div class="pp-c-av"><img src="${esc(u.profilePicUrl)}" alt=""/></div>`
-            : `<div class="pp-c-av">${(u.username||'?').charAt(0).toUpperCase()}</div>`;
+        if (u.profilePicUrl) return `<div class="pp-c-av"><img src="${esc(u.profilePicUrl)}" alt=""/></div>`;
+        return `<div class="pp-c-av">${(u.username || '?').charAt(0).toUpperCase()}</div>`;
     }
 
     function buildCEl(c) {
         const isOwner = c.userId === currentUserId;
         const avHtml  = c.profilePicUrl
             ? `<div class="pp-c-av"><img src="${esc(c.profilePicUrl)}" alt=""/></div>`
-            : `<div class="pp-c-av">${(c.username||'?').charAt(0).toUpperCase()}</div>`;
+            : `<div class="pp-c-av">${(c.username || '?').charAt(0).toUpperCase()}</div>`;
+
         const el = document.createElement('div');
         el.className = 'pp-c';
         el.dataset.commentId = c.id;
         el.dataset.userId    = c.userId;
+
         el.innerHTML = `
             ${avHtml}
             <div class="pp-c-body">
@@ -376,22 +356,25 @@
               <div class="pp-c-meta">
                 <span>${fmtDate(c.createdAt)}</span>
                 <button class="pp-reply-btn" data-id="${c.id}" data-un="${esc(c.username)}">Reply</button>
-                <button class="pp-del-btn ${isOwner?'show':''}" data-id="${c.id}">Delete</button>
+                <button class="pp-del-btn ${isOwner ? 'show' : ''}" data-id="${c.id}">Delete</button>
               </div>
               ${c.replyCount > 0
             ? `<button class="pp-vr-btn" data-id="${c.id}" data-cnt="${c.replyCount}">
                      View ${c.replyCount} ${c.replyCount===1?'reply':'replies'}
                    </button>` : ''}
             </div>`;
-        el.querySelector('.pp-reply-btn').onclick = function() {
-            const repliesContainer = this.closest('.pp-replies');
-            const rootId = repliesContainer ? repliesContainer.id.replace('pp-r-', '') : this.dataset.id;
-            ppStartReply(rootId, this.dataset.un);
+
+        /* FIX: simple direct reply — dataset.id, not closest('.pp-replies') */
+        el.querySelector('.pp-reply-btn').onclick = function () {
+            ppStartReply(this.dataset.id, this.dataset.un);
         };
+
         const db = el.querySelector('.pp-del-btn');
-        if (db) db.onclick = function(){ ppDelete(this.dataset.id, el); };
+        if (db) db.onclick = function () { ppDelete(this.dataset.id, el); };
+
         const vr = el.querySelector('.pp-vr-btn');
-        if (vr) vr.onclick = function(){ ppToggleReplies(this, c.id); };
+        if (vr) vr.onclick = function () { ppToggleReplies(this, c.id); };
+
         return el;
     }
 
@@ -400,7 +383,8 @@
         document.getElementById('ppReplyLabel').textContent = '@' + username;
         document.getElementById('ppReplyBar').classList.add('on');
         const inp = document.getElementById('ppInput');
-        inp.placeholder = 'Reply to @' + username + '…'; inp.focus();
+        inp.placeholder = 'Reply to @' + username + '…';
+        inp.focus();
     }
 
     function ppCancelReply() {
@@ -413,38 +397,57 @@
     }
 
     function ppSubmit() {
-        const inp = document.getElementById('ppInput');
+        const inp     = document.getElementById('ppInput');
         const content = inp.value.trim();
         if (!content || !ppPostId) return;
+
         const body = {
             postId:   parseInt(ppPostId),
             content,
             parentId: ppReplyId ? parseInt(ppReplyId) : null,
             replyingToUsername: ppReplyId
-                ? document.getElementById('ppReplyLabel').textContent.replace('@','')
+                ? document.getElementById('ppReplyLabel').textContent.replace('@', '')
                 : null
         };
-        fetch('/posts/comments/add', { method:'POST', headers: secureHeaders(true), body: JSON.stringify(body) })
+
+        fetch('/posts/comments/add', {
+            method: 'POST',
+            headers: secureHeaders(true),
+            body: JSON.stringify(body)
+        })
             .then(r => r.json())
             .then(nc => {
-                inp.value = ''; document.getElementById('ppPostBtn').disabled = true;
-                const rid = ppReplyId; ppCancelReply();
+                inp.value = '';
+                document.getElementById('ppPostBtn').disabled = true;
+                const rid = ppReplyId;
+                ppCancelReply();
+
                 if (!nc) return;
                 const scroll = document.getElementById('ppScroll');
-                const noC = scroll.querySelector('.pp-no-comments'); if (noC) noC.remove();
+                const noC = scroll.querySelector('.pp-no-comments');
+                if (noC) noC.remove();
 
                 if (rid) {
-                    ppLoadReplies(rid);
+                    let rDiv = document.getElementById('pp-r-' + rid);
+                    if (!rDiv) {
+                        rDiv = document.createElement('div');
+                        rDiv.className = 'pp-replies';
+                        rDiv.id = 'pp-r-' + rid;
+                        const parentEl = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
+                        if (parentEl) parentEl.appendChild(rDiv);
+                    }
+                    rDiv.style.display = 'block';
+                    const el = buildCEl(nc);
+                    el.style.marginLeft = '0px';
+                    rDiv.appendChild(el);
 
                     let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${rid}"]`);
-
                     if (!vrBtn) {
                         const parentBody = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
-
                         if (parentBody) {
                             vrBtn = document.createElement('button');
                             vrBtn.className = 'pp-vr-btn';
-                            vrBtn.dataset.id = rid;
+                            vrBtn.dataset.id  = rid;
                             vrBtn.dataset.cnt = 1;
                             vrBtn.textContent = 'Hide replies';
                             vrBtn.onclick = function () { ppToggleReplies(this, rid); };
@@ -459,7 +462,8 @@
                     scroll.appendChild(buildCEl(nc));
                     scroll.scrollTop = scroll.scrollHeight;
                 }
-            }).catch(console.error);
+            })
+            .catch(console.error);
     }
 
     function flattenReplies(replies) {
@@ -467,74 +471,15 @@
         function dfs(list) {
             list.forEach(r => {
                 result.push(r);
-                if (r.replies && r.replies.length) { dfs(r.replies); }
+                if (r.replies && r.replies.length) dfs(r.replies);
             });
         }
         dfs(replies);
         return result;
     }
 
+    /* FIX: uses flattenReplies so nested reply DTOs are displayed flat */
     function ppToggleReplies(btn, parentId) {
-        let cont = document.getElementById('pp-r-'+parentId);
-        if (!cont) {
-            cont = document.createElement('div');
-            cont.className = 'pp-replies';
-            cont.id = 'pp-r-' + parentId;
-            const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
-            if (!parentBody) return;
-            parentBody.appendChild(cont);
-        }
-        if (cont.dataset.loaded === 'true') {
-            const hidden = cont.style.display === 'none';
-            cont.style.display = hidden ? 'block' : 'none';
-            btn.innerHTML = hidden
-                ? 'Hide replies'
-                : 'View '+btn.dataset.cnt+' '+(btn.dataset.cnt==1?'reply':'replies');
-            return;
-        }
-        btn.textContent = 'Loading…';
-        fetch('/comments/replies/'+parentId).then(r=>r.json()).then(replies=>{
-            cont.innerHTML = '';
-            const flatReplies = flattenReplies(replies);
-            flatReplies.forEach(r => {
-                const el = buildCEl(r);
-                el.style.marginLeft = "0px";
-                cont.appendChild(el);
-            });
-            cont.dataset.loaded = 'true'; cont.style.display = 'block';
-            btn.textContent = 'Hide replies';
-        }).catch(()=>{ btn.textContent = 'View '+btn.dataset.cnt+' replies'; });
-    }
-
-    function ppDelete(id, el) {
-        fetch('/comments/delete/' + id, {
-            method: 'POST',
-            headers: secureHeaders(false)
-        })
-            .then(r => {
-                if (!r.ok) { alert('Could not delete comment.'); return; }
-
-                const parentEl = el.closest('.pp-replies');
-                el.remove();
-
-                if (parentEl && parentEl.children.length === 0) {
-                    const parentCommentId = parentEl.id.replace('pp-r-', '');
-                    parentEl.remove();
-                    const vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentCommentId}"]`);
-                    if (vrBtn) vrBtn.remove();
-                }
-            })
-            .catch(console.error);
-    }
-
-    function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
-    function fmtDate(iso){
-        if(!iso)return'';
-        try{ return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
-        catch(e){return'';}
-    }
-
-    function ppLoadReplies(parentId) {
         let cont = document.getElementById('pp-r-' + parentId);
 
         if (!cont) {
@@ -546,19 +491,95 @@
             parentBody.appendChild(cont);
         }
 
+        if (cont.dataset.loaded === 'true') {
+            const hidden = cont.style.display === 'none';
+            cont.style.display = hidden ? 'block' : 'none';
+            btn.innerHTML = hidden
+                ? 'Hide replies'
+                : 'View ' + btn.dataset.cnt + ' ' + (btn.dataset.cnt == 1 ? 'reply' : 'replies');
+            return;
+        }
+
+        btn.textContent = 'Loading…';
         fetch('/comments/replies/' + parentId)
             .then(r => r.json())
             .then(replies => {
                 cont.innerHTML = '';
-                const flatReplies = flattenReplies(replies);
-                flatReplies.forEach(r => {
+                flattenReplies(replies).forEach(r => {
                     const el = buildCEl(r);
-                    el.style.marginLeft = "0px"; // keep flat
+                    el.style.marginLeft = '0px';
                     cont.appendChild(el);
                 });
-                cont.style.display = 'block';
+                cont.dataset.loaded = 'true';
+                cont.style.display  = 'block';
+                btn.textContent = 'Hide replies';
+            })
+            .catch(() => {
+                btn.textContent = 'View ' + btn.dataset.cnt + ' replies';
+            });
+    }
+
+    function ppLoadReplies(parentId) {
+        let cont = document.getElementById('pp-r-' + parentId);
+        if (!cont) {
+            cont = document.createElement('div');
+            cont.className = 'pp-replies';
+            cont.id = 'pp-r-' + parentId;
+            const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
+            if (!parentBody) return;
+            parentBody.appendChild(cont);
+        }
+        fetch('/comments/replies/' + parentId)
+            .then(r => r.json())
+            .then(replies => {
+                cont.innerHTML = '';
+                flattenReplies(replies).forEach(r => {
+                    const el = buildCEl(r);
+                    el.style.marginLeft = '0px';
+                    cont.appendChild(el);
+                });
+                cont.style.display  = 'block';
                 cont.dataset.loaded = 'true';
             });
+    }
+
+    function ppDelete(id, el) {
+        fetch('/comments/delete/' + id, { method: 'POST', headers: secureHeaders(false) })
+            .then(r => {
+                if (!r.ok) { alert('Could not delete comment.'); return; }
+                const parentEl = el.closest('.pp-replies');
+                el.remove();
+                if (parentEl && parentEl.children.length === 0) {
+                    const parentCommentId = parentEl.id.replace('pp-r-', '');
+                    parentEl.remove();
+                    const vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentCommentId}"]`);
+                    if (vrBtn) vrBtn.remove();
+                }
+            })
+            .catch(console.error);
+    }
+
+    function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+    function fmtDate(iso) {
+        if (!iso) return '';
+        try { return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+        catch(e){ return ''; }
+    }
+
+    /* ── Tab switching ── */
+    function showTab(tabName, btn) {
+        const postsContent = document.getElementById('posts-content');
+        const savedContent = document.getElementById('saved-content');
+        const buttons = document.querySelectorAll('.tab-btn');
+        if (tabName === 'posts') {
+            postsContent.style.display = 'grid';
+            savedContent.style.display = 'none';
+        } else {
+            postsContent.style.display = 'none';
+            savedContent.style.display = 'grid';
+        }
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     }
 </script>
 </body>

@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="_csrf"        th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <title>Instagram</title>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" th:href="@{/css/feed.css}"/>
@@ -24,18 +24,20 @@
         <div class="search-dropdown" id="searchDropdown"></div>
     </div>
 
-    <div class="nav-icons" style="display:flex;align-items:center;gap:20px;font-size:24px;">
-        <a th:href="@{/posts}" title="Home" style="color:inherit;text-decoration:none;">
+    <div class="nav-icons" style="display: flex; align-items: center; gap: 20px; font-size: 24px;">
+        <a th:href="@{/posts}" title="Home" style="color: inherit; text-decoration: none;">
             <i class="fa-solid fa-house"></i>
         </a>
-        <a th:href="@{/posts/new}" title="New Post" style="color:inherit;text-decoration:none;">
+
+        <a th:href="@{/posts/new}" title="New Post" style="color: inherit; text-decoration: none;">
             <i class="fa-regular fa-square-plus"></i>
         </a>
-        <a th:href="@{/users/{id}/profile(id=${currentUser.id})}" title="Profile" style="color:inherit;text-decoration:none;">
+
+        <a th:href="@{/users/{id}/profile(id=${currentUser.id})}" title="Profile" style="color: inherit; text-decoration: none;">
             <i class="fa-regular fa-circle-user"></i>
         </a>
-        <form th:action="@{/logout}" method="post" style="display:inline;margin:0;">
-            <button type="submit" title="Logout" style="background:none;border:none;padding:0;cursor:pointer;color:inherit;font-size:24px;">
+        <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">
+            <button type="submit" title="Logout" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; font-size: 24px;">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </button>
         </form>
@@ -44,7 +46,9 @@
 
 <div class="layout">
     <main>
+
         <div class="post-card" th:each="post : ${posts}">
+
             <div class="post-header">
                 <a class="post-user" th:href="@{/users/{id}/profile(id=${post.user.id})}">
                     <div class="post-avatar">
@@ -52,40 +56,53 @@
                              th:src="${post.user.profilePicUrl}"
                              th:alt="${post.user.username}"
                              style="width:100%;height:100%;object-fit:cover;border-radius:50%;border:1.5px solid #000;"/>
+
                         <div class="post-avatar-inner"
                              th:unless="${post.user.profilePicUrl != null}"
-                             th:text="${not #strings.isEmpty(post.user.username) ? #strings.substring(post.user.username,0,1).toUpperCase() : '?'}">A</div>
+                             th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">A</div>
                     </div>
                     <div class="post-username" th:text="${post.user.username}">username</div>
                 </a>
 
-                <button th:if="${post.user.id == currentUser.id}"
+                <button
+                        th:if="${post.user.id == currentUser.id}"
                         class="post-more"
                         th:attr="data-post-id=${post.id}"
-                        onclick="openDeleteModal(this)" title="Delete">
+                        onclick="openDeleteModal(this)"
+                        title="Delete">
                     <i class="fa-regular fa-trash-can"></i>
                 </button>
             </div>
 
-            <div class="post-carousel-container" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none;">
-                <div th:each="media, mediaStat : ${post.carouselMedia}" class="carousel-slide" style="flex:0 0 100%;scroll-snap-align:start;position:relative;">
+            <div class="post-carousel-container" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none;">
+
+                <div th:each="media, mediaStat : ${post.carouselMedia}" class="carousel-slide" style="flex: 0 0 100%; scroll-snap-align: start; position: relative;">
+
                     <img th:if="${media.mediaType == 'IMAGE'}"
                          th:src="${media.mediaUrl}"
-                         style="width:100%;height:auto;max-height:600px;object-fit:cover;display:block;"
+                         style="width: 100%; height: auto; max-height: 600px; object-fit: cover; display: block;"
                          th:alt="${post.caption}"/>
+
                     <video th:if="${media.mediaType == 'VIDEO'}"
-                           th:src="${media.mediaUrl}" controls
-                           style="width:100%;height:auto;max-height:600px;object-fit:cover;display:block;"></video>
+                           th:src="${media.mediaUrl}"
+                           controls
+                           style="width: 100%; height: auto; max-height: 600px; object-fit: cover; display: block;">
+                    </video>
+
                     <div th:if="${#lists.size(post.carouselMedia) > 1}"
-                         style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:white;padding:4px 8px;border-radius:12px;font-size:12px;z-index:10;">
+                         class="slide-counter"
+                         style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; z-index: 10;">
                         <span th:text="${mediaStat.count}"></span> / <span th:text="${#lists.size(post.carouselMedia)}"></span>
                     </div>
+
                 </div>
+
             </div>
 
             <div class="post-actions" style="display: flex; align-items: center;">
                 <button class="action-btn like-btn"
-                        th:attr="data-post-id=${post.id}, data-liked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}"
+                        th:attr="data-post-id=${post.id},
+                 data-liked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}"
                         style="background: none; border: none; padding: 0; cursor: pointer; margin-right: 12px;"
                         title="Like">
                     <i class="fa-heart like-icon"
@@ -110,17 +127,17 @@
                             th:data-post-id="${post.id}"
                             title="Save" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit;">
                         <i th:id="'save-icon-' + ${post.id}"
-                           th:class="${#lists.contains(currentUser.savedPosts.![post.id], post.id)} ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'" style="font-size: 24px;">
+                           th:class="${#lists.contains(currentUser.savedPosts.![post.id], post.id)}
+                         ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'" style="font-size: 24px;">
                         </i>
                     </button>
                 </div>
             </div>
 
-
             <div class="likes-count">
                 <span th:id="'like-count-' + ${post.id}"
-                      th:with="lCount=${post.likes != null ? #lists.size(post.likes) : 0}"
-                      th:text="${lCount} + ' ' + (${lCount} == 1 ? 'like' : 'likes')"></span>
+                      th:text="${post.likes.size()} + ' ' + (${post.likes.size()} == 1 ? 'like' : 'likes')">
+                </span>
             </div>
 
             <div class="post-caption">
@@ -136,17 +153,22 @@
                 View all comments
             </button>
 
-            <div class="post-time" th:text="${post.createdAt}">2 hours ago</div>
 
-            <form class="post-comment-bar feed-comment-form"
-                  th:attr="data-post-id=${post.id}, data-user-id=${currentUser.id}"
-                  onsubmit="return feedSubmitComment(event, this)">
+            <div class="post-time" th:text="${#temporals.format(post.createdAt, 'MMMM d, yyyy')}">April 4, 2026</div>
+            <form class="post-comment-bar" th:action="@{/comments/add}" method="POST">
                 <span style="font-size:18px">&#128512;</span>
-                <input class="comment-input feed-comment-input" type="text"
-                       placeholder="Add a comment…" autocomplete="off"/>
+                <input type="hidden" name="postId" th:value="${post.id}"/>
+                <input type="hidden" name="userId" th:value="${currentUser.id}"/>
+                <input class="comment-input"
+                       type="text"
+                       name="content"
+                       placeholder="Add a comment?"
+                       autocomplete="off"/>
                 <button type="submit" class="post-btn">Post</button>
             </form>
+
         </div>
+
     </main>
 </div>
 
@@ -208,7 +230,7 @@
 </div>
 
 <script th:inline="javascript">
-    /* ── CSRF helpers ── */
+    /* ── CSRF ── */
     const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
     const currentUserId = /*[[${currentUser.id}]]*/ null;
@@ -220,31 +242,38 @@
     }
 
     /* ════════════════════════════════════════════════
-       FEED INLINE COMMENT (no reload)
+       DELETE MODAL LOGIC (Fixed)
     ════════════════════════════════════════════════ */
-    function feedSubmitComment(e, form) {
-        e.preventDefault();
-        const input   = form.querySelector('.feed-comment-input');
-        const content = input.value.trim();
-        if (!content) return false;
-
-        const postId = form.dataset.postId;
-        const userId = form.dataset.userId;
-
-        fetch('/posts/comments/add', {
-            method: 'POST',
-            headers: secureHeaders(true),
-            body: JSON.stringify({ postId: parseInt(postId), userId: parseInt(userId), content })
-        })
-            .then(r => r.json())
-            .then(() => {
-                input.value = '';
-                // Optional: You could dynamically update the comment count text here if needed.
-            })
-            .catch(console.error);
-
-        return false;
+    function openDeleteModal(btn) {
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('deleteForm');
+        form.action = '/posts/' + btn.dataset.postId + '/delete';
+        modal.style.display = 'flex';
     }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    /* ════════════════════════════════════════════════
+       BIO RENDERER
+    ════════════════════════════════════════════════ */
+    (function () {
+        const bioEl = document.getElementById('bioText');
+        if (!bioEl) return;
+        const raw = bioEl.getAttribute('data-bio') || '';
+        if (!raw.trim()) { bioEl.textContent = 'No bio yet.'; return; }
+        const urlRe = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+        bioEl.innerHTML = '';
+        raw.split(urlRe).forEach(part => {
+            if (urlRe.test(part)) {
+                const a = document.createElement('a');
+                a.href = part.startsWith('http') ? part : 'https://' + part;
+                a.textContent = part; a.target = '_blank'; a.rel = 'noopener noreferrer';
+                a.className = 'bio-link'; bioEl.appendChild(a);
+            } else { bioEl.appendChild(document.createTextNode(part)); }
+        });
+    })();
 
     /* ════════════════════════════════════════════════
        POST POPUP
@@ -252,9 +281,8 @@
     let ppMediaList = [], ppMediaIdx = 0, ppPostId = null, ppReplyId = null;
 
     function openPostPopup(postId) {
-        ppPostId  = postId;
+        ppPostId = postId;
         ppMediaList = []; ppMediaIdx = 0; ppReplyId = null;
-
         document.getElementById('ppOverlay').classList.add('pp-open');
         document.body.style.overflow = 'hidden';
         document.getElementById('ppScroll').innerHTML =
@@ -279,27 +307,18 @@
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closePP(); });
 
-    /* ── Render ── */
     function renderPopup(d) {
-        ppMediaList = d.media || [];
-        ppMediaIdx  = 0;
+        ppMediaList = d.media || []; ppMediaIdx = 0;
         renderMedia();
-
-        // Avatar
         const av = document.getElementById('ppAv');
-        if (d.user.profilePicUrl) {
-            av.innerHTML = `<img src="${esc(d.user.profilePicUrl)}" alt=""/>`;
-        } else {
-            av.textContent = (d.user.username || '?').charAt(0).toUpperCase();
-        }
+        if (d.user.profilePicUrl) av.innerHTML = `<img src="${esc(d.user.profilePicUrl)}" alt=""/>`;
+        else av.textContent = (d.user.username||'?').charAt(0).toUpperCase();
         document.getElementById('ppOwner').textContent = d.user.username;
-
         renderLike(d.liked, d.likeCount);
         document.getElementById('ppTime').textContent = fmtDate(d.createdAt);
         renderComments(d);
     }
 
-    /* ── Media carousel ── */
     function renderMedia() {
         const wrap = document.getElementById('ppMedia');
         const dots = document.getElementById('ppDots');
@@ -307,13 +326,9 @@
         const next = document.querySelector('.pp-next');
         const m = ppMediaList[ppMediaIdx];
         if (!m) { wrap.innerHTML = '<p style="color:#8e8e8e">No media</p>'; return; }
-
-        if (m.mediaType === 'IMAGE') {
-            wrap.innerHTML = `<img src="${esc(m.mediaUrl)}" style="width:100%;height:100%;object-fit:contain;" alt=""/>`;
-        } else {
-            wrap.innerHTML = `<video src="${esc(m.mediaUrl)}" controls style="width:100%;height:100%;object-fit:contain;"></video>`;
-        }
-
+        wrap.innerHTML = m.mediaType === 'IMAGE'
+            ? `<img src="${esc(m.mediaUrl)}" style="width:100%;height:100%;object-fit:contain;" alt=""/>`
+            : `<video src="${esc(m.mediaUrl)}" controls style="width:100%;height:100%;object-fit:contain;"></video>`;
         dots.innerHTML = '';
         ppMediaList.forEach((_, i) => {
             const d = document.createElement('div');
@@ -321,8 +336,7 @@
             d.onclick = () => { ppMediaIdx = i; renderMedia(); };
             dots.appendChild(d);
         });
-
-        prev.style.display = ppMediaList.length > 1 && ppMediaIdx > 0  ? 'flex' : 'none';
+        prev.style.display = ppMediaList.length > 1 && ppMediaIdx > 0 ? 'flex' : 'none';
         next.style.display = ppMediaList.length > 1 && ppMediaIdx < ppMediaList.length - 1 ? 'flex' : 'none';
     }
 
@@ -332,28 +346,23 @@
         ppMediaIdx = ni; renderMedia();
     }
 
-    /* ── Like ── */
     function renderLike(liked, count) {
         const icon = document.getElementById('ppLikeIcon');
         icon.className = liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
         icon.style.color = liked ? '#ff3040' : '';
-        const el = document.getElementById('ppLikeCount');
-        el.textContent = count > 0 ? count + (count === 1 ? ' like' : ' likes') : '';
+        document.getElementById('ppLikeCount').textContent =
+            count > 0 ? count + (count === 1 ? ' like' : ' likes') : '';
     }
 
     function ppLike() {
         if (!ppPostId) return;
         fetch('/posts/' + ppPostId + '/like', { method: 'POST', headers: secureHeaders(false) })
-            .then(r => r.json())
-            .then(d => renderLike(d.liked, d.likeCount))
-            .catch(console.error);
+            .then(r => r.json()).then(d => renderLike(d.liked, d.likeCount)).catch(console.error);
     }
 
-    /* ── Comments ── */
     function renderComments(d) {
         const scroll = document.getElementById('ppScroll');
         scroll.innerHTML = '';
-
         if (d.caption) {
             const cap = document.createElement('div');
             cap.className = 'pp-caption';
@@ -361,31 +370,28 @@
                 `<div class="pp-caption-text"><strong>${esc(d.user.username)}</strong>${esc(d.caption)}</div>`;
             scroll.appendChild(cap);
         }
-
-        if (!d.comments || d.comments.length === 0) {
-            scroll.insertAdjacentHTML('beforeend', '<div class="pp-no-comments">No comments yet.</div>');
+        if (!d.comments || !d.comments.length) {
+            scroll.insertAdjacentHTML('beforeend','<div class="pp-no-comments">No comments yet.</div>');
             return;
         }
-
         d.comments.forEach(c => scroll.appendChild(buildCEl(c)));
     }
 
     function buildAvHtml(u) {
-        if (u.profilePicUrl) return `<div class="pp-c-av"><img src="${esc(u.profilePicUrl)}" alt=""/></div>`;
-        return `<div class="pp-c-av">${(u.username || '?').charAt(0).toUpperCase()}</div>`;
+        return u.profilePicUrl
+            ? `<div class="pp-c-av"><img src="${esc(u.profilePicUrl)}" alt=""/></div>`
+            : `<div class="pp-c-av">${(u.username||'?').charAt(0).toUpperCase()}</div>`;
     }
 
     function buildCEl(c) {
         const isOwner = c.userId === currentUserId;
         const avHtml  = c.profilePicUrl
             ? `<div class="pp-c-av"><img src="${esc(c.profilePicUrl)}" alt=""/></div>`
-            : `<div class="pp-c-av">${(c.username || '?').charAt(0).toUpperCase()}</div>`;
-
+            : `<div class="pp-c-av">${(c.username||'?').charAt(0).toUpperCase()}</div>`;
         const el = document.createElement('div');
         el.className = 'pp-c';
         el.dataset.commentId = c.id;
         el.dataset.userId    = c.userId;
-
         el.innerHTML = `
             ${avHtml}
             <div class="pp-c-body">
@@ -393,37 +399,33 @@
               <div class="pp-c-meta">
                 <span>${fmtDate(c.createdAt)}</span>
                 <button class="pp-reply-btn" data-id="${c.id}" data-un="${esc(c.username)}">Reply</button>
-                <button class="pp-del-btn ${isOwner ? 'show' : ''}" data-id="${c.id}">Delete</button>
+                <button class="pp-del-btn ${isOwner?'show':''}" data-id="${c.id}">Delete</button>
               </div>
               ${c.replyCount > 0
             ? `<button class="pp-vr-btn" data-id="${c.id}" data-cnt="${c.replyCount}">
                      View ${c.replyCount} ${c.replyCount===1?'reply':'replies'}
                    </button>` : ''}
             </div>`;
-
-        el.querySelector('.pp-reply-btn').onclick = function () {
+        el.querySelector('.pp-reply-btn').onclick = function() {
             const repliesContainer = this.closest('.pp-replies');
+
             const rootId = repliesContainer ? repliesContainer.id.replace('pp-r-', '') : this.dataset.id;
+
             ppStartReply(rootId, this.dataset.un);
         };
-
         const db = el.querySelector('.pp-del-btn');
-        if (db) db.onclick = function () { ppDelete(this.dataset.id, el); };
-
+        if (db) db.onclick = function(){ ppDelete(this.dataset.id, el); };
         const vr = el.querySelector('.pp-vr-btn');
-        if (vr) vr.onclick = function () { ppToggleReplies(this, c.id); };
-
+        if (vr) vr.onclick = function(){ ppToggleReplies(this, c.id); };
         return el;
     }
 
-    /* ── Reply ── */
     function ppStartReply(id, username) {
         ppReplyId = id;
         document.getElementById('ppReplyLabel').textContent = '@' + username;
         document.getElementById('ppReplyBar').classList.add('on');
         const inp = document.getElementById('ppInput');
-        inp.placeholder = 'Reply to @' + username + '…';
-        inp.focus();
+        inp.placeholder = 'Reply to @' + username + '…'; inp.focus();
     }
 
     function ppCancelReply() {
@@ -435,51 +437,46 @@
         if (btn) btn.disabled = true;
     }
 
-    /* ── Submit comment ── */
     function ppSubmit() {
-        const inp     = document.getElementById('ppInput');
+        const inp = document.getElementById('ppInput');
         const content = inp.value.trim();
         if (!content || !ppPostId) return;
-
         const body = {
             postId:   parseInt(ppPostId),
             content,
             parentId: ppReplyId ? parseInt(ppReplyId) : null,
             replyingToUsername: ppReplyId
-                ? document.getElementById('ppReplyLabel').textContent.replace('@', '')
+                ? document.getElementById('ppReplyLabel').textContent.replace('@','')
                 : null
         };
-
-        fetch('/posts/comments/add', {
-            method: 'POST',
-            headers: secureHeaders(true),
-            body: JSON.stringify(body)
-        })
+        fetch('/posts/comments/add', { method:'POST', headers: secureHeaders(true), body: JSON.stringify(body) })
             .then(r => r.json())
             .then(nc => {
-                inp.value = '';
-                document.getElementById('ppPostBtn').disabled = true;
-                const rid = ppReplyId;
-                ppCancelReply();
-
+                inp.value = ''; document.getElementById('ppPostBtn').disabled = true;
+                const rid = ppReplyId; ppCancelReply();
                 if (!nc) return;
                 const scroll = document.getElementById('ppScroll');
-                const noC = scroll.querySelector('.pp-no-comments');
-                if (noC) noC.remove();
+                const noC = scroll.querySelector('.pp-no-comments'); if (noC) noC.remove();
 
                 if (rid) {
                     ppLoadReplies(rid);
 
                     let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${rid}"]`);
+
                     if (!vrBtn) {
                         const parentBody = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
+
                         if (parentBody) {
                             vrBtn = document.createElement('button');
                             vrBtn.className = 'pp-vr-btn';
                             vrBtn.dataset.id = rid;
                             vrBtn.dataset.cnt = 1;
                             vrBtn.textContent = 'Hide replies';
-                            vrBtn.onclick = function () { ppToggleReplies(this, rid); };
+
+                            vrBtn.onclick = function () {
+                                ppToggleReplies(this, rid);
+                            };
+
                             parentBody.appendChild(vrBtn);
                         }
                     } else {
@@ -487,12 +484,8 @@
                         vrBtn.dataset.cnt = newCount;
                         vrBtn.textContent = 'Hide replies';
                     }
-                } else {
-                    scroll.appendChild(buildCEl(nc));
-                    scroll.scrollTop = scroll.scrollHeight;
                 }
-            })
-            .catch(console.error);
+            }).catch(console.error);
     }
 
     function flattenReplies(replies) {
@@ -509,54 +502,59 @@
         return result;
     }
 
-    /* ── Toggle replies ── */
     function ppToggleReplies(btn, parentId) {
-        const cont = document.getElementById('pp-r-' + parentId);
-        if (!cont) return;
-
+        let cont = document.getElementById('pp-r-'+parentId);
+        if (!cont) {
+            cont = document.createElement('div');
+            cont.className = 'pp-replies';
+            cont.id = 'pp-r-' + parentId;
+            const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
+            if (!parentBody) return;
+            parentBody.appendChild(cont);
+        }
         if (cont.dataset.loaded === 'true') {
             const hidden = cont.style.display === 'none';
             cont.style.display = hidden ? 'block' : 'none';
             btn.innerHTML = hidden
                 ? 'Hide replies'
-                : 'View ' + btn.dataset.cnt + ' ' + (btn.dataset.cnt == 1 ? 'reply' : 'replies');
+                : 'View '+btn.dataset.cnt+' '+(btn.dataset.cnt==1?'reply':'replies');
             return;
         }
-
         btn.textContent = 'Loading…';
+        fetch('/comments/replies/'+parentId).then(r=>r.json()).then(replies=>{
+            cont.innerHTML = '';
+            replies.forEach(r => {
+                const el = buildCEl(r);
 
-        fetch('/comments/replies/' + parentId)
-            .then(r => r.json())
-            .then(replies => {
-                cont.innerHTML = '';
-                const flatReplies = flattenReplies(replies);
-                flatReplies.forEach(r => {
-                    const el = buildCEl(r);
-                    el.style.marginLeft = "0px";
-                    cont.appendChild(el);
-                });
+                // 🔥 FORCE FLAT UI
+                el.style.marginLeft = "0px";
 
-                cont.dataset.loaded = 'true';
-                cont.style.display  = 'block';
-                btn.textContent = 'Hide replies';
-            })
-            .catch(() => {
-                btn.textContent = 'View ' + btn.dataset.cnt + ' replies';
+                cont.appendChild(el);
             });
+            cont.dataset.loaded = 'true'; cont.style.display = 'block';
+            btn.textContent = 'Hide replies';
+        }).catch(()=>{ btn.textContent = 'View '+btn.dataset.cnt+' replies'; });
     }
 
-    /* ── Delete comment ── */
     function ppDelete(id, el) {
-        fetch('/comments/delete/' + id, { method: 'POST', headers: secureHeaders(false) })
+        fetch('/comments/delete/' + id, {
+            method: 'POST',
+            headers: secureHeaders(false)
+        })
             .then(r => {
-                if (!r.ok) { alert('Could not delete comment.'); return; }
+                if (!r.ok) {
+                    alert('Could not delete comment.');
+                    return;
+                }
 
                 const parentEl = el.closest('.pp-replies');
                 el.remove();
 
                 if (parentEl && parentEl.children.length === 0) {
                     const parentCommentId = parentEl.id.replace('pp-r-', '');
+
                     parentEl.remove();
+
                     const vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentCommentId}"]`);
                     if (vrBtn) vrBtn.remove();
                 }
@@ -564,14 +562,11 @@
             .catch(console.error);
     }
 
-    /* ── Helpers ── */
-    function esc(s) {
-        const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML;
-    }
-    function fmtDate(iso) {
-        if (!iso) return '';
-        try { return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
-        catch(e){ return ''; }
+    function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+    function fmtDate(iso){
+        if(!iso)return'';
+        try{ return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+        catch(e){return'';}
     }
 
     function ppLoadReplies(parentId) {
@@ -592,8 +587,8 @@
             .then(r => r.json())
             .then(replies => {
                 cont.innerHTML = '';
-                const flatReplies = flattenReplies(replies);
-                flatReplies.forEach(r => {
+
+                replies.forEach(r => {
                     const el = buildCEl(r);
                     el.style.marginLeft = "0px"; // keep flat
                     cont.appendChild(el);
@@ -603,40 +598,135 @@
                 cont.dataset.loaded = 'true';
             });
     }
+    (function () {
+        const input = document.getElementById('searchInput');
+        const dropdown = document.getElementById('searchDropdown');
 
-    /* ════════════════════════════════════════════════
-       DELETE POST MODAL
-    ════════════════════════════════════════════════ */
-    function openDeleteModal(btn) {
-        const modal = document.getElementById('deleteModal');
-        const form = document.getElementById('deleteForm');
-        form.action = '/posts/' + btn.dataset.postId + '/delete';
-        modal.style.display = 'flex';
-    }
+        if (!input || !dropdown) return;
 
-    function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; }
-    document.getElementById('deleteModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeDeleteModal(); });
+        let debounceTimer;
 
-    /* ════════════════════════════════════════════════
-       LIKE BUTTON (feed cards)
-    ════════════════════════════════════════════════ */
-    document.querySelectorAll('.like-btn').forEach(btn => {
-        const icon = btn.querySelector('.like-icon');
-        if (btn.dataset.liked === 'true') {
-            icon.classList.replace('fa-regular','fa-solid'); icon.style.color = '#ff3040';
+        input.addEventListener('input', function () {
+            const query = this.value.trim();
+
+            clearTimeout(debounceTimer);
+            dropdown.innerHTML = '';
+
+            if (query.length === 0) {
+                dropdown.classList.remove('open');
+                return;
+            }
+
+            // Debounce: wait 300ms after user stops typing
+            debounceTimer = setTimeout(() => {
+                fetch('/users/search?query=' + encodeURIComponent(query), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(res => res.json())
+                    .then(users => {
+                        dropdown.innerHTML = '';
+
+                        if (users.length === 0) {
+                            dropdown.innerHTML = '<div class="search-no-results">No users found</div>';
+                        } else {
+                            users.forEach(user => {
+                                const initial = user.username.charAt(0).toUpperCase();
+                                const item = document.createElement('a');
+                                item.href = `/users/${user.id}/profile`;
+                                item.className = 'search-result-item';
+                                item.innerHTML = `
+                                <div class="search-result-avatar">
+                                    <div class="search-result-avatar-inner">${initial}</div>
+                                </div>
+                                <div>
+                                    <div class="search-result-username">${escapeHtml(user.username)}</div>
+                                </div>
+                            `;
+                                dropdown.appendChild(item);
+                            });
+                        }
+
+                        dropdown.classList.add('open');
+                    })
+                    .catch(() => {
+                        // silently fail
+                    });
+            }, 300);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('searchWrap').contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        // Close on Escape key
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                dropdown.classList.remove('open');
+                input.blur();
+            }
+        });
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
+    })();
+
+    document.querySelectorAll('.like-btn').forEach(function (btn) {
+
+        const icon = btn.querySelector('.like-icon');
+
+        if (btn.dataset.liked === 'true') {
+            icon.classList.remove('fa-regular');
+            icon.classList.add('fa-solid');
+            icon.style.color = '#ff3040';
+        } else {
+            icon.classList.remove('fa-solid');
+            icon.classList.add('fa-regular');
+            icon.style.color = '';
+        }
+
         btn.addEventListener('click', function () {
-            const pid = this.dataset.postId;
-            fetch('/posts/' + pid + '/like', { method: 'POST', headers: secureHeaders(false) })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.liked) { icon.classList.replace('fa-regular','fa-solid'); icon.style.color='#ff3040'; }
-                    else            { icon.classList.replace('fa-solid','fa-regular');  icon.style.color=''; }
-                    const cnt = document.getElementById('like-count-'+pid);
-                    if (cnt) cnt.textContent = data.likeCount + ' ' + (data.likeCount===1?'like':'likes');
+            const postId = this.dataset.postId;
+            fetch('/posts/' + postId + '/like', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Like failed: ' + res.status);
+                    return res.json();
+                })
+                .then(function (data) {
+
+                    if (data.liked) {
+                        icon.classList.remove('fa-regular');
+                        icon.classList.add('fa-solid');
+                        icon.style.color = '#ff3040';    // Instagram red
+                    } else {
+                        icon.classList.remove('fa-solid');
+                        icon.classList.add('fa-regular');
+                        icon.style.color = '';
+                    }
+
+                    const countEl = document.getElementById('like-count-' + postId);
+                    if (countEl) {
+                        const text = data.likeCount === 1 ? 'like' : 'likes';
+                        countEl.textContent = data.likeCount + ' ' + text;
+                    }
+
                     btn.dataset.liked = data.liked ? 'true' : 'false';
                 })
-                .catch(console.error);
+                .catch(function (err) {
+                    console.error('Like toggle error:', err);
+                });
         });
     });
 
@@ -647,15 +737,21 @@
         button.addEventListener('click', async function() {
             const postId = this.getAttribute('data-post-id');
             const icon = document.getElementById('save-icon-' + postId);
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 
             try {
                 const response = await fetch(`/posts/${postId}/save`, {
                     method: 'POST',
-                    headers: secureHeaders(true) // Reuse existing secureHeaders function
+                    headers: {
+                        [csrfHeader]: csrfToken,
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (response.ok) {
                     const data = await response.json();
+                    // Toggle filled vs outline icon
                     if (data.saved) {
                         icon.classList.replace('fa-regular', 'fa-solid');
                     } else {
@@ -667,44 +763,6 @@
             }
         });
     });
-
-    /* ════════════════════════════════════════════════
-       SEARCH
-    ════════════════════════════════════════════════ */
-    (function () {
-        const input    = document.getElementById('searchInput');
-        const dropdown = document.getElementById('searchDropdown');
-        if (!input || !dropdown) return;
-        let timer;
-        input.addEventListener('input', function () {
-            const q = this.value.trim();
-            clearTimeout(timer); dropdown.innerHTML = '';
-            if (!q) { dropdown.classList.remove('open'); return; }
-            timer = setTimeout(() => {
-                fetch('/users/search?query=' + encodeURIComponent(q), { headers: {'X-Requested-With':'XMLHttpRequest'} })
-                    .then(r => r.json())
-                    .then(users => {
-                        dropdown.innerHTML = '';
-                        if (!users.length) { dropdown.innerHTML = '<div class="search-no-results">No users found</div>'; }
-                        else {
-                            users.forEach(u => {
-                                const a = document.createElement('a');
-                                a.href = '/users/'+u.id+'/profile';
-                                a.className = 'search-result-item';
-                                a.innerHTML = `<div class="search-result-avatar"><div class="search-result-avatar-inner">${u.username.charAt(0).toUpperCase()}</div></div>
-                                               <div><div class="search-result-username">${escHtml(u.username)}</div></div>`;
-                                dropdown.appendChild(a);
-                            });
-                        }
-                        dropdown.classList.add('open');
-                    }).catch(()=>{});
-            }, 300);
-        });
-        document.addEventListener('click', e => {
-            if (!document.getElementById('searchWrap').contains(e.target)) dropdown.classList.remove('open');
-        });
-        function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-    })();
 </script>
 </body>
 </html>
