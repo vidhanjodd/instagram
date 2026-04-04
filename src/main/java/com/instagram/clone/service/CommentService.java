@@ -87,7 +87,12 @@ public class CommentService {
         commentRepository.delete(comment);
     }
     private CommentResponse mapToResponseWithReplyCount(Comment comment) {
-        int replyCount = (comment.getReplies() != null) ? comment.getReplies().size() : 0;
+
+        List<CommentResponse> replies = (comment.getReplies() != null)
+                ? comment.getReplies().stream()
+                .map(this::mapToResponseWithReplyCount)
+                .toList()
+                : Collections.emptyList();
 
         return CommentResponse.builder()
                 .id(comment.getId())
@@ -96,8 +101,8 @@ public class CommentService {
                 .content(comment.getContent())
                 .profilePicUrl(comment.getUser().getProfilePicUrl())
                 .createdAt(comment.getCreatedAt())
-                .replyCount(replyCount)
-                .replies(Collections.emptyList())
+                .replyCount(replies.size())
+                .replies(replies)
                 .build();
     }
 
