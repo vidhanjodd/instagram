@@ -1,0 +1,246 @@
+/* RESET */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* VARIABLES */
+:root {
+    --bg: #000;
+    --text: #fff;
+    --muted: #a8a8a8;
+    --border: rgba(255,255,255,0.1);
+}
+
+/* BODY */
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+}
+
+/* NAVBAR */
+.nav-bar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 54px;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+}
+
+.nav-logo {
+    font-family: 'Grand Hotel', cursive;
+    font-size: 26px;
+    background: linear-gradient(45deg,#833ab4,#fd1d1d,#fcb045);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-title {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* CONTAINER */
+.reels-container {
+    height: calc(100vh - 54px);
+    margin-top: 54px;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+}
+
+/* REEL */
+.reel {
+    height: calc(100vh - 54px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    scroll-snap-align: start;
+}
+
+/* VIDEO */
+.reel-video {
+    height: 90vh;
+    max-width: 420px;
+    aspect-ratio: 9/16;
+    border-radius: 14px;
+    object-fit: cover;
+}
+
+/* LEFT (TEXT OVERLAY) */
+.reel-left {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 420px;
+    padding: 0 12px;
+}
+
+.username {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.caption {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+/* RIGHT ACTIONS */
+.reel-right {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(210px);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    align-items: center;
+}
+
+/* ACTION */
+.action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    font-size: 22px;
+    transition: transform 0.15s ease;
+}
+
+.action:hover {
+    transform: scale(1.15);
+}
+
+.action span {
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* LIKE ACTIVE */
+.like-btn.liked i {
+    color: #ff3040;
+    transform: scale(1.2);
+}
+
+/* ---------------- COMMENT SHEET ---------------- */
+
+.comment-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 200;
+}
+
+.comment-modal.hidden {
+    display: none;
+}
+
+/* SHEET */
+.comment-sheet {
+    width: 100%;
+    max-width: 500px;
+    height: 70vh;
+    background: #111;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.25s ease;
+}
+
+/* ANIMATION */
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* HEADER */
+.comment-header {
+    text-align: center;
+    padding: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+}
+
+/* LIST */
+.comment-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* COMMENT ITEM */
+.comment-item {
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.comment-item b {
+    margin-right: 6px;
+}
+
+/* EMPTY */
+.empty-comments {
+    text-align: center;
+    color: var(--muted);
+    margin-top: 20px;
+}
+
+/* INPUT BAR */
+.comment-input-bar {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    background: #111;
+}
+
+.comment-input-bar input {
+    flex: 1;
+    background: #222;
+    border: none;
+    padding: 10px;
+    border-radius: 20px;
+    color: white;
+    outline: none;
+}
+
+.comment-input-bar button {
+    background: transparent;
+    color: #0095f6;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* SCROLLBAR CLEAN */
+.comment-list::-webkit-scrollbar {
+    width: 4px;
+}
+.comment-list::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}

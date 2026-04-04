@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Instagram · Reels</title>
+
+    <link rel="stylesheet" th:href="@{/css/reel-list.css}"/>
+
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
+
+<nav class="nav-bar">
+    <a class="nav-logo" th:href="@{/posts}">Instagram</a>
+    <div class="nav-title">Reels</div>
+</nav>
+
+<div class="reels-container">
+
+    <div th:if="${#lists.isEmpty(reels)}" class="no-reels-message">
+        <h2>No Reels Yet</h2>
+        <a th:href="@{/reels/create}">Create One</a>
+    </div>
+
+    <div th:each="reel : ${reels}" class="reel">
+
+        <!-- VIDEO -->
+        <video class="reel-video"
+               th:data-id="${reel.id}"
+               muted loop playsinline>
+            <source th:src="${reel.videoUrl}" type="video/mp4">
+        </video>
+
+        <!-- LEFT -->
+        <div class="reel-left">
+            <div class="username" th:text="${reel.user.username}">username</div>
+            <div class="caption" th:text="${reel.caption}">caption</div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="reel-right">
+
+            <div class="action like-btn" th:data-id="${reel.id}">
+                <i class="fa-regular fa-heart"></i>
+                <span th:text="${reel.likeCount}">0</span>
+            </div>
+
+            <div class="action comment-btn" th:data-id="${reel.id}">
+                <i class="fa-regular fa-comment"></i>
+                <span th:text="${reel.commentCount}">0</span>
+            </div>
+
+            <div class="action view-count">
+                <i class="fa-regular fa-eye"></i>
+                <span th:text="${reel.viewCount}">0</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- INSTAGRAM STYLE COMMENT SHEET -->
+<div id="commentModal" class="comment-modal hidden">
+    <div class="comment-sheet">
+
+        <div class="comment-header">
+            Comments
+        </div>
+
+        <div id="commentList" class="comment-list"></div>
+
+        <div class="comment-input-bar">
+            <input id="commentInput" placeholder="Add a comment..." />
+            <button id="postComment">Post</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // ✅ FIXED: decode CSRF token correctly
+    function getCsrfToken() {
+        const match = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('XSRF-TOKEN='));
+        if (!match) return '';
+        return decodeURIComponent(match.split('=')[1]);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const csrfToken = getCsrfToken();
+
+        /* ---------- LIKE ---------- */
+        document.querySelectorAll('.like-btn').forEach(async (btn) => {
+
+            const reelId = btn.dataset.id;
+
+            try {
+                const res = await fetch(`/reels/${reelId}/liked`);
+                if (res.ok) {
+                    const liked = await res.json();
+                    if (liked) btn.classList.add('liked');
+                }
+            } catch {}
+
+            btn.addEventListener('click', async () => {
+
+                const liked = btn.classList.contains('liked');
+                const url = liked
+                    ? `/reels/${reelId}/unlike`
+                    : `/reels/${reelId}/like`;
+
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-XSRF-TOKEN': csrfToken
+                        }
+                    });
+
+                    const count = await res.text();
+                    btn.querySelector('span').textContent = count;
+                    btn.classList.toggle('liked');
+
+                } catch {}
+            });
+        });
+
+        /* ---------- COMMENTS ---------- */
+        const modal = document.getElementById('commentModal');
+        const commentList = document.getElementById('commentList');
+        const input = document.getElementById('commentInput');
+        const postBtn = document.getElementById('postComment');
+
+        let currentReelId = null;
+
+        document.querySelectorAll('.comment-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+
+                currentReelId = btn.dataset.id;
+                modal.classList.remove('hidden');
+
+                commentList.innerHTML = "Loading...";
+
+                try {
+                    const res = await fetch(`/reels/${currentReelId}/comments`);
+                    const comments = await res.json();
+
+                    if (!comments.length) {
+                        commentList.innerHTML = "No comments yet";
+                        return;
+                    }
+
+                    renderComments(comments);
+
+                } catch {
+                    commentList.innerHTML = "Failed to load";
+                }
+            });
+        });
+
+        function renderComments(comments) {
+            commentList.innerHTML = comments.map(c => `
+                <div class="comment-item">
+                    <b>${c.username}</b>
+                    <span>${c.content}</span>
+                </div>
+            `).join('');
+        }
+
+        /* POST COMMENT */
+        postBtn.addEventListener('click', postComment);
+        input.addEventListener('keypress', e => {
+            if (e.key === 'Enter') postComment();
+        });
+
+        async function postComment() {
+
+            const text = input.value.trim();
+            if (!text) return;
+
+            try {
+                // ✅ FIXED: send JSON instead of form-urlencoded
+                const res = await fetch(`/reels/${currentReelId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-XSRF-TOKEN': getCsrfToken()
+                    },
+                    body: JSON.stringify({
+                        reelId: parseInt(currentReelId),
+                        content: text
+                    })
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const newComment = await res.json();
+
+                commentList.insertAdjacentHTML('afterbegin', `
+                    <div class="comment-item">
+                        <b>${newComment.username}</b>
+                        <span>${newComment.content}</span>
+                    </div>
+                `);
+
+                input.value = "";
+
+                const reel = document.querySelector(`video[data-id='${currentReelId}']`).closest('.reel');
+                const count = reel.querySelector('.comment-btn span');
+                count.textContent = parseInt(count.textContent || "0") + 1;
+
+            } catch (e) {
+                console.error("Failed to post comment:", e);
+            }
+        }
+
+        /* CLOSE */
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        });
+
+        /* ---------- VIEW ---------- */
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+
+                const video = entry.target;
+                const reelId = video.dataset.id;
+
+                if (entry.isIntersecting) {
+                    video.play().catch(() => {});
+
+                    if (!video.dataset.viewed) {
+                        video.dataset.viewed = "true";
+
+                        fetch(`/reels/${reelId}/view`, {
+                            method: 'POST',
+                            headers: {
+                                'X-XSRF-TOKEN': csrfToken
+                            }
+                        })
+                        .then(res => res.text())
+                        .then(count => {
+                            const reel = video.closest('.reel');
+                            reel.querySelector('.view-count span').textContent = count;
+                        });
+                    }
+
+                } else {
+                    video.pause();
+                }
+            });
+        }, { threshold: 0.7 });
+
+        document.querySelectorAll('.reel-video').forEach(v => observer.observe(v));
+
+    });
+</script>
+
+</body>
+</html>

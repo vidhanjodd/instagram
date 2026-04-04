@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reel</title>
+
+    <link rel="stylesheet" th:href="@{/css/reel-detail.css}" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<nav class="nav-bar">
+    <a class="nav-logo" th:href="@{/reels}">Instagram</a>
+    <a class="nav-back" th:href="@{/reels}">← Back</a>
+</nav>
+
+<div class="reel-page-container">
+    <div class="reel-main">
+
+        <!-- VIDEO -->
+        <div class="reel-video-section">
+            <video id="reelVideo" autoplay loop playsinline
+                   th:src="${reel.videoUrl}" class="reel-video"></video>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="reel-sidebar">
+
+            <div class="reel-user-card">
+                <img class="reel-avatar"
+                     th:src="${reel.user.profilePicUrl != null ? reel.user.profilePicUrl : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}">
+                <span class="username" th:text="${reel.user.username}"></span>
+            </div>
+
+            <div class="reel-caption" th:if="${reel.caption}">
+                <span th:text="${reel.caption}"></span>
+            </div>
+
+            <div class="reel-stats">
+                <span class="stat-value" th:text="${reel.likeCount}">0</span>
+                <span class="stat-value" th:text="${reel.commentCount}">0</span>
+                <span class="stat-value" th:text="${reel.viewCount}">0</span>
+            </div>
+
+            <div class="reel-actions">
+                <button type="button" id="likeBtn">♡</button>
+                <button type="button" id="commentBtn">💬</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- COMMENTS MODAL -->
+<div id="commentModal" class="comment-modal hidden">
+    <div class="comment-box">
+
+        <div class="comment-header">Comments</div>
+
+        <div id="commentList" class="comment-list"></div>
+
+        <div class="comment-input-bar">
+            <input id="commentInput" placeholder="Add a comment..." />
+            <button type="button" id="postCommentBtn">Post</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- 🔥 IMPORTANT: inject userId correctly -->
+<script th:inline="javascript">
+    const userId = [[${currentUser.id}]];
+</script>
+
+<script>
+    function getCsrfToken() {
+     const match = document.cookie
+         .split('; ')
+         .find(row => row.startsWith('XSRF-TOKEN='));
+     if (!match) return '';
+     return decodeURIComponent(match.split('=')[1]);
+ }
+
+     document.addEventListener('DOMContentLoaded', async () => {
+
+         const reelId = parseInt(window.location.pathname.split('/').pop());
+
+         const statValues = document.querySelectorAll('.stat-value');
+         const likeStat = statValues[0];
+         const commentStat = statValues[1];
+         const viewStat = statValues[2];
+
+         const likeBtn = document.getElementById('likeBtn');
+         const commentBtn = document.getElementById('commentBtn');
+         const modal = document.getElementById('commentModal');
+         const commentList = document.getElementById('commentList');
+         const input = document.getElementById('commentInput');
+         const postBtn = document.getElementById('postCommentBtn');
+         const video = document.getElementById('reelVideo');
+
+         let isLiked = false;
+
+         // ---------------- VIEW ----------------
+         try {
+             const res = await fetch(`/reels/${reelId}/view`, {
+                 method: 'POST',
+                 headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+             });
+             if (res.ok) viewStat.textContent = await res.text();
+         } catch {}
+
+         // ---------------- LIKE STATE ----------------
+         try {
+             const res = await fetch(`/reels/${reelId}/liked`);
+             if (res.ok) {
+                 isLiked = await res.json();
+                 likeBtn.textContent = isLiked ? '❤️' : '♡';
+             }
+         } catch {}
+
+         // ---------------- LIKE ----------------
+         likeBtn.addEventListener('click', async () => {
+             try {
+                 const url = isLiked
+                     ? `/reels/${reelId}/unlike`
+                     : `/reels/${reelId}/like`;
+
+                 const res = await fetch(url, {
+                     method: 'POST',
+                     headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+                 });
+
+                 if (!res.ok) throw new Error();
+
+                 const count = await res.text();
+
+                 isLiked = !isLiked;
+                 likeBtn.textContent = isLiked ? '❤️' : '♡';
+                 likeStat.textContent = count;
+
+             } catch (e) {
+                 console.error(e);
+             }
+         });
+
+         // ---------------- VIDEO ----------------
+         video.addEventListener('click', () => {
+             video.paused ? video.play() : video.pause();
+         });
+
+         // ---------------- OPEN COMMENTS ----------------
+         commentBtn.addEventListener('click', async () => {
+             modal.classList.remove('hidden');
+
+             try {
+                 const res = await fetch(`/reels/${reelId}/comments`);
+                 const comments = await res.json();
+
+                 commentList.innerHTML = '';
+
+                 if (!comments.length) {
+                     commentList.innerHTML = '<div>No comments yet</div>';
+                     return;
+                 }
+
+                 comments.forEach(c => {
+                     commentList.innerHTML += `
+                         <div class="comment-item">
+                             <b>${c.username}</b>
+                             <span>${c.content}</span>
+                         </div>
+                     `;
+                 });
+
+             } catch (e) {
+                 console.error(e);
+             }
+         });
+
+         // ---------------- CLOSE ----------------
+         modal.addEventListener('click', (e) => {
+             if (e.target === modal) modal.classList.add('hidden');
+         });
+
+         // ---------------- POST COMMENT ----------------
+         async function postComment() {
+             const content = input.value.trim();
+             if (!content) return;
+
+             try {
+                 const res = await fetch(`/reels/${reelId}/comments`, {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-XSRF-TOKEN': getCsrfToken()
+                     },
+                     body: JSON.stringify({
+                         reelId: reelId,
+                         userId: userId,
+                         content: content
+                     })
+                 });
+
+                 if (!res.ok) throw new Error();
+
+                 const newComment = await res.json();
+
+                 commentList.innerHTML =
+                     `<div class="comment-item">
+                         <b>${newComment.username}</b>
+                         <span>${newComment.content}</span>
+                     </div>`
+                     + commentList.innerHTML;
+
+                 input.value = '';
+
+                 commentStat.textContent =
+                     parseInt(commentStat.textContent || 0) + 1;
+
+             } catch (e) {
+                 console.error(e);
+             }
+         }
+
+         postBtn.addEventListener('click', postComment);
+
+         input.addEventListener('keypress', (e) => {
+             if (e.key === 'Enter') postComment();
+         });
+
+     });
+</script>
+
+</body>
+</html>

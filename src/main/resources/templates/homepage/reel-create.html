@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Instagram · New Reel</title>
+    <link rel="stylesheet" th:href="@{/css/reel-create.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<nav>
+    <a class="nav-logo" th:href="@{/posts}">Instagram</a>
+    <div style="font-size:16px; font-weight:600;">New Reel</div>
+    <a class="nav-back" th:href="@{/posts}">✕</a>
+</nav>
+
+<div class="page">
+    <div th:if="${error}" class="alert" style="color: red; padding: 10px; text-align: center;" th:text="${error}"></div>
+
+    <form th:action="@{/reels/create}" method="post" enctype="multipart/form-data" id="reelForm">
+
+        <div class="modal">
+            <div class="modal-header">
+                <span style="color:var(--muted); font-size:14px;"></span>
+                <span class="modal-title">New Reel</span>
+                <button type="submit" class="share-btn" id="shareBtn">Share</button>
+            </div>
+
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('videoInput').click()">
+                <div class="upload-icon">🎬</div>
+                <div class="upload-title">Drag your video here</div>
+                <div class="upload-subtitle">Max. 1 video, up to 30 seconds</div>
+                <button type="button" class="upload-btn" onclick="event.stopPropagation(); document.getElementById('videoInput').click()">
+                    Select from computer
+                </button>
+                <input type="file" id="videoInput" name="file" accept="video/*"
+                       onchange="handleVideoSelect(this)" style="display: none;"/>
+            </div>
+
+            <div id="previewContainer" class="preview-container" style="display: none;">
+                <div class="video-wrapper">
+                    <video id="videoPreview" controls></video>
+                    <button type="button" class="remove-video-btn" onclick="removeVideo()">✕</button>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <div class="user-row">
+                    <div class="user-avatar">
+                        <div class="user-avatar-inner">👤</div>
+                    </div>
+                    <div class="user-name" th:text="${#authentication != null ? #authentication.name : 'username'}">username</div>
+                </div>
+                <textarea class="caption-input" name="caption"
+                          placeholder="Write a caption for your Reel…" maxlength="2200"
+                          oninput="updateCount(this)"></textarea>
+                <div class="caption-footer">
+                    <span class="char-count" id="charCount">0 / 2200</span>
+                </div>
+                <div class="duration-info" id="durationInfo" style="display: none;">
+                    <span>Video duration: <strong id="videoDuration">0</strong>s / 30s</span>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('shareBtn').disabled = true;
+    });
+
+    let selectedVideo = null;
+
+    function handleVideoSelect(input) {
+        const file = input.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        // Check if it's a video file
+        if (!file.type.startsWith('video/')) {
+            alert('Please select a valid video file');
+            input.value = '';
+            return;
+        }
+
+        // Check file size (max 50MB as per application.properties)
+        if (file.size > 50 * 1024 * 1024) {
+            alert('Video file is too large. Maximum 50MB allowed.');
+            input.value = '';
+            return;
+        }
+
+        selectedVideo = file;
+        input.value = '';
+
+        renderVideoPreview();
+    }
+
+    function renderVideoPreview() {
+        const area = document.getElementById('uploadArea');
+        const previewContainer = document.getElementById('previewContainer');
+        const videoPreview = document.getElementById('videoPreview');
+        const durationInfo = document.getElementById('durationInfo');
+        const shareBtn = document.getElementById('shareBtn');
+
+        if (!selectedVideo) {
+            area.style.display = 'flex';
+            previewContainer.style.display = 'none';
+            durationInfo.style.display = 'none';
+            shareBtn.disabled = true;
+            return;
+        }
+
+        area.style.display = 'none';
+        previewContainer.style.display = 'block';
+        durationInfo.style.display = 'block';
+
+        const url = URL.createObjectURL(selectedVideo);
+        videoPreview.src = url;
+
+        // Check video duration when metadata is loaded
+        videoPreview.onloadedmetadata = function() {
+            const duration = Math.floor(videoPreview.duration);
+            document.getElementById('videoDuration').textContent = duration;
+
+            if (duration > 30) {
+                document.getElementById('durationInfo').style.color = '#e1306c';
+                shareBtn.disabled = true;
+                alert('Video is too long! Maximum duration is 30 seconds.');
+            } else {
+                document.getElementById('durationInfo').style.color = '#8e8e8e';
+                shareBtn.disabled = false;
+                updateInputFile();
+            }
+        };
+    }
+
+    function removeVideo() {
+        selectedVideo = null;
+        document.getElementById('videoInput').value = '';
+        renderVideoPreview();
+    }
+
+    function updateInputFile() {
+        if (!selectedVideo) {
+            return;
+        }
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(selectedVideo);
+        document.getElementById('videoInput').files = dataTransfer.files;
+    }
+
+    function updateCount(el) {
+        document.getElementById('charCount').textContent = el.value.length + ' / 2200';
+    }
+
+    document.getElementById('reelForm').addEventListener('submit', function (e) {
+        if (!selectedVideo) {
+            e.preventDefault();
+            alert('Please select a video to upload');
+            return;
+        }
+
+        const videoElement = document.getElementById('videoPreview');
+        if (videoElement.duration > 30) {
+            e.preventDefault();
+            alert('Video exceeds 30 second limit');
+            return;
+        }
+    });
+
+    // Handle drag and drop
+    const uploadArea = document.getElementById('uploadArea');
+    
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.background = 'rgba(255,255,255,0.05)';
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.background = '';
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.background = '';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            document.getElementById('videoInput').files = files;
+            handleVideoSelect(document.getElementById('videoInput'));
+        }
+    });
+</script>
+</body>
+</html>
