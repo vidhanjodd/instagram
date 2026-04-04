@@ -97,10 +97,6 @@
             <a th:href="@{/posts/new}" class="create-btn">+ Share your first photo</a>
         </div>
 
-        <!--
-            FIX: removed iframe approach (openPostModal with <iframe>).
-            Now uses the same openPostPopup() as feed — REST API, no reload.
-        -->
         <div class="grid-item"
              th:each="post : ${posts}"
              th:attr="data-post-id=${post.id}"
