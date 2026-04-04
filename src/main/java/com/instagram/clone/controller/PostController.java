@@ -1,5 +1,6 @@
 package com.instagram.clone.controller;
 
+import com.instagram.clone.entity.Comment;
 import com.instagram.clone.entity.Post;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.UserRepository;
@@ -14,6 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/posts")
@@ -95,12 +97,19 @@ public class PostController {
         return "redirect:/posts";
     }
 
-    @GetMapping("/posts/{id}")
-    public String getPostDetails(@PathVariable Long id, Model model) {
+    @GetMapping("/{id}")
+    public String getPostDetails(@PathVariable Long id, Model model, Principal principal) {
         Post post = postService.getPostById(id);
 
         model.addAttribute("post", post);
-        model.addAttribute("comments", post.getComments());
+
+        List<Comment> topLevelComments = post.getComments().stream()
+                .filter(comment -> comment.getParent() == null)
+                .collect(Collectors.toList());
+
+        model.addAttribute("comments", topLevelComments);
+
+        model.addAttribute("currentUser", getCurrentUser(principal));
 
         return "homepage/post-details";
     }

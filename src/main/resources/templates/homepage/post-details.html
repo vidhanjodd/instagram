@@ -8,8 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" th:href="@{/css/post-details.css}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-    <meta name="_csrf" th:content="${_csrf.token}" />
-    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="_csrf" th:content="${_csrf?.token}" />
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}" />
 </head>
 <body>
 
@@ -85,28 +85,28 @@
                 </div>
 
                 <div id="commentsList"
-                     th:attr="data-current-user-id=${currentUser.id}">
+                     th:attr="data-current-user-id=${currentUser?.id}">
 
                     <div class="comment-item"
                          th:each="comment : ${comments}"
                          th:id="'comment-' + ${comment.id}"
-                         th:attr="data-comment-id=${comment.id}, data-user-id=${comment.userId}, data-reply-count=${comment.replyCount}">
+                         th:attr="data-comment-id=${comment.id}, data-user-id=${comment.user?.id}, data-reply-count=${comment.replies != null ? #lists.size(comment.replies) : 0}">
 
                         <div class="small-avatar">
 
-                            <img th:if="${comment.profilePicUrl != null}"
-                                 th:src="${comment.profilePicUrl}"
+                            <img th:if="${comment.user?.profilePicUrl != null}"
+                                 th:src="${comment.user?.profilePicUrl}"
                                  style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
 
-                            <span th:unless="${comment.profilePicUrl != null}"
-                                  th:text="${#strings.substring(comment.username, 0, 1).toUpperCase()}">
+                            <span th:unless="${comment.user?.profilePicUrl != null}"
+                                  th:text="${comment.user?.username != null ? #strings.substring(comment.user.username, 0, 1).toUpperCase() : 'U'}">
                             </span>
 
                         </div>
 
                         <div class="comment-body">
                             <div class="comment-text">
-                                <strong th:text="${comment.username}">user</strong>
+                                <strong th:text="${comment.user?.username}">user</strong>
                                 <span th:text="${comment.content}">comment text</span>
                             </div>
 
@@ -115,7 +115,7 @@
                                       th:text="${#temporals.format(comment.createdAt, 'MMM d')}">Jan 1</span>
 
                                 <button class="reply-btn"
-                                        th:attr="data-comment-id=${comment.id}, data-username=${comment.username}">
+                                        th:attr="data-comment-id=${comment.id}, data-username=${comment.user?.username}">
                                     Reply
                                 </button>
 
@@ -126,9 +126,9 @@
                             </div>
 
                             <button class="view-replies-btn"
-                                    th:if="${comment.replyCount > 0}"
-                                    th:attr="data-comment-id=${comment.id}, data-reply-count=${comment.replyCount}">
-                                View <span th:text="${comment.replyCount}">0</span> replies
+                                    th:if="${comment.replies != null and #lists.size(comment.replies) > 0}"
+                                    th:attr="data-comment-id=${comment.id}, data-reply-count=${#lists.size(comment.replies)}">
+                                View <span th:text="${#lists.size(comment.replies)}">0</span> replies
                             </button>
 
                             <div class="replies-list"
@@ -146,7 +146,7 @@
 
                     <form id="likeForm" th:action="@{/posts/{postId}/like(postId=${post.id})}" method="post" style="display: inline;">
                         <button type="submit" class="action-btn" title="Like" style="padding: 0;">
-                            <span th:with="isLiked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}">
+                            <span th:with="isLiked=${post.likes != null and currentUser != null and post.likes.![user?.id].contains(currentUser.id)}">
                                 <i id="likeIcon"
                                    th:class="${isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"
                                    th:style="${isLiked ? 'color: #ff3040;' : ''}"></i>
@@ -182,7 +182,7 @@
                       id="commentForm">
 
                     <input type="hidden" name="postId" th:value="${post.id}"/>
-                    <input type="hidden" name="userId" th:value="${currentUser.id}"/>
+                    <input type="hidden" name="userId" th:value="${currentUser?.id}"/>
                     <input type="hidden" name="parentId" id="parentIdField" value=""/>
                     <input type="hidden" name="replyingToUsername" id="replyingToUsername" />
 
@@ -202,15 +202,39 @@
 </div>
 
 <script th:inline="javascript">
-    const currentUserId = [[${currentUser.id}]];
+    const currentUserId = [[${currentUser?.id}]];
+
+    // Helper functions to get the exact CSRF token and header name Spring Boot expects
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="_csrf"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    function getCsrfHeader() {
+        const meta = document.querySelector('meta[name="_csrf_header"]');
+        return meta ? meta.getAttribute('content') : 'X-CSRF-TOKEN';
+    }
+
+    // Standard headers for all secure fetch requests
+    function getSecureHeaders() {
+        const headers = { 'Accept': 'application/json' };
+        const token = getCsrfToken();
+        const headerName = getCsrfHeader();
+        if (token && headerName) {
+            headers[headerName] = token;
+        }
+        return headers;
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         initComments();
 
         const input = document.getElementById('commentInput');
-        input.addEventListener('input', function () {
-            document.getElementById('submitBtn').disabled = !this.value.trim();
-        });
+        if (input) {
+            input.addEventListener('input', function () {
+                document.getElementById('submitBtn').disabled = !this.value.trim();
+            });
+        }
 
         const likeForm = document.getElementById('likeForm');
         if (likeForm) {
@@ -219,12 +243,12 @@
 
                 fetch(this.action, {
                     method: 'POST',
-                    headers: {
-                        'X-XSRF-TOKEN': getCsrfToken(),
-                        'Accept': 'application/json'
-                    }
+                    headers: getSecureHeaders()
                 })
-                .then(function(response) { return response.json(); })
+                .then(function(response) {
+                    if (!response.ok) throw new Error("Failed to like post");
+                    return response.json();
+                })
                 .then(function(data) {
                     const icon = document.getElementById('likeIcon');
                     if (data.liked) {
@@ -243,7 +267,7 @@
                     }
                 })
                 .catch(function(error) {
-                    console.error(error);
+                    console.error("Like Error:", error);
                 });
             });
         }
@@ -252,7 +276,6 @@
     function initComments() {
         const list = document.getElementById('commentsList');
         if (!list) return;
-
         list.querySelectorAll('.comment-item').forEach(wireCommentItem);
     }
 
@@ -283,7 +306,7 @@
         }
     }
 
-   function prepareReply(commentId, username) {
+    function prepareReply(commentId, username) {
         let parentCommentId = commentId;
         const commentElement = document.querySelector('[data-comment-id="' + commentId + '"]');
         const parentContainer = commentElement.closest('.comment-item');
@@ -296,6 +319,7 @@
         document.getElementById('parentIdField').value = parentCommentId;
         document.getElementById('replyingToUsername').value = username;
         document.getElementById('reply-username-label').textContent = '@' + username;
+        document.getElementById('reply-info').classList.remove('hidden');
         document.getElementById('reply-info').classList.add('active');
 
         const input = document.getElementById('commentInput');
@@ -305,6 +329,7 @@
 
     function cancelReply() {
         document.getElementById('parentIdField').value = '';
+        document.getElementById('reply-info').classList.remove('active');
         document.getElementById('reply-info').classList.add('hidden');
 
         const input = document.getElementById('commentInput');
@@ -313,7 +338,8 @@
         document.getElementById('submitBtn').disabled = true;
     }
 
-    document.getElementById('cancel-reply-btn').addEventListener('click', cancelReply);
+    const cancelBtn = document.getElementById('cancel-reply-btn');
+    if (cancelBtn) cancelBtn.addEventListener('click', cancelReply);
 
     function toggleReplies(btn, parentId) {
         const container = document.getElementById('replies-' + parentId);
@@ -331,10 +357,14 @@
             return;
         }
 
+        const originalText = btn.innerHTML;
         btn.textContent = 'Loading…';
 
         fetch('/comments/replies/' + parentId)
-            .then(function (res) { return res.json(); })
+            .then(function (res) {
+                if (!res.ok) throw new Error("Server returned " + res.status);
+                return res.json();
+            })
             .then(function (replies) {
                 container.innerHTML = '';
 
@@ -349,22 +379,27 @@
                 btn.innerHTML = 'Hide replies';
             })
             .catch(function (err) {
-                btn.textContent = 'View ' + btn.dataset.replyCount + ' replies';
+                console.error("View Replies Error:", err);
+                alert("Could not load replies. Check your backend terminal for errors!");
+                btn.innerHTML = originalText; // Reset button text
             });
     }
 
     function buildReplyElement(reply) {
         const initial = reply.username ? reply.username.charAt(0).toUpperCase() : '?';
-        const isOwner = reply.userId === currentUserId;
 
-         const avatar = reply.profilePicUrl
-        ? `<img src="${reply.profilePicUrl}"
-                style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
-        : `<span>${initial}</span>`;
+        // Failsafe check in case your CommentResponse DTO uses different field names (like reply.id instead of reply.userId)
+        const authorId = reply.userId || reply.user_id || reply.id;
+        const isOwner = authorId === currentUserId;
+
+        const avatar = reply.profilePicUrl || reply.profilePictureUrl
+            ? `<img src="${reply.profilePicUrl || reply.profilePictureUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
+            : `<span>${initial}</span>`;
+
         const item = document.createElement('div');
         item.className = 'comment-item';
         item.dataset.commentId = reply.id;
-        item.dataset.userId = reply.userId;
+        item.dataset.userId = authorId;
         item.dataset.replyCount = 0;
 
         item.innerHTML = `
@@ -389,28 +424,31 @@
     }
 
     function handleDelete(commentId, itemElement) {
+        if (!confirm("Are you sure you want to delete this comment?")) return;
+
         fetch('/comments/delete/' + commentId, {
             method: 'POST',
-            headers: {
-                'X-XSRF-TOKEN': getCsrfToken()
-            }
+            headers: getSecureHeaders()
         })
         .then(function (res) {
             if (res.ok) {
                 itemElement.remove();
-
                 const repliesContainer = document.getElementById('replies-' + commentId);
                 if (repliesContainer) repliesContainer.remove();
-                const viewBtn = document.querySelector('[data-comment-id="' + commentId + '"].view-replies-btn');
+
+                // Hide the "View replies" button if it exists
+                const viewBtn = document.querySelector('.view-replies-btn[data-comment-id="' + commentId + '"]');
                 if (viewBtn) viewBtn.remove();
 
-                setTimeout(() => location.reload(), 300);
+                // Optional: reload the page to refresh comment counts
+                // setTimeout(() => location.reload(), 300);
             } else {
-                alert('Could not delete comment. Please try again.');
+                return res.text().then(text => { throw new Error(text) });
             }
         })
-        .catch(function () {
-            alert('Network error. Please try again.');
+        .catch(function (err) {
+            console.error("Delete Error:", err);
+            alert('Could not delete comment: ' + err.message);
         });
     }
 
@@ -418,10 +456,6 @@
         if (event.target === event.currentTarget) {
             window.location.href = '/posts';
         }
-    }
-
-    function getCsrfToken() {
-        return document.querySelector('meta[name="_csrf"]').getAttribute('content');
     }
 
     function escapeHtml(str) {

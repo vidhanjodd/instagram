@@ -65,7 +65,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-    document.querySelector('.share-btn').disabled = true;
+        document.querySelector('.share-btn').disabled = true;
     });
     let selectedFiles = [];
 
@@ -79,34 +79,39 @@
         }
 
         selectedFiles = [...selectedFiles, ...newFiles];
-        renderPreview();
+
+        // FIX 1: Clear the input value BEFORE repopulating it
         input.value = '';
+
+        renderPreview();
     }
 
     function renderPreview() {
         const area = document.getElementById('uploadArea');
         const carousel = document.getElementById('previewCarousel');
         const addMore = document.getElementById('addMoreContainer');
+
         if (selectedFiles.length === 0) {
             area.style.display = 'flex';
             carousel.style.display = 'none';
             addMore.style.display = 'none';
             document.querySelector('.share-btn').disabled = true;
-
             return;
         }
 
         area.style.display = 'none';
         carousel.style.display = 'flex';
         addMore.style.display = 'block';
+
         const shareBtn = document.querySelector('.share-btn');
         shareBtn.disabled = selectedFiles.length === 0;
+
         carousel.querySelectorAll('.slide-container').forEach(el => {
-        const media = el.querySelector('img, video');
-        if (media && media.src) {
-            URL.revokeObjectURL(media.src);
-        }
-         });
+            const media = el.querySelector('img, video');
+            if (media && media.src) {
+                URL.revokeObjectURL(media.src);
+            }
+        });
         carousel.innerHTML = '';
 
         selectedFiles.forEach((file, index) => {
@@ -114,7 +119,6 @@
 
             const wrapper = document.createElement('div');
             wrapper.className = 'slide-container';
-
 
             if (file.type.startsWith('image/')) {
                 const img = document.createElement('img');
@@ -151,9 +155,7 @@
 
     function updateInputFiles() {
         const dataTransfer = new DataTransfer();
-
         selectedFiles.forEach(file => dataTransfer.items.add(file));
-
         document.getElementById('fileInput').files = dataTransfer.files;
     }
 
@@ -168,14 +170,7 @@
         }
     });
 
-    document.getElementById('postForm').addEventListener('formdata', function (e) {
-        const formData = e.formData;
-        formData.delete('files');
-
-        selectedFiles.forEach(file => {
-            formData.append('files', file);
-        });
-    });
+    // FIX 2: The formdata event listener has been completely removed so it stops deleting files before submission
 </script>
 </body>
 </html>
