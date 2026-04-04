@@ -161,7 +161,22 @@
                     <button class="action-btn" title="Share" style="padding: 0;">
                         <i class="fa-regular fa-paper-plane"></i>
                     </button>
+
+                    <div class="right-actions">
+                        <button type="button"
+                                class="action-btn save-btn-ajax"
+                                th:data-post-id="${post.id}"
+                                title="Save">
+                            <i th:id="'save-icon-' + ${post.id}"
+                               th:class="${#lists.contains(currentUser.savedPosts.![post.id], post.id)}
+                         ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'">
+                            </i>
+                        </button>
+                    </div>
+
                 </div>
+
+
 
                 <div id="likeCountDisplay" style="font-weight: 600; font-size: 14px; margin-bottom: 4px; padding: 0 16px;"
                      th:text="${post.likes != null and #lists.size(post.likes) > 0 ? #lists.size(post.likes) + ' likes' : ''}">
@@ -473,6 +488,39 @@
             return '';
         }
     }
+
+
+        document.querySelectorAll('.save-btn-ajax').forEach(button => {
+        button.addEventListener('click', async function() {
+            const postId = this.getAttribute('data-post-id');
+            const icon = document.getElementById('save-icon-' + postId);
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+            try {
+                const response = await fetch(`/posts/${postId}/save`, {
+                    method: 'POST',
+                    headers: {
+                        [csrfHeader]: csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Toggle filled vs outline icon
+                    if (data.saved) {
+                        icon.classList.replace('fa-regular', 'fa-solid');
+                    } else {
+                        icon.classList.replace('fa-solid', 'fa-regular');
+                    }
+                }
+            } catch (error) {
+                console.error("Save Error:", error);
+            }
+        });
+    });
+
 </script>
 
 </body>
