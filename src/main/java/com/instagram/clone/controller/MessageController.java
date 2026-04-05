@@ -16,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.http.ResponseEntity;
 import java.security.Principal;
 import java.util.List;
 
@@ -76,5 +77,28 @@ public class MessageController {
 
         messagingTemplate.convertAndSend(
                 "/topic/messages/" + sender.getId(), chatMessage);
+    }
+
+    // Delete message (REST — only sender can delete)
+    @DeleteMapping("/{messageId}")
+    @ResponseBody
+    public ResponseEntity<?> deleteMessage(@PathVariable Long messageId,
+                                           @AuthenticationPrincipal UserDetails userDetails) {
+        User requester = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
+
+        try {
+            ChatMessage deleted = messageService.deleteMessage(messageId, requester);
+
+            // Broadcast deletion to both participants so both sides update instantly
+            messagingTemplate.convertAndSend(
+                    "/topic/delete/" + deleted.getReceiverId(), deleted.getId());
+            messagingTemplate.convertAndSend(
+                    "/topic/delete/" + deleted.getSenderId(), deleted.getId());
+
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
     }
 }

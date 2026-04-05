@@ -80,4 +80,28 @@ public class MessageService {
                 .createdAt(m.getCreatedAt())
                 .build();
     }
+
+    public ChatMessage deleteMessage(Long messageId, User requester) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        if (!message.getSender().getId().equals(requester.getId())) {
+            throw new RuntimeException("You can only delete your own messages");
+        }
+
+        message.setDeleted(true);
+        messageRepository.save(message);
+
+        // Return a ChatMessage so the controller can broadcast deletion via WebSocket
+        return ChatMessage.builder()
+                .id(message.getId())
+                .senderId(message.getSender().getId())
+                .senderUsername(message.getSender().getUsername())
+                .senderProfilePic(message.getSender().getProfilePicUrl())
+                .receiverId(message.getReceiver().getId())
+                .receiverUsername(message.getReceiver().getUsername())
+                .content(null)
+                .createdAt(message.getCreatedAt())
+                .build();
+    }
 }

@@ -160,6 +160,14 @@ nav {
 .bubble.received { background: #efefef; color: #111; border-bottom-left-radius: 4px; }
 .bubble.sent     { background: #0095f6; color: #fff;  border-bottom-right-radius: 4px; }
 
+.bubble.deleted-msg {
+    background: transparent !important;
+    border: 1.5px solid #dbdbdb;
+    color: #8e8e8e !important;
+    font-style: italic;
+    font-size: 13px;
+}
+
 .msg-group.received .msg-row:not(:first-child) .bubble { border-top-left-radius: 4px; }
 .msg-group.sent     .msg-row:not(:first-child) .bubble { border-top-right-radius: 4px; }
 
@@ -209,6 +217,40 @@ nav {
     transition: opacity 0.15s;
 }
 .send-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* ── Message delete button ── */
+.msg-row {
+    position: relative;
+    align-items: center;
+}
+
+.msg-delete-btn {
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #8e8e8e;
+    font-size: 13px;
+    padding: 4px 6px;
+    border-radius: 50%;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+    flex-shrink: 0;
+    order: -1;
+}
+
+.msg-delete-btn:hover {
+    color: #ed4956;
+    background: rgba(237, 73, 86, 0.1);
+}
+
+.msg-group.sent:hover .msg-delete-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
 
 /* connection badge */
 .ws-status {
