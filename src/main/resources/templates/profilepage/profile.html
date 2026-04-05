@@ -1,3 +1,561 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org" lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8"/>-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>-->
+<!--    <title th:text="${user != null ? user.username + ' • Instagram' : 'Instagram'}">Profile • Instagram</title>-->
+<!--    <meta name="_csrf"        th:content="${_csrf.token}"/>-->
+<!--    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>-->
+<!--    <link rel="stylesheet" th:href="@{/css/profile.css}"/>-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>-->
+<!--</head>-->
+<!--<body>-->
+<!--<nav>-->
+<!--    <a class="nav-logo" th:href="@{/posts}">Instagram</a>-->
+<!--    <div style="font-size:15px;font-weight:600;" th:text="${user.username}">username</div>-->
+<!--    <div class="nav-icons">-->
+<!--        <a th:href="@{/posts}" title="Home"><i class="fa-solid fa-house"></i></a>-->
+<!--        <form th:action="@{/logout}" method="post" style="display:inline">-->
+<!--            <button type="submit" title="Logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>-->
+<!--        </form>-->
+<!--    </div>-->
+<!--</nav>-->
+
+<!--<div class="page">-->
+<!--    <div class="profile-header">-->
+<!--        <div class="profile-avatar-wrap">-->
+<!--            <div class="profile-avatar-ring">-->
+<!--                <div class="profile-avatar-inner">-->
+<!--                    <img th:if="${user.profilePicUrl != null}" th:src="${user.profilePicUrl}" th:alt="${user.username}"/>-->
+<!--                    <span th:unless="${user.profilePicUrl != null}"-->
+<!--                          th:text="${#strings.substring(user.username,0,1).toUpperCase()}">A</span>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="profile-info">-->
+<!--            <div class="profile-top">-->
+<!--                <span class="profile-username" th:text="${user.username}">username</span>-->
+
+<!--                <div class="profile-actions" th:if="${currentUser.id == user.id}">-->
+<!--                    <a class="btn-edit" th:href="@{/users/{id}/edit(id=${user.id})}">Edit profile</a>-->
+<!--                    <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post"-->
+<!--                          style="display:inline" onsubmit="return confirm('Delete account?')">-->
+<!--                        <button class="btn-danger" type="submit">Delete account</button>-->
+<!--                    </form>-->
+<!--                </div>-->
+
+<!--                <div th:if="${currentUser.id != user.id}">-->
+<!--                    <form th:action="@{/users/{id}/follow(id=${user.id})}" method="post" style="display:inline">-->
+<!--                        <button th:if="${isFollowing}"  type="submit" class="btn-edit">Following</button>-->
+<!--                        <button th:unless="${isFollowing}" type="submit" class="btn-follow">Follow</button>-->
+<!--                    </form>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div class="profile-stats">-->
+<!--                <div class="stat">-->
+<!--                    <span class="stat-num" th:text="${#lists.size(posts)}">0</span>-->
+<!--                    <span class="stat-label">posts</span>-->
+<!--                </div>-->
+<!--                <a class="stat stat-link" th:href="@{/users/{id}/followers(id=${user.id})}">-->
+<!--                    <span class="stat-num" th:text="${followersCount}">0</span>-->
+<!--                    <span class="stat-label">followers</span>-->
+<!--                </a>-->
+<!--                <a class="stat stat-link" th:href="@{/users/{id}/following(id=${user.id})}">-->
+<!--                    <span class="stat-num" th:text="${followingCount}">0</span>-->
+<!--                    <span class="stat-label">following</span>-->
+<!--                </a>-->
+<!--            </div>-->
+
+<!--            <div class="profile-bio">-->
+<!--                <div class="display-name" th:text="${user.username}">username</div>-->
+<!--                <div class="bio-text" id="bioText"-->
+<!--                     th:attr="data-bio=${user.bio != null && !#strings.isEmpty(user.bio) ? user.bio : ''}"></div>-->
+<!--                <a th:if="${user.websiteUrl != null && !#strings.isEmpty(user.websiteUrl)}"-->
+<!--                   th:href="${user.websiteUrl}"-->
+<!--                   th:text="${user.websiteUrl.replaceAll('https?://', '')}"-->
+<!--                   class="profile-website-link" target="_blank" rel="noopener noreferrer"></a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <div class="profile-tabs">-->
+<!--        <button class="tab-btn active" onclick="showTab('posts', this)">-->
+<!--            <i class="fa-solid fa-th"></i> POSTS-->
+<!--        </button>-->
+<!--        <button th:if="${#authentication.name == user.username}"-->
+<!--                class="tab-btn"-->
+<!--                onclick="showTab('saved', this)">-->
+<!--            <i class="fa-regular fa-bookmark"></i> SAVED-->
+<!--        </button>-->
+<!--    </div>-->
+
+<!--    <div class="profile-content-container">-->
+<!--        <div id="posts-content" class="posts-grid">-->
+<!--            <div th:each="post : ${user.posts}" class="grid-item">-->
+<!--                <a th:href="@{/posts/{id}(id=${post.id})}">-->
+<!--                    <img th:src="${post.carouselMedia[0].mediaUrl}" alt="Post">-->
+<!--                </a>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div id="saved-content" class="posts-grid" style="display: none;">-->
+<!--            <div th:each="savedItem : ${user.savedPosts}" class="grid-item">-->
+<!--                <a th:href="@{/posts/{id}(id=${savedItem.post.id})}">-->
+<!--                    <img th:src="${savedItem.post.carouselMedia[0].mediaUrl}" alt="Saved Post">-->
+<!--                </a>-->
+<!--            </div>-->
+<!--            <div th:if="${#lists.isEmpty(user.savedPosts)}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8e8e8e;">-->
+<!--                <i class="fa-regular fa-bookmark" style="font-size: 40px; margin-bottom: 10px;"></i>-->
+<!--                <p>Save photos and videos that you want to see again.</p>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--</div>-->
+
+<!--&lt;!&ndash; Post popup &ndash;&gt;-->
+<!--<div id="ppOverlay" class="pp-overlay" onclick="if(event.target===this)closePP()">-->
+<!--    <div class="pp-card">-->
+<!--        <div class="pp-left" id="ppLeft">-->
+<!--            <button class="pp-nav pp-prev" onclick="ppNav(-1)">&#8249;</button>-->
+<!--            <div id="ppMedia" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>-->
+<!--            <button class="pp-nav pp-next" onclick="ppNav(1)">&#8250;</button>-->
+<!--            <div class="pp-dots" id="ppDots"></div>-->
+<!--        </div>-->
+<!--        <div class="pp-right">-->
+<!--            <div class="pp-header">-->
+<!--                <div class="pp-av" id="ppAv"></div>-->
+<!--                <span class="pp-owner" id="ppOwner"></span>-->
+<!--                <button class="pp-close" onclick="closePP()"><i class="fa-solid fa-xmark"></i></button>-->
+<!--            </div>-->
+<!--            <div class="pp-scroll" id="ppScroll">-->
+<!--                <div class="pp-spin-wrap"><div class="pp-spinner"></div></div>-->
+<!--            </div>-->
+<!--            <div class="pp-footer">-->
+<!--                <div class="pp-actions">-->
+<!--                    <button class="pp-act-btn" id="ppLikeBtn" onclick="ppLike()" title="Like">-->
+<!--                        <i class="fa-regular fa-heart" id="ppLikeIcon"></i>-->
+<!--                    </button>-->
+<!--                    <button class="pp-act-btn" onclick="document.getElementById('ppInput').focus()" title="Comment">-->
+<!--                        <i class="fa-regular fa-comment"></i>-->
+<!--                    </button>-->
+<!--                    <button class="pp-act-btn" title="Share">-->
+<!--                        <i class="fa-regular fa-paper-plane"></i>-->
+<!--                    </button>-->
+<!--                </div>-->
+<!--                <div class="pp-like-count" id="ppLikeCount"></div>-->
+<!--                <div class="pp-time" id="ppTime"></div>-->
+<!--                <div class="pp-reply-bar" id="ppReplyBar">-->
+<!--                    <span>Replying to <strong id="ppReplyLabel"></strong></span>-->
+<!--                    <button class="pp-cancel-reply" onclick="ppCancelReply()">&#10005;</button>-->
+<!--                </div>-->
+<!--                <div class="pp-input-row">-->
+<!--                    <input class="pp-input" id="ppInput" type="text"-->
+<!--                           placeholder="Add a comment…" autocomplete="off"-->
+<!--                           oninput="document.getElementById('ppPostBtn').disabled=!this.value.trim()"/>-->
+<!--                    <button class="pp-post-btn" id="ppPostBtn" disabled onclick="ppSubmit()">Post</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script th:inline="javascript">-->
+<!--    const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');-->
+<!--    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');-->
+<!--    const currentUserId = /*[[${currentUser.id}]]*/ null;-->
+
+<!--    function secureHeaders(json) {-->
+<!--        const h = { [csrfHeader]: csrfToken };-->
+<!--        if (json) h['Content-Type'] = 'application/json';-->
+<!--        return h;-->
+<!--    }-->
+
+<!--    /* ── Bio renderer ── */-->
+<!--    (function () {-->
+<!--        const bioEl = document.getElementById('bioText');-->
+<!--        if (!bioEl) return;-->
+<!--        const raw = bioEl.getAttribute('data-bio') || '';-->
+<!--        if (!raw.trim()) { bioEl.textContent = 'No bio yet.'; return; }-->
+<!--        const urlRe = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;-->
+<!--        bioEl.innerHTML = '';-->
+<!--        raw.split(urlRe).forEach(part => {-->
+<!--            if (urlRe.test(part)) {-->
+<!--                const a = document.createElement('a');-->
+<!--                a.href = part.startsWith('http') ? part : 'https://' + part;-->
+<!--                a.textContent = part; a.target = '_blank'; a.rel = 'noopener noreferrer';-->
+<!--                a.className = 'bio-link'; bioEl.appendChild(a);-->
+<!--            } else { bioEl.appendChild(document.createTextNode(part)); }-->
+<!--        });-->
+<!--    })();-->
+
+<!--    /* ── Post popup ── */-->
+<!--    let ppMediaList = [], ppMediaIdx = 0, ppPostId = null, ppReplyId = null;-->
+
+<!--    function openPostPopup(postId) {-->
+<!--        ppPostId = postId;-->
+<!--        ppMediaList = []; ppMediaIdx = 0; ppReplyId = null;-->
+<!--        document.getElementById('ppOverlay').classList.add('pp-open');-->
+<!--        document.body.style.overflow = 'hidden';-->
+<!--        document.getElementById('ppScroll').innerHTML =-->
+<!--            '<div class="pp-spin-wrap"><div class="pp-spinner"></div></div>';-->
+<!--        fetch('/posts/' + postId + '/data')-->
+<!--            .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })-->
+<!--            .then(renderPopup)-->
+<!--            .catch(err => {-->
+<!--                document.getElementById('ppScroll').innerHTML =-->
+<!--                    '<p style="color:#e1306c;padding:20px;text-align:center;">Failed to load post.</p>';-->
+<!--                console.error(err);-->
+<!--            });-->
+<!--    }-->
+
+<!--    function closePP() {-->
+<!--        document.getElementById('ppOverlay').classList.remove('pp-open');-->
+<!--        document.body.style.overflow = '';-->
+<!--        ppPostId = null; ppReplyId = null;-->
+<!--        ppCancelReply();-->
+<!--    }-->
+
+<!--    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePP(); });-->
+
+<!--    function renderPopup(d) {-->
+<!--        ppMediaList = d.media || []; ppMediaIdx = 0;-->
+<!--        renderMedia();-->
+<!--        const av = document.getElementById('ppAv');-->
+<!--        if (d.user.profilePicUrl) av.innerHTML = `<img src="${esc(d.user.profilePicUrl)}" alt=""/>`;-->
+<!--        else av.textContent = (d.user.username||'?').charAt(0).toUpperCase();-->
+<!--        document.getElementById('ppOwner').textContent = d.user.username;-->
+<!--        renderLike(d.liked, d.likeCount);-->
+<!--        document.getElementById('ppTime').textContent = fmtDate(d.createdAt);-->
+<!--        renderComments(d);-->
+<!--    }-->
+
+<!--    function renderMedia() {-->
+<!--        const wrap = document.getElementById('ppMedia');-->
+<!--        const dots = document.getElementById('ppDots');-->
+<!--        const prev = document.querySelector('.pp-prev');-->
+<!--        const next = document.querySelector('.pp-next');-->
+<!--        const m = ppMediaList[ppMediaIdx];-->
+<!--        if (!m) { wrap.innerHTML = '<p style="color:#8e8e8e">No media</p>'; return; }-->
+<!--        if (m.mediaType === 'IMAGE') {-->
+<!--            wrap.innerHTML = `<img src="${esc(m.mediaUrl)}" style="width:100%;height:100%;object-fit:contain;" alt=""/>`;-->
+<!--        } else {-->
+<!--            wrap.innerHTML = `<video src="${esc(m.mediaUrl)}" controls style="width:100%;height:100%;object-fit:contain;"></video>`;-->
+<!--        }-->
+<!--        dots.innerHTML = '';-->
+<!--        ppMediaList.forEach((_, i) => {-->
+<!--            const d = document.createElement('div');-->
+<!--            d.className = 'pp-dot' + (i === ppMediaIdx ? ' active' : '');-->
+<!--            d.onclick = () => { ppMediaIdx = i; renderMedia(); };-->
+<!--            dots.appendChild(d);-->
+<!--        });-->
+<!--        prev.style.display = ppMediaList.length > 1 && ppMediaIdx > 0 ? 'flex' : 'none';-->
+<!--        next.style.display = ppMediaList.length > 1 && ppMediaIdx < ppMediaList.length - 1 ? 'flex' : 'none';-->
+<!--    }-->
+
+<!--    function ppNav(dir) {-->
+<!--        const ni = ppMediaIdx + dir;-->
+<!--        if (ni < 0 || ni >= ppMediaList.length) return;-->
+<!--        ppMediaIdx = ni; renderMedia();-->
+<!--    }-->
+
+<!--    function renderLike(liked, count) {-->
+<!--        const icon = document.getElementById('ppLikeIcon');-->
+<!--        icon.className = liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';-->
+<!--        icon.style.color = liked ? '#ff3040' : '';-->
+<!--        const el = document.getElementById('ppLikeCount');-->
+<!--        el.textContent = count > 0 ? count + (count === 1 ? ' like' : ' likes') : '';-->
+<!--    }-->
+
+<!--    function ppLike() {-->
+<!--        if (!ppPostId) return;-->
+<!--        fetch('/posts/' + ppPostId + '/like', { method: 'POST', headers: secureHeaders(false) })-->
+<!--            .then(r => r.json())-->
+<!--            .then(d => renderLike(d.liked, d.likeCount))-->
+<!--            .catch(console.error);-->
+<!--    }-->
+
+<!--    function renderComments(d) {-->
+<!--        const scroll = document.getElementById('ppScroll');-->
+<!--        scroll.innerHTML = '';-->
+<!--        if (d.caption) {-->
+<!--            const cap = document.createElement('div');-->
+<!--            cap.className = 'pp-caption';-->
+<!--            cap.innerHTML = buildAvHtml(d.user) +-->
+<!--                `<div class="pp-caption-text"><strong>${esc(d.user.username)}</strong>${esc(d.caption)}</div>`;-->
+<!--            scroll.appendChild(cap);-->
+<!--        }-->
+<!--        if (!d.comments || d.comments.length === 0) {-->
+<!--            scroll.insertAdjacentHTML('beforeend', '<div class="pp-no-comments">No comments yet.</div>');-->
+<!--            return;-->
+<!--        }-->
+<!--        d.comments.forEach(c => scroll.appendChild(buildCEl(c)));-->
+<!--    }-->
+
+<!--    function buildAvHtml(u) {-->
+<!--        if (u.profilePicUrl) return `<div class="pp-c-av"><img src="${esc(u.profilePicUrl)}" alt=""/></div>`;-->
+<!--        return `<div class="pp-c-av">${(u.username || '?').charAt(0).toUpperCase()}</div>`;-->
+<!--    }-->
+
+<!--    function buildCEl(c) {-->
+<!--        const isOwner = c.userId === currentUserId;-->
+<!--        const avHtml  = c.profilePicUrl-->
+<!--            ? `<div class="pp-c-av"><img src="${esc(c.profilePicUrl)}" alt=""/></div>`-->
+<!--            : `<div class="pp-c-av">${(c.username || '?').charAt(0).toUpperCase()}</div>`;-->
+
+<!--        const el = document.createElement('div');-->
+<!--        el.className = 'pp-c';-->
+<!--        el.dataset.commentId = c.id;-->
+<!--        el.dataset.userId    = c.userId;-->
+
+<!--        el.innerHTML = `-->
+<!--            ${avHtml}-->
+<!--            <div class="pp-c-body">-->
+<!--              <div class="pp-c-text"><strong>${esc(c.username)}</strong>${esc(c.content)}</div>-->
+<!--              <div class="pp-c-meta">-->
+<!--                <span>${fmtDate(c.createdAt)}</span>-->
+<!--                <button class="pp-reply-btn" data-id="${c.id}" data-un="${esc(c.username)}">Reply</button>-->
+<!--                <button class="pp-del-btn ${isOwner ? 'show' : ''}" data-id="${c.id}">Delete</button>-->
+<!--              </div>-->
+<!--              ${c.replyCount > 0-->
+<!--            ? `<button class="pp-vr-btn" data-id="${c.id}" data-cnt="${c.replyCount}">-->
+<!--                     View ${c.replyCount} ${c.replyCount===1?'reply':'replies'}-->
+<!--                   </button>` : ''}-->
+<!--            </div>`;-->
+
+<!--        /* FIX: simple direct reply — dataset.id, not closest('.pp-replies') */-->
+<!--        el.querySelector('.pp-reply-btn').onclick = function () {-->
+<!--            ppStartReply(this.dataset.id, this.dataset.un);-->
+<!--        };-->
+
+<!--        const db = el.querySelector('.pp-del-btn');-->
+<!--        if (db) db.onclick = function () { ppDelete(this.dataset.id, el); };-->
+
+<!--        const vr = el.querySelector('.pp-vr-btn');-->
+<!--        if (vr) vr.onclick = function () { ppToggleReplies(this, c.id); };-->
+
+<!--        return el;-->
+<!--    }-->
+
+<!--    function ppStartReply(id, username) {-->
+<!--        ppReplyId = id;-->
+<!--        document.getElementById('ppReplyLabel').textContent = '@' + username;-->
+<!--        document.getElementById('ppReplyBar').classList.add('on');-->
+<!--        const inp = document.getElementById('ppInput');-->
+<!--        inp.placeholder = 'Reply to @' + username + '…';-->
+<!--        inp.focus();-->
+<!--    }-->
+
+<!--    function ppCancelReply() {-->
+<!--        ppReplyId = null;-->
+<!--        document.getElementById('ppReplyBar').classList.remove('on');-->
+<!--        const inp = document.getElementById('ppInput');-->
+<!--        if (inp) { inp.placeholder = 'Add a comment…'; inp.value = ''; }-->
+<!--        const btn = document.getElementById('ppPostBtn');-->
+<!--        if (btn) btn.disabled = true;-->
+<!--    }-->
+
+<!--    function ppSubmit() {-->
+<!--        const inp     = document.getElementById('ppInput');-->
+<!--        const content = inp.value.trim();-->
+<!--        if (!content || !ppPostId) return;-->
+
+<!--        const body = {-->
+<!--            postId:   parseInt(ppPostId),-->
+<!--            content,-->
+<!--            parentId: ppReplyId ? parseInt(ppReplyId) : null,-->
+<!--            replyingToUsername: ppReplyId-->
+<!--                ? document.getElementById('ppReplyLabel').textContent.replace('@', '')-->
+<!--                : null-->
+<!--        };-->
+
+<!--        fetch('/posts/comments/add', {-->
+<!--            method: 'POST',-->
+<!--            headers: secureHeaders(true),-->
+<!--            body: JSON.stringify(body)-->
+<!--        })-->
+<!--            .then(r => r.json())-->
+<!--            .then(nc => {-->
+<!--                inp.value = '';-->
+<!--                document.getElementById('ppPostBtn').disabled = true;-->
+<!--                const rid = ppReplyId;-->
+<!--                ppCancelReply();-->
+
+<!--                if (!nc) return;-->
+<!--                const scroll = document.getElementById('ppScroll');-->
+<!--                const noC = scroll.querySelector('.pp-no-comments');-->
+<!--                if (noC) noC.remove();-->
+
+<!--                if (rid) {-->
+<!--                    let rDiv = document.getElementById('pp-r-' + rid);-->
+<!--                    if (!rDiv) {-->
+<!--                        rDiv = document.createElement('div');-->
+<!--                        rDiv.className = 'pp-replies';-->
+<!--                        rDiv.id = 'pp-r-' + rid;-->
+<!--                        const parentEl = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);-->
+<!--                        if (parentEl) parentEl.appendChild(rDiv);-->
+<!--                    }-->
+<!--                    rDiv.style.display = 'block';-->
+<!--                    const el = buildCEl(nc);-->
+<!--                    el.style.marginLeft = '0px';-->
+<!--                    rDiv.appendChild(el);-->
+
+<!--                    let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${rid}"]`);-->
+<!--                    if (!vrBtn) {-->
+<!--                        const parentBody = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);-->
+<!--                        if (parentBody) {-->
+<!--                            vrBtn = document.createElement('button');-->
+<!--                            vrBtn.className = 'pp-vr-btn';-->
+<!--                            vrBtn.dataset.id  = rid;-->
+<!--                            vrBtn.dataset.cnt = 1;-->
+<!--                            vrBtn.textContent = 'Hide replies';-->
+<!--                            vrBtn.onclick = function () { ppToggleReplies(this, rid); };-->
+<!--                            parentBody.appendChild(vrBtn);-->
+<!--                        }-->
+<!--                    } else {-->
+<!--                        const newCount = parseInt(vrBtn.dataset.cnt || '0') + 1;-->
+<!--                        vrBtn.dataset.cnt = newCount;-->
+<!--                        vrBtn.textContent = 'Hide replies';-->
+<!--                    }-->
+<!--                } else {-->
+<!--                    scroll.appendChild(buildCEl(nc));-->
+<!--                    scroll.scrollTop = scroll.scrollHeight;-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(console.error);-->
+<!--    }-->
+
+<!--    function flattenReplies(replies) {-->
+<!--        let result = [];-->
+<!--        function dfs(list) {-->
+<!--            list.forEach(r => {-->
+<!--                result.push(r);-->
+<!--                if (r.replies && r.replies.length) dfs(r.replies);-->
+<!--            });-->
+<!--        }-->
+<!--        dfs(replies);-->
+<!--        return result;-->
+<!--    }-->
+
+<!--    /* FIX: uses flattenReplies so nested reply DTOs are displayed flat */-->
+<!--    function ppToggleReplies(btn, parentId) {-->
+<!--        let cont = document.getElementById('pp-r-' + parentId);-->
+
+<!--        if (!cont) {-->
+<!--            cont = document.createElement('div');-->
+<!--            cont.className = 'pp-replies';-->
+<!--            cont.id = 'pp-r-' + parentId;-->
+<!--            const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);-->
+<!--            if (!parentBody) return;-->
+<!--            parentBody.appendChild(cont);-->
+<!--        }-->
+
+<!--        if (cont.dataset.loaded === 'true') {-->
+<!--            const hidden = cont.style.display === 'none';-->
+<!--            cont.style.display = hidden ? 'block' : 'none';-->
+<!--            btn.innerHTML = hidden-->
+<!--                ? 'Hide replies'-->
+<!--                : 'View ' + btn.dataset.cnt + ' ' + (btn.dataset.cnt == 1 ? 'reply' : 'replies');-->
+<!--            return;-->
+<!--        }-->
+
+<!--        btn.textContent = 'Loading…';-->
+<!--        fetch('/comments/replies/' + parentId)-->
+<!--            .then(r => r.json())-->
+<!--            .then(replies => {-->
+<!--                cont.innerHTML = '';-->
+<!--                flattenReplies(replies).forEach(r => {-->
+<!--                    const el = buildCEl(r);-->
+<!--                    el.style.marginLeft = '0px';-->
+<!--                    cont.appendChild(el);-->
+<!--                });-->
+<!--                cont.dataset.loaded = 'true';-->
+<!--                cont.style.display  = 'block';-->
+<!--                btn.textContent = 'Hide replies';-->
+<!--            })-->
+<!--            .catch(() => {-->
+<!--                btn.textContent = 'View ' + btn.dataset.cnt + ' replies';-->
+<!--            });-->
+<!--    }-->
+
+<!--    function ppLoadReplies(parentId) {-->
+<!--        let cont = document.getElementById('pp-r-' + parentId);-->
+<!--        if (!cont) {-->
+<!--            cont = document.createElement('div');-->
+<!--            cont.className = 'pp-replies';-->
+<!--            cont.id = 'pp-r-' + parentId;-->
+<!--            const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);-->
+<!--            if (!parentBody) return;-->
+<!--            parentBody.appendChild(cont);-->
+<!--        }-->
+<!--        fetch('/comments/replies/' + parentId)-->
+<!--            .then(r => r.json())-->
+<!--            .then(replies => {-->
+<!--                cont.innerHTML = '';-->
+<!--                flattenReplies(replies).forEach(r => {-->
+<!--                    const el = buildCEl(r);-->
+<!--                    el.style.marginLeft = '0px';-->
+<!--                    cont.appendChild(el);-->
+<!--                });-->
+<!--                cont.style.display  = 'block';-->
+<!--                cont.dataset.loaded = 'true';-->
+<!--            });-->
+<!--    }-->
+
+<!--    function ppDelete(id, el) {-->
+<!--        fetch('/comments/delete/' + id, { method: 'POST', headers: secureHeaders(false) })-->
+<!--            .then(r => {-->
+<!--                if (!r.ok) { alert('Could not delete comment.'); return; }-->
+<!--                const parentEl = el.closest('.pp-replies');-->
+<!--                el.remove();-->
+<!--                if (parentEl && parentEl.children.length === 0) {-->
+<!--                    const parentCommentId = parentEl.id.replace('pp-r-', '');-->
+<!--                    parentEl.remove();-->
+<!--                    const vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentCommentId}"]`);-->
+<!--                    if (vrBtn) vrBtn.remove();-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(console.error);-->
+<!--    }-->
+
+<!--    function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }-->
+<!--    function fmtDate(iso) {-->
+<!--        if (!iso) return '';-->
+<!--        try { return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }-->
+<!--        catch(e){ return ''; }-->
+<!--    }-->
+
+<!--    /* ── Tab switching ── */-->
+<!--    function showTab(tabName, btn) {-->
+<!--        const postsContent = document.getElementById('posts-content');-->
+<!--        const savedContent = document.getElementById('saved-content');-->
+<!--        const buttons = document.querySelectorAll('.tab-btn');-->
+<!--        if (tabName === 'posts') {-->
+<!--            postsContent.style.display = 'grid';-->
+<!--            savedContent.style.display = 'none';-->
+<!--        } else {-->
+<!--            postsContent.style.display = 'none';-->
+<!--            savedContent.style.display = 'grid';-->
+<!--        }-->
+<!--        buttons.forEach(b => b.classList.remove('active'));-->
+<!--        btn.classList.add('active');-->
+<!--    }-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
@@ -46,11 +604,17 @@
                     </form>
                 </div>
 
-                <div th:if="${currentUser.id != user.id}">
+                <div th:if="${currentUser.id != user.id}" style="display:flex;align-items:center;gap:8px;">
                     <form th:action="@{/users/{id}/follow(id=${user.id})}" method="post" style="display:inline">
                         <button th:if="${isFollowing}"  type="submit" class="btn-edit">Following</button>
                         <button th:unless="${isFollowing}" type="submit" class="btn-follow">Follow</button>
                     </form>
+                    <a th:if="${isFollowing}"
+                       th:href="@{/messages/{id}(id=${user.id})}"
+                       class="btn-edit"
+                       style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="fa-regular fa-paper-plane" style="font-size:13px;"></i> Message
+                    </a>
                 </div>
             </div>
 

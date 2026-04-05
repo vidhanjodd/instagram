@@ -33,6 +33,10 @@
             <i class="fa-regular fa-square-plus"></i>
         </a>
 
+        <a th:href="@{/messages}" title="Messages" style="color: inherit; text-decoration: none;">
+            <i class="fa-regular fa-paper-plane"></i>
+        </a>
+
         <a th:href="@{/users/{id}/profile(id=${currentUser.id})}" title="Profile" style="color: inherit; text-decoration: none;">
             <i class="fa-regular fa-circle-user"></i>
         </a>
@@ -442,14 +446,16 @@
         if (!content || !ppPostId) return;
         const body = {
             postId:   parseInt(ppPostId),
+            userId:   currentUserId,
             content,
             parentId: ppReplyId ? parseInt(ppReplyId) : null,
             replyingToUsername: ppReplyId
                 ? document.getElementById('ppReplyLabel').textContent.replace('@','')
                 : null
         };
-        fetch('/posts/comments/add', { method:'POST', headers: secureHeaders(true), body: JSON.stringify(body) })
-            .then(r => r.json())
+        // FIX: use /comments/add/json so we get JSON back and can update UI instantly
+        fetch('/comments/add/json', { method:'POST', headers: secureHeaders(true), body: JSON.stringify(body) })
+            .then(r => { if (!r.ok) throw new Error('Comment failed: ' + r.status); return r.json(); })
             .then(nc => {
                 inp.value = ''; document.getElementById('ppPostBtn').disabled = true;
                 const rid = ppReplyId; ppCancelReply();
@@ -458,24 +464,19 @@
                 const noC = scroll.querySelector('.pp-no-comments'); if (noC) noC.remove();
 
                 if (rid) {
+                    // Reply: reload replies container
                     ppLoadReplies(rid);
 
                     let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${rid}"]`);
-
                     if (!vrBtn) {
                         const parentBody = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
-
                         if (parentBody) {
                             vrBtn = document.createElement('button');
                             vrBtn.className = 'pp-vr-btn';
                             vrBtn.dataset.id = rid;
                             vrBtn.dataset.cnt = 1;
                             vrBtn.textContent = 'Hide replies';
-
-                            vrBtn.onclick = function () {
-                                ppToggleReplies(this, rid);
-                            };
-
+                            vrBtn.onclick = function () { ppToggleReplies(this, rid); };
                             parentBody.appendChild(vrBtn);
                         }
                     } else {
@@ -483,6 +484,11 @@
                         vrBtn.dataset.cnt = newCount;
                         vrBtn.textContent = 'Hide replies';
                     }
+                } else {
+                    // FIX: top-level comment — append to scroll and scroll to it
+                    const el = buildCEl(nc);
+                    scroll.appendChild(el);
+                    scroll.scrollTop = scroll.scrollHeight;
                 }
             }).catch(console.error);
     }
