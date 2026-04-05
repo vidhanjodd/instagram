@@ -1,3 +1,352 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org"-->
+<!--      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8"/>-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>-->
+<!--    <meta name="_csrf"        th:content="${_csrf.token}"/>-->
+<!--    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>-->
+<!--    <title>Messages · Instagram</title>-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>-->
+<!--    <link rel="stylesheet" th:href="@{/css/chat.css}"/>-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>-->
+
+<!--    &lt;!&ndash; SockJS + STOMP (needed for WebSocket) &ndash;&gt;-->
+<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>-->
+<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--&lt;!&ndash; NAV &ndash;&gt;-->
+<!--<nav>-->
+<!--    <a class="nav-logo" th:href="@{/posts}">Instagram</a>-->
+<!--    <div class="nav-icons">-->
+<!--        <a th:href="@{/posts}"     title="Home"><i class="fa-solid fa-house"></i></a>-->
+<!--        <a th:href="@{/posts/new}" title="New Post"><i class="fa-regular fa-square-plus"></i></a>-->
+<!--        <a th:href="@{/messages}"  title="Messages"><i class="fa-solid fa-paper-plane"></i></a>-->
+<!--        <a th:href="@{/users/{id}/profile(id=${currentUser.id})}" title="Profile"><i class="fa-regular fa-circle-user"></i></a>-->
+<!--        <form th:action="@{/logout}" method="post" style="display:inline;margin:0;">-->
+<!--            <button type="submit" title="Logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>-->
+<!--        </form>-->
+<!--    </div>-->
+<!--</nav>-->
+
+<!--<div class="chat-root">-->
+
+<!--    &lt;!&ndash; ══ INBOX SIDEBAR ══ &ndash;&gt;-->
+<!--    <div class="inbox-sidebar">-->
+<!--        <div class="inbox-top">-->
+<!--            <span class="inbox-username" th:text="${currentUser.username}">username</span>-->
+<!--        </div>-->
+<!--        <div class="inbox-tabs">-->
+<!--            <button class="inbox-tab active">Messages</button>-->
+<!--            <button class="inbox-tab">Requests</button>-->
+<!--        </div>-->
+
+<!--        <div class="inbox-scroll">-->
+<!--            <div class="inbox-empty" th:if="${inbox == null or #lists.isEmpty(inbox)}">-->
+<!--                No conversations yet-->
+<!--            </div>-->
+
+<!--            <th:block th:each="msg : ${inbox}">-->
+<!--                <th:block th:with="-->
+<!--                    partnerId=${msg.senderId == currentUser.id ? msg.receiverId : msg.senderId},-->
+<!--                    partnerName=${msg.senderId == currentUser.id ? msg.receiverUsername : msg.senderUsername},-->
+<!--                    partnerPic=${msg.senderId == currentUser.id ? null : msg.senderProfilePic}">-->
+<!--                    <a th:href="@{/messages/{id}(id=${partnerId})}"-->
+<!--                       th:classappend="${otherUser != null and otherUser.id == partnerId} ? ' active' : ''"-->
+<!--                       class="conv-row">-->
+<!--                        <div class="conv-av">-->
+<!--                            <div class="conv-av-inner">-->
+<!--                                <img th:if="${partnerPic != null}" th:src="${partnerPic}" th:alt="${partnerName}"/>-->
+<!--                                <span th:unless="${partnerPic != null}"-->
+<!--                                      th:text="${#strings.substring(partnerName,0,1).toUpperCase()}">U</span>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="conv-text">-->
+<!--                            <div class="conv-name" th:text="${partnerName}">username</div>-->
+<!--                            <div class="conv-preview"-->
+<!--                                 th:text="${msg.senderId == currentUser.id ? 'You: ' : ''} + ${msg.content}">-->
+<!--                                last message-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                        <div class="conv-time"-->
+<!--                             th:text="${#temporals.format(msg.createdAt, 'h:mm a')}">10:00 AM</div>-->
+<!--                    </a>-->
+<!--                </th:block>-->
+<!--            </th:block>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    &lt;!&ndash; ══ CONVERSATION PANEL ══ &ndash;&gt;-->
+<!--    <div class="conv-panel">-->
+
+<!--        &lt;!&ndash; No conversation selected &ndash;&gt;-->
+<!--        <div class="conv-empty" th:if="${otherUser == null}">-->
+<!--            <div class="conv-empty-icon"><i class="fa-regular fa-paper-plane"></i></div>-->
+<!--            <h3>Your messages</h3>-->
+<!--            <p>Send a message to start a conversation.</p>-->
+<!--        </div>-->
+
+<!--        &lt;!&ndash; Active conversation &ndash;&gt;-->
+<!--        <th:block th:if="${otherUser != null}">-->
+
+<!--            &lt;!&ndash; Header &ndash;&gt;-->
+<!--            <div class="conv-header">-->
+<!--                <a th:href="@{/users/{id}/profile(id=${otherUser.id})}" style="text-decoration:none;">-->
+<!--                    <div class="conv-header-av">-->
+<!--                        <div class="conv-header-av-inner">-->
+<!--                            <img th:if="${otherUser.profilePicUrl != null}"-->
+<!--                                 th:src="${otherUser.profilePicUrl}" th:alt="${otherUser.username}"/>-->
+<!--                            <span th:unless="${otherUser.profilePicUrl != null}"-->
+<!--                                  th:text="${#strings.substring(otherUser.username,0,1).toUpperCase()}">U</span>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </a>-->
+<!--                <div class="conv-header-info">-->
+<!--                    <a class="conv-header-name" th:text="${otherUser.username}">username</a>-->
+<!--                    <div class="conv-header-sub">Instagram</div>-->
+<!--                </div>-->
+<!--                <div class="conv-header-actions">-->
+<!--                    <a th:href="@{/users/{id}/profile(id=${otherUser.id})}" title="View profile">-->
+<!--                        <i class="fa-regular fa-circle-user"></i>-->
+<!--                    </a>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            &lt;!&ndash; Messages area &ndash;&gt;-->
+<!--            <div class="messages-area" id="messagesArea">-->
+
+<!--                &lt;!&ndash; Profile card &ndash;&gt;-->
+<!--                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 0 16px;">-->
+<!--                    <div class="conv-av" style="width:72px;height:72px;">-->
+<!--                        <div class="conv-av-inner" style="font-size:26px;">-->
+<!--                            <img th:if="${otherUser.profilePicUrl != null}"-->
+<!--                                 th:src="${otherUser.profilePicUrl}" th:alt="${otherUser.username}"/>-->
+<!--                            <span th:unless="${otherUser.profilePicUrl != null}"-->
+<!--                                  th:text="${#strings.substring(otherUser.username,0,1).toUpperCase()}">U</span>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                    <div style="font-weight:600;font-size:15px;" th:text="${otherUser.username}">username</div>-->
+<!--                    <div style="font-size:13px;color:#8e8e8e;">Instagram</div>-->
+<!--                    <a th:href="@{/users/{id}/profile(id=${otherUser.id})}"-->
+<!--                       style="margin-top:4px;background:#efefef;color:#111;border-radius:8px;-->
+<!--                              padding:7px 16px;font-size:13px;font-weight:600;text-decoration:none;">-->
+<!--                        View profile-->
+<!--                    </a>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; Existing messages from DB &ndash;&gt;-->
+<!--                <th:block th:if="${messages != null and not #lists.isEmpty(messages)}">-->
+<!--                    <th:block th:each="msg, stat : ${messages}">-->
+<!--                        <div class="msg-date-sep"-->
+<!--                             th:if="${stat.first or-->
+<!--                                     !#temporals.format(msg.createdAt,'yyyy-MM-dd').equals(-->
+<!--                                       #temporals.format(messages[stat.index - 1].createdAt,'yyyy-MM-dd'))}"-->
+<!--                             th:text="${#temporals.format(msg.createdAt, 'MMMM d, yyyy')}">April 4</div>-->
+
+<!--                        <div th:classappend="${msg.senderId == currentUser.id} ? ' sent' : ' received'"-->
+<!--                             class="msg-group">-->
+<!--                            <div class="msg-row">-->
+<!--                                <div class="msg-row-av" th:if="${msg.senderId != currentUser.id}">-->
+<!--                                    <img th:if="${msg.senderProfilePic != null}"-->
+<!--                                         th:src="${msg.senderProfilePic}" th:alt="${msg.senderUsername}"/>-->
+<!--                                    <span th:unless="${msg.senderProfilePic != null}"-->
+<!--                                          th:text="${#strings.substring(msg.senderUsername,0,1).toUpperCase()}">U</span>-->
+<!--                                </div>-->
+<!--                                <div th:classappend="${msg.senderId == currentUser.id} ? ' sent' : ' received'"-->
+<!--                                     class="bubble" th:text="${msg.content}">message</div>-->
+<!--                            </div>-->
+<!--                            <div class="msg-timestamp"-->
+<!--                                 th:text="${#temporals.format(msg.createdAt, 'h:mm a')}">10:00 AM</div>-->
+<!--                        </div>-->
+<!--                    </th:block>-->
+<!--                </th:block>-->
+
+<!--                &lt;!&ndash; Typing indicator (shown via WebSocket) &ndash;&gt;-->
+<!--                <div class="typing-indicator" id="typingIndicator">-->
+<!--                    <div class="typing-dots">-->
+<!--                        <span></span><span></span><span></span>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--            </div>-->
+
+<!--            &lt;!&ndash; Input bar &ndash;&gt;-->
+<!--            <div class="msg-input-wrap">-->
+<!--                <div class="msg-input-bar">-->
+<!--                    <button class="emoji-btn" onclick="toggleEmojiBox()">😊</button>-->
+
+<!--                    <div id="emojiBox" class="emoji-box">-->
+<!--                    </div>-->
+<!--                    <input type="text" id="msgInput" placeholder="Message..." autocomplete="off"/>-->
+<!--                    <button class="send-btn" id="sendBtn" disabled>Send</button>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--        </th:block>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--&lt;!&ndash; WebSocket status badge &ndash;&gt;-->
+<!--<div class="ws-status disconnected" id="wsStatus">Connecting…</div>-->
+
+<!--<script th:inline="javascript">-->
+<!--    /*<![CDATA[*/-->
+<!--    const currentUserId   = /*[[${currentUser.id}]]*/ null;-->
+<!--    const currentUsername = /*[[${currentUser.username}]]*/ '';-->
+<!--    const currentUserPic  = /*[[${currentUser.profilePicUrl}]]*/ null;-->
+<!--    const otherUserId     = /*[[${otherUser != null ? otherUser.id : null}]]*/ null;-->
+<!--    const otherUsername   = /*[[${otherUser != null ? otherUser.username : null}]]*/ null;-->
+<!--    const otherUserPic    = /*[[${otherUser != null ? otherUser.profilePicUrl : null}]]*/ null;-->
+<!--    /*]]>*/-->
+
+<!--    const area      = document.getElementById('messagesArea');-->
+<!--    const input     = document.getElementById('msgInput');-->
+<!--    const sendBtn   = document.getElementById('sendBtn');-->
+<!--    const wsStatus  = document.getElementById('wsStatus');-->
+<!--    const typingEl  = document.getElementById('typingIndicator');-->
+
+<!--    // Scroll to bottom on load-->
+<!--    if (area) area.scrollTop = area.scrollHeight;-->
+
+<!--    // ── STOMP / WebSocket setup ──────────────────────────────────────────────-->
+<!--    let stompClient = null;-->
+<!--    let typingTimer = null;-->
+
+<!--    function connect() {-->
+<!--        const socket = new SockJS('/ws');-->
+<!--        stompClient = Stomp.over(socket);-->
+<!--        stompClient.debug = null; // silence logs-->
+
+<!--        stompClient.connect({}, function () {-->
+<!--            wsStatus.textContent = '● Live';-->
+<!--            wsStatus.className = 'ws-status connected';-->
+
+<!--            // Subscribe to MY personal topic → receives messages sent TO me-->
+<!--            stompClient.subscribe('/topic/messages/' + currentUserId, function (frame) {-->
+<!--                const msg = JSON.parse(frame.body);-->
+
+<!--                // Only render if we're currently in that conversation-->
+<!--                if (otherUserId && (msg.senderId == otherUserId || msg.senderId == currentUserId)) {-->
+<!--                    // Don't double-append our own sent messages (we append optimistically)-->
+<!--                    if (msg.senderId != currentUserId) {-->
+<!--                        hideTyping();-->
+<!--                        appendBubble(msg.content, false, msg.senderUsername, msg.senderProfilePic, new Date());-->
+<!--                    }-->
+<!--                    // Update inbox preview-->
+<!--                    updateInboxPreview(msg);-->
+<!--                }-->
+<!--            });-->
+
+<!--        }, function () {-->
+<!--            wsStatus.textContent = '● Offline';-->
+<!--            wsStatus.className = 'ws-status disconnected';-->
+<!--            // Retry after 3s-->
+<!--            setTimeout(connect, 3000);-->
+<!--        });-->
+<!--    }-->
+
+<!--    connect();-->
+
+<!--    // ── Input handlers ───────────────────────────────────────────────────────-->
+<!--    if (input && sendBtn) {-->
+<!--        input.addEventListener('input', function () {-->
+<!--            sendBtn.disabled = this.value.trim().length === 0;-->
+<!--        });-->
+
+<!--        input.addEventListener('keydown', function (e) {-->
+<!--            if (e.key === 'Enter' && !sendBtn.disabled) sendMessage();-->
+<!--        });-->
+
+<!--        sendBtn.addEventListener('click', sendMessage);-->
+<!--    }-->
+
+<!--    // ── Send via WebSocket ────────────────────────────────────────────────────-->
+<!--    function sendMessage() {-->
+<!--        const content = input.value.trim();-->
+<!--        if (!content || !otherUserId || !stompClient || !stompClient.connected) return;-->
+
+<!--        // Optimistic UI: show bubble immediately-->
+<!--        appendBubble(content, true, currentUsername, currentUserPic, new Date());-->
+<!--        input.value = '';-->
+<!--        sendBtn.disabled = true;-->
+
+<!--        // Send via STOMP to /app/chat.send → server saves + broadcasts-->
+<!--        stompClient.send('/app/chat.send', {}, JSON.stringify({-->
+<!--            receiverId: otherUserId,-->
+<!--            content: content-->
+<!--        }));-->
+<!--    }-->
+
+<!--    // ── Append bubble to DOM ─────────────────────────────────────────────────-->
+<!--    function appendBubble(text, isSent, username, profilePic, date) {-->
+<!--        // Remove typing indicator from flow before appending-->
+<!--        if (typingEl) area.removeChild(typingEl);-->
+
+<!--        const group = document.createElement('div');-->
+<!--        group.className = 'msg-group ' + (isSent ? 'sent' : 'received');-->
+
+<!--        const row = document.createElement('div');-->
+<!--        row.className = 'msg-row';-->
+
+<!--        if (!isSent) {-->
+<!--            const av = document.createElement('div');-->
+<!--            av.className = 'msg-row-av';-->
+<!--            if (profilePic) {-->
+<!--                av.innerHTML = `<img src="${esc(profilePic)}" alt="${esc(username)}"/>`;-->
+<!--            } else {-->
+<!--                av.textContent = (username || '?')[0].toUpperCase();-->
+<!--            }-->
+<!--            row.appendChild(av);-->
+<!--        }-->
+
+<!--        const bubble = document.createElement('div');-->
+<!--        bubble.className = 'bubble ' + (isSent ? 'sent' : 'received');-->
+<!--        bubble.textContent = text;-->
+<!--        row.appendChild(bubble);-->
+<!--        group.appendChild(row);-->
+
+<!--        const ts = document.createElement('div');-->
+<!--        ts.className = 'msg-timestamp';-->
+<!--        ts.textContent = formatTime(date);-->
+<!--        group.appendChild(ts);-->
+
+<!--        // Re-attach typing indicator at the end-->
+<!--        area.appendChild(group);-->
+<!--        if (typingEl) area.appendChild(typingEl);-->
+
+<!--        area.scrollTop = area.scrollHeight;-->
+<!--    }-->
+
+<!--    // ── Typing indicator helpers ──────────────────────────────────────────────-->
+<!--    function showTyping() {-->
+<!--        if (typingEl) typingEl.classList.add('visible');-->
+<!--        if (area) area.scrollTop = area.scrollHeight;-->
+<!--    }-->
+<!--    function hideTyping() {-->
+<!--        if (typingEl) typingEl.classList.remove('visible');-->
+<!--    }-->
+
+<!--    // ── Update inbox sidebar preview ──────────────────────────────────────────-->
+<!--    function updateInboxPreview(msg) {-->
+<!--        const partnerId = msg.senderId == currentUserId ? msg.receiverId : msg.senderId;-->
+<!--        const row = document.querySelector(`.conv-row[href="/messages/${partnerId}"]`);-->
+<!--        if (row) {-->
+<!--            const preview = row.querySelector('.conv-preview');-->
+<!--            const time    = row.querySelector('.conv-time');-->
+<!--            if (preview) preview.textContent = (msg.senderId == currentUserId ? 'You: ' : '') + msg.content;-->
+<!--            if (time)    time.textContent    = formatTime(new Date());-->
+<!--        }-->
+<!--    }-->
+
+<!--    // ── Helpers ───────────────────────────────────────────────────────────────-->
+<!--    function formatTime(date) {-->
+<!--        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });-->
+<!--    }-->
+<!--    function esc(str) {-->
+<!--        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');-->
+<!--    }-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
@@ -108,10 +457,20 @@
                     <div class="conv-header-sub">Instagram</div>
                 </div>
                 <div class="conv-header-actions">
+                    <button id="vanishToggleBtn" class="vanish-toggle-btn" onclick="toggleVanishMode()" title="Vanish mode">
+                        <i class="fa-solid fa-ghost"></i>
+                    </button>
                     <a th:href="@{/users/{id}/profile(id=${otherUser.id})}" title="View profile">
                         <i class="fa-regular fa-circle-user"></i>
                     </a>
                 </div>
+            </div>
+
+            <!-- Vanish mode banner -->
+            <div class="vanish-banner" id="vanishBanner" style="display:none;">
+                <i class="fa-solid fa-ghost"></i>
+                <span>Vanish mode is on — messages disappear after seen</span>
+                <button onclick="toggleVanishMode()" class="vanish-off-btn">Turn off</button>
             </div>
 
             <!-- Messages area -->
@@ -214,6 +573,28 @@
     const wsStatus  = document.getElementById('wsStatus');
     const typingEl  = document.getElementById('typingIndicator');
 
+    // ── Vanish mode state ────────────────────────────────────────────────────
+    let vanishMode = false;
+
+    function toggleVanishMode() {
+        vanishMode = !vanishMode;
+        const btn    = document.getElementById('vanishToggleBtn');
+        const banner = document.getElementById('vanishBanner');
+        const panel  = document.querySelector('.conv-panel');
+
+        if (vanishMode) {
+            btn.classList.add('vanish-active');
+            banner.style.display = 'flex';
+            panel.classList.add('vanish-bg');
+            input.placeholder = 'Vanish mode — message will disappear after seen…';
+        } else {
+            btn.classList.remove('vanish-active');
+            banner.style.display = 'none';
+            panel.classList.remove('vanish-bg');
+            input.placeholder = 'Message...';
+        }
+    }
+
     // Scroll to bottom on load
     if (area) area.scrollTop = area.scrollHeight;
 
@@ -239,7 +620,11 @@
                     // Don't double-append our own sent messages (we append optimistically)
                     if (msg.senderId != currentUserId) {
                         hideTyping();
-                        appendBubble(msg.content, false, msg.senderUsername, msg.senderProfilePic, new Date(), msg.id);
+                        appendBubble(msg.content, false, msg.senderUsername, msg.senderProfilePic, new Date(), msg.id, msg.vanish);
+                        // If it's a vanish message received, mark it as seen immediately
+                        if (msg.vanish) {
+                            stompClient.send('/app/chat.seen', {}, JSON.stringify({ senderId: otherUserId }));
+                        }
                     } else {
                         // Assign real msgId to the last optimistic bubble so delete works
                         const nullGroups = area.querySelectorAll('.msg-group.sent:not([data-msg-id])');
@@ -260,6 +645,11 @@
                 const msgId = JSON.parse(frame.body);
                 removeBubbleById(msgId);
             });
+
+            // If in a conversation, mark any vanish messages from the other user as seen
+            if (otherUserId) {
+                stompClient.send('/app/chat.seen', {}, JSON.stringify({ senderId: otherUserId }));
+            }
 
         }, function () {
             wsStatus.textContent = '● Offline';
@@ -290,19 +680,20 @@
         if (!content || !otherUserId || !stompClient || !stompClient.connected) return;
 
         // Optimistic UI: show bubble immediately
-        appendBubble(content, true, currentUsername, currentUserPic, new Date(), null);
+        appendBubble(content, true, currentUsername, currentUserPic, new Date(), null, vanishMode);
         input.value = '';
         sendBtn.disabled = true;
 
         // Send via STOMP to /app/chat.send → server saves + broadcasts
         stompClient.send('/app/chat.send', {}, JSON.stringify({
             receiverId: otherUserId,
-            content: content
+            content: content,
+            vanish: vanishMode
         }));
     }
 
     // ── Append bubble to DOM ─────────────────────────────────────────────────
-    function appendBubble(text, isSent, username, profilePic, date, msgId) {
+    function appendBubble(text, isSent, username, profilePic, date, msgId, isVanish) {
         // Remove typing indicator from flow before appending
         if (typingEl) area.removeChild(typingEl);
 
@@ -325,7 +716,7 @@
         }
 
         const bubble = document.createElement('div');
-        bubble.className = 'bubble ' + (isSent ? 'sent' : 'received');
+        bubble.className = 'bubble ' + (isSent ? 'sent' : 'received') + (isVanish ? ' vanish-bubble' : '');
         bubble.textContent = text;
         row.appendChild(bubble);
 
@@ -344,7 +735,7 @@
 
         const ts = document.createElement('div');
         ts.className = 'msg-timestamp';
-        ts.textContent = formatTime(date);
+        ts.textContent = (isVanish ? '👻 ' : '') + formatTime(date);
         group.appendChild(ts);
 
         // Re-attach typing indicator at the end

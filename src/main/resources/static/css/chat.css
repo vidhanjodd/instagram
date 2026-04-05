@@ -218,6 +218,85 @@ nav {
 }
 .send-btn:disabled { opacity: 0.35; cursor: default; }
 
+/* ── Vanish Mode ── */
+.vanish-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 22px;
+    color: #8e8e8e;
+    padding: 4px;
+    border-radius: 50%;
+    transition: color 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.vanish-toggle-btn:hover {
+    color: #a855f7;
+    background: rgba(168, 85, 247, 0.1);
+}
+.vanish-toggle-btn.vanish-active {
+    color: #a855f7;
+    background: rgba(168, 85, 247, 0.15);
+}
+
+.vanish-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #2d1b69, #1a0533);
+    color: #d8b4fe;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 20px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.3);
+}
+.vanish-banner i { font-size: 16px; }
+
+.vanish-off-btn {
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    color: #d8b4fe;
+    border-radius: 12px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: background 0.15s;
+}
+.vanish-off-btn:hover { background: rgba(168, 85, 247, 0.35); }
+
+.conv-panel.vanish-bg .messages-area {
+    background: linear-gradient(180deg, #0d0018 0%, #1a0533 100%);
+}
+.conv-panel.vanish-bg .msg-input-wrap {
+    background: #0d0018;
+    border-top: 1px solid rgba(168, 85, 247, 0.3);
+}
+.conv-panel.vanish-bg .msg-input-bar {
+    border-color: rgba(168, 85, 247, 0.4);
+    background: #1a0533;
+    color: #f3e8ff;
+}
+.conv-panel.vanish-bg .msg-input-bar input {
+    color: #f3e8ff;
+}
+.conv-panel.vanish-bg .msg-input-bar input::placeholder {
+    color: rgba(216, 180, 254, 0.5);
+}
+
+.bubble.vanish-bubble.sent {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+}
+.bubble.vanish-bubble.received {
+    background: #2d1b69;
+    color: #f3e8ff;
+}
+
 /* ── Message delete button ── */
 .msg-row {
     position: relative;

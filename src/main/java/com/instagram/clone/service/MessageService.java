@@ -29,6 +29,7 @@ public class MessageService {
                 .sender(sender)
                 .receiver(receiver)
                 .content(request.getContent())
+                .vanish(request.isVanish())
                 .build();
 
         Message saved = messageRepository.save(message);
@@ -41,8 +42,30 @@ public class MessageService {
                 .receiverId(receiver.getId())
                 .receiverUsername(receiver.getUsername())
                 .content(saved.getContent())
+                .vanish(saved.isVanish())
                 .createdAt(saved.getCreatedAt())
                 .build();
+    }
+
+    /**
+     * Mark all unseen vanish messages from sender as seen and soft-delete them.
+     * Returns list of deleted message IDs so controller can broadcast.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public List<Long> markVanishMessagesSeen(User viewer, Long senderId) {
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Message> unseen = messageRepository.findUnseenVanishMessages(viewer, sender);
+        List<Long> deletedIds = new java.util.ArrayList<>();
+
+        for (Message m : unseen) {
+            m.setSeen(true);
+            m.setDeleted(true);
+            messageRepository.save(m);
+            deletedIds.add(m.getId());
+        }
+        return deletedIds;
     }
 
     /**

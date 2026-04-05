@@ -25,4 +25,10 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             "GROUP BY CASE WHEN m2.sender = :user THEN m2.receiver.id ELSE m2.sender.id END" +
             ") ORDER BY m.createdAt DESC")
     List<Message> findLatestMessagePerConversation(@Param("user") User user);
+
+    // Find all unseen vanish messages sent TO a user in a conversation
+    @Query("SELECT m FROM Message m WHERE m.receiver = :receiver AND m.sender = :sender " +
+            "AND m.vanish = true AND m.seen = false AND m.deleted = false")
+    List<Message> findUnseenVanishMessages(@Param("receiver") User receiver,
+                                           @Param("sender") User sender);
 }

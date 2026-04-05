@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import java.security.Principal;
 import java.util.List;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -99,6 +100,24 @@ public class MessageController {
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
+
+    // WebSocket: receiver opens conversation → mark vanish messages as seen → delete them
+    @MessageMapping("/chat.seen")
+    public void markSeen(@Payload java.util.Map<String, Long> payload, Principal principal) {
+        User viewer = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
+
+        Long senderId = payload.get("senderId");
+        if (senderId == null) return;
+
+        List<Long> deletedIds = messageService.markVanishMessagesSeen(viewer, senderId);
+
+        // Broadcast each deleted vanish message ID to both sides
+        for (Long msgId : deletedIds) {
+            messagingTemplate.convertAndSend("/topic/delete/" + viewer.getId(), msgId);
+            messagingTemplate.convertAndSend("/topic/delete/" + senderId, msgId);
         }
     }
 }
