@@ -62,7 +62,7 @@ public class CommentService {
         }
 
         commentRepository.save(comment);
-        
+
         return mapToBasicResponse(comment);
     }
 
@@ -115,11 +115,10 @@ public class CommentService {
 
     private CommentResponse mapToResponseWithReplies(Comment comment) {
 
-        List<CommentResponse> replies = comment.getReplies() != null
-                ? comment.getReplies().stream()
-                .map(this::mapToResponseWithReplies)
-                .toList()
-                : Collections.emptyList();
+        List<CommentResponse> replies = commentRepository.findByParentId(comment.getId())
+                .stream()
+                .map(this::mapToBasicResponse)
+                .toList();
 
         return CommentResponse.builder()
                 .id(comment.getId())
@@ -202,11 +201,13 @@ public class CommentService {
             ? "@" + request.getReplyingToUsername() + " " + request.getContent()
             : request.getContent();
 
+        Comment actualParent = (parent.getParent() == null) ? parent : parent.getParent();
+
         Comment reply = Comment.builder()
-            .user(user)
-            .content(content)
-            .parent(parent)
-            .build();
+                    .user(user)
+                    .content(content)
+                    .parent(actualParent)
+                    .build();
 
         if (parent.getPost() != null) {
             reply.setPost(parent.getPost());

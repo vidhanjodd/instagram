@@ -106,41 +106,61 @@
     </div>
 
     <div class="profile-tabs">
-        <button class="tab-btn active" onclick="showTab('posts', this)">
-            <i class="fa-solid fa-th"></i> POSTS
-        </button>
-        <button th:if="${#authentication.name == user.username}"
-                class="tab-btn"
-                onclick="showTab('saved', this)">
+        <div class="tab active" onclick="switchTab('posts')">
+            <i class="fa-solid fa-table-cells"></i> POSTS
+        </div>
+        <div th:if="${currentUser != null and currentUser.id == user.id}" class="tab" onclick="switchTab('saved')">
             <i class="fa-regular fa-bookmark"></i> SAVED
-        </button>
+        </div>
     </div>
 
-    <div class="profile-content-container">
-        <div id="posts-content" class="posts-grid">
-            <div th:each="post : ${user.posts}" class="grid-item">
-                <a th:href="@{/posts/{id}(id=${post.id})}">
-                    <img th:src="${post.carouselMedia[0].mediaUrl}" alt="Post">
-                </a>
+    <div id="posts-content" class="posts-grid">
+        <div th:each="post : ${user.posts}"
+             class="grid-item"
+             th:data-post-id="${post.id}"
+             onclick="openPostPopup(this.dataset.postId)"
+             style="cursor:pointer;">
+            <img th:if="${post.carouselMedia != null and not #lists.isEmpty(post.carouselMedia)}"
+                 th:src="${post.carouselMedia[0].mediaUrl}" alt="Post">
+
+            <div class="grid-overlay">
+                    <span class="grid-stat">
+                        <i class="fa-solid fa-heart"></i>
+                        <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>
+                    </span>
+                <span class="grid-stat">
+                        <i class="fa-solid fa-comment"></i>
+                        <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>
+                    </span>
+            </div>
+        </div>
+    </div>
+
+    <div id="saved-content" class="posts-grid" style="display: none;">
+        <div th:each="savedItem : ${user.savedPosts}"
+             class="grid-item"
+             th:data-post-id="${savedItem.post.id}"
+             onclick="openPostPopup(this.dataset.postId)"
+             style="cursor:pointer;">
+            <img th:if="${savedItem.post.carouselMedia != null and not #lists.isEmpty(savedItem.post.carouselMedia)}"
+                 th:src="${savedItem.post.carouselMedia[0].mediaUrl}" alt="Saved Post">
+
+            <div class="grid-overlay">
+                    <span class="grid-stat">
+                        <i class="fa-solid fa-heart"></i>
+                        <span th:text="${savedItem.post.likes != null ? savedItem.post.likes.size() : 0}">0</span>
+                    </span>
             </div>
         </div>
 
-        <div id="saved-content" class="posts-grid" style="display: none;">
-            <div th:each="savedItem : ${user.savedPosts}" class="grid-item">
-                <a th:href="@{/posts/{id}(id=${savedItem.post.id})}">
-                    <img th:src="${savedItem.post.carouselMedia[0].mediaUrl}" alt="Saved Post">
-                </a>
-            </div>
-            <div th:if="${#lists.isEmpty(user.savedPosts)}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8e8e8e;">
-                <i class="fa-regular fa-bookmark" style="font-size: 40px; margin-bottom: 10px;"></i>
-                <p>Save photos and videos that you want to see again.</p>
-            </div>
+        <div th:if="${#lists.isEmpty(user.savedPosts)}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8e8e8e;">
+            <i class="fa-regular fa-bookmark" style="font-size: 40px; margin-bottom: 10px;"></i>
+            <p>Save photos and videos that you want to see again.</p>
         </div>
     </div>
 
 </div>
 
-<!-- Post popup -->
 <div id="ppOverlay" class="pp-overlay" onclick="if(event.target===this)closePP()">
     <div class="pp-card">
         <div class="pp-left" id="ppLeft">
@@ -334,6 +354,7 @@
         el.className = 'pp-c';
         el.dataset.commentId = c.id;
         el.dataset.userId    = c.userId;
+        el.dataset.parentId = c.parentId || c.id;
 
         el.innerHTML = `
             ${avHtml}
@@ -406,6 +427,15 @@
                 inp.value = '';
                 document.getElementById('ppPostBtn').disabled = true;
                 const rid = ppReplyId;
+
+                let parentId = rid;
+
+                if (rid) {
+                    const parentEl = document.querySelector(`[data-comment-id="${id}"]`);
+                    parentId = parentEl?.dataset.parentId || rid;
+                }
+
+                ppLoadReplies(parentId);
                 ppCancelReply();
 
                 if (!nc) return;
@@ -414,29 +444,44 @@
                 if (noC) noC.remove();
 
                 if (rid) {
-                    let rDiv = document.getElementById('pp-r-' + rid);
+                    let rDiv = document.getElementById('pp-r-' + parentId);
                     if (!rDiv) {
                         rDiv = document.createElement('div');
                         rDiv.className = 'pp-replies';
-                        rDiv.id = 'pp-r-' + rid;
-                        const parentEl = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
+                        rDiv.id = 'pp-r-' + parentId;
+                        const parentEl = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
                         if (parentEl) parentEl.appendChild(rDiv);
                     }
                     rDiv.style.display = 'block';
-                    const el = buildCEl(nc);
+                    const el = document.createElement('div');
+                    el.className = 'pp-reply';
+
+                    el.innerHTML = `
+                        ${buildAvHtml(nc)}
+                        <div class="pp-c-body">
+                            <div class="pp-c-text">
+                                <strong>${nc.username}</strong> ${nc.content}
+                            </div>
+                            <div class="pp-c-meta">
+                                <span>${fmtDate(nc.createdAt)}</span>
+                                <button onclick="ppStartReply(${nc.id}, '${nc.username}')">Reply</button>
+                            </div>
+                        </div>
+                    `;
+
                     el.style.marginLeft = '0px';
                     rDiv.appendChild(el);
 
-                    let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${rid}"]`);
+                    let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentId}"]`);
                     if (!vrBtn) {
-                        const parentBody = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
+                        const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
                         if (parentBody) {
                             vrBtn = document.createElement('button');
                             vrBtn.className = 'pp-vr-btn';
-                            vrBtn.dataset.id  = rid;
+                            vrBtn.dataset.id  = parentId;
                             vrBtn.dataset.cnt = 1;
                             vrBtn.textContent = 'Hide replies';
-                            vrBtn.onclick = function () { ppToggleReplies(this, rid); };
+                            vrBtn.onclick = function () { ppToggleReplies(this, parentId); };
                             parentBody.appendChild(vrBtn);
                         }
                     } else {
@@ -452,19 +497,6 @@
             .catch(console.error);
     }
 
-    function flattenReplies(replies) {
-        let result = [];
-        function dfs(list) {
-            list.forEach(r => {
-                result.push(r);
-                if (r.replies && r.replies.length) dfs(r.replies);
-            });
-        }
-        dfs(replies);
-        return result;
-    }
-
-    /* FIX: uses flattenReplies so nested reply DTOs are displayed flat */
     function ppToggleReplies(btn, parentId) {
         let cont = document.getElementById('pp-r-' + parentId);
 
@@ -491,7 +523,7 @@
             .then(r => r.json())
             .then(replies => {
                 cont.innerHTML = '';
-                flattenReplies(replies).forEach(r => {
+                replies.forEach(r => {
                     const el = buildCEl(r);
                     el.style.marginLeft = '0px';
                     cont.appendChild(el);
@@ -519,7 +551,7 @@
             .then(r => r.json())
             .then(replies => {
                 cont.innerHTML = '';
-                flattenReplies(replies).forEach(r => {
+                replies.forEach(r => {
                     const el = buildCEl(r);
                     el.style.marginLeft = '0px';
                     cont.appendChild(el);

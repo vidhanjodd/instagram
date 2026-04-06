@@ -199,7 +199,9 @@ public class PostController {
         if (request.getPostId() == null) {
             return ResponseEntity.badRequest().body(null);
         }
-        CommentResponse response = commentService.createComment(request);
+        CommentResponse response = request.getParentId() != null
+                ? commentService.addReply(request)
+                : commentService.createTopLevelComment(request);
         return ResponseEntity.ok(response);
     }
 }

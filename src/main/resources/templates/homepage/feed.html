@@ -166,11 +166,13 @@
                 <span th:text="${post.caption}">Caption here</span>
             </div>
 
-            <a th:if="${post.comments != null and not #lists.isEmpty(post.comments)}"
-               th:href="@{/posts/{postId}(postId=${post.id})}"
-               th:text="'View all ' + ${#lists.size(post.comments)} + ' comments'">
+            <button th:if="${post.comments != null and not #lists.isEmpty(post.comments)}"
+                    th:data-post-id="${post.id}"
+                    onclick="openPostPopup(this.dataset.postId)"
+                    class="view-comments-btn"
+                    th:text="'View all ' + ${#lists.size(post.comments)} + ' comments'">
                 View all comments
-            </a>
+            </button>
 
 
             <div class="post-time" th:text="${#temporals.format(post.createdAt, 'MMMM d, yyyy')}">April 4, 2026</div>
@@ -401,6 +403,7 @@
         el.className = 'pp-c';
         el.dataset.commentId = c.id;
         el.dataset.userId    = c.userId;
+        el.dataset.parentId = c.parentId || c.id;
         el.innerHTML = `
             ${avHtml}
             <div class="pp-c-body">
@@ -463,25 +466,32 @@
             .then(r => { if (!r.ok) throw new Error('Comment failed: ' + r.status); return r.json(); })
             .then(nc => {
                 inp.value = ''; document.getElementById('ppPostBtn').disabled = true;
-                const rid = ppReplyId; ppCancelReply();
+                const rid = ppReplyId;
+                let parentId = rid;
+                if (rid) {
+                    const parentEl = document.querySelector(`[data-comment-id="${rid}"]`);
+                    parentId = parentEl?.dataset.parentId || rid;
+                }
+                ppLoadReplies(parentId);
+                ppCancelReply();
                 if (!nc) return;
                 const scroll = document.getElementById('ppScroll');
                 const noC = scroll.querySelector('.pp-no-comments'); if (noC) noC.remove();
 
                 if (rid) {
                     // Reply: reload replies container
-                    ppLoadReplies(rid);
 
-                    let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${rid}"]`);
+
+                    let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentId}"]`);
                     if (!vrBtn) {
-                        const parentBody = document.querySelector(`[data-comment-id="${rid}"] .pp-c-body`);
+                        const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
                         if (parentBody) {
                             vrBtn = document.createElement('button');
                             vrBtn.className = 'pp-vr-btn';
-                            vrBtn.dataset.id = rid;
+                            vrBtn.dataset.id = parentId;
                             vrBtn.dataset.cnt = 1;
                             vrBtn.textContent = 'Hide replies';
-                            vrBtn.onclick = function () { ppToggleReplies(this, rid); };
+                            vrBtn.onclick = function () { ppToggleReplies(this, parentId); };
                             parentBody.appendChild(vrBtn);
                         }
                     } else {
@@ -497,19 +507,6 @@
             }).catch(console.error);
     }
 
-    function flattenReplies(replies) {
-        let result = [];
-        function dfs(list) {
-            list.forEach(r => {
-                result.push(r);
-                if (r.replies && r.replies.length) {
-                    dfs(r.replies);
-                }
-            });
-        }
-        dfs(replies);
-        return result;
-    }
 
     function ppToggleReplies(btn, parentId) {
         let cont = document.getElementById('pp-r-'+parentId);
