@@ -52,7 +52,7 @@ public class ChatMessage {
     private String receiverUsername;
     private String content;
     private LocalDateTime createdAt;
-    private boolean vanish;    // was this sent in vanish mode?
-    private boolean seen;      // has receiver seen it?
+    private boolean vanish;
+    private boolean seen;
     private boolean deleted;
 }

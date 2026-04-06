@@ -124,14 +124,9 @@
 
     <div class="profile-content-container">
 
-        <!--
-            POSTS GRID
-            Each grid-item uses onclick="openPostPopup(this.dataset.postId)"
-            instead of an <a> tag so the popup opens without navigating away.
-        -->
+
         <div id="posts-content" class="posts-grid">
 
-            <!-- Private account lock screen for non-followers -->
             <div th:if="${isPrivateProfile and currentUser.id != user.id and !isFollowing}"
                  class="private-lock">
                 <i class="fa-solid fa-lock"></i>
@@ -139,7 +134,6 @@
                 <p>Follow this account to see their photos and videos.</p>
             </div>
 
-            <!-- Actual post grid (visible when allowed) -->
             <div th:each="post : ${posts}"
                  th:unless="${isPrivateProfile and currentUser.id != user.id and !isFollowing}"
                  class="grid-item"
@@ -161,7 +155,6 @@
                 </div>
             </div>
 
-            <!-- Empty state for own profile -->
             <div th:if="${#lists.isEmpty(posts) and (currentUser.id == user.id or isFollowing or !isPrivateProfile)}"
                  class="empty-grid">
                 <div class="icon">📷</div>

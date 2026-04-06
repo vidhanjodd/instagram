@@ -25,34 +25,29 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Post relationship (leave unchanged)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Post post;
 
-    // Reel relationship (important for reels)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reel_id", nullable = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Reel reel;
 
-    // User who made the comment
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
-    // Comment text (fixed: added constraints)
     @Column(nullable = false, length = 1000)
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id", nullable = true)
-    @OnDelete(action = OnDeleteAction.CASCADE) // ADD THIS LINE
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Comment parent;
 
-    // Replies (fixed: initialized list)
     @JsonIgnore
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> replies = new ArrayList<>();

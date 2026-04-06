@@ -30,7 +30,6 @@ public class MessageController {
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // Inbox
     @GetMapping
     public String inbox(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         User currentUser = userRepository.findByUsername(userDetails.getUsername())
@@ -42,7 +41,6 @@ public class MessageController {
         return "homepage/chat";
     }
 
-    // Conversation
     @GetMapping("/{userId}")
     public String conversation(@PathVariable Long userId,
                                @AuthenticationPrincipal UserDetails userDetails,
@@ -64,7 +62,6 @@ public class MessageController {
         return "homepage/chat";
     }
 
-    // WebSocket
     @MessageMapping("/chat.send")
     public void handleMessage(@Payload MessageRequest request, Principal principal) {
 
@@ -80,7 +77,6 @@ public class MessageController {
                 "/topic/messages/" + sender.getId(), chatMessage);
     }
 
-    // Delete message (REST — only sender can delete)
     @DeleteMapping("/{messageId}")
     @ResponseBody
     public ResponseEntity<?> deleteMessage(@PathVariable Long messageId,
@@ -91,7 +87,6 @@ public class MessageController {
         try {
             ChatMessage deleted = messageService.deleteMessage(messageId, requester);
 
-            // Broadcast deletion to both participants so both sides update instantly
             messagingTemplate.convertAndSend(
                     "/topic/delete/" + deleted.getReceiverId(), deleted.getId());
             messagingTemplate.convertAndSend(
@@ -103,7 +98,6 @@ public class MessageController {
         }
     }
 
-    // WebSocket: receiver opens conversation → mark vanish messages as seen → delete them
     @MessageMapping("/chat.seen")
     public void markSeen(@Payload java.util.Map<String, Long> payload, Principal principal) {
         User viewer = userRepository.findByUsername(principal.getName())
@@ -114,7 +108,6 @@ public class MessageController {
 
         List<Long> deletedIds = messageService.markVanishMessagesSeen(viewer, senderId);
 
-        // Broadcast each deleted vanish message ID to both sides
         for (Long msgId : deletedIds) {
             messagingTemplate.convertAndSend("/topic/delete/" + viewer.getId(), msgId);
             messagingTemplate.convertAndSend("/topic/delete/" + senderId, msgId);

@@ -8,5 +8,5 @@ import lombok.Setter;
 public class MessageRequest {
     private Long receiverId;
     private String content;
-     private boolean vanish;  // true when sent in vanish mode
+     private boolean vanish;
 }
