@@ -29,6 +29,15 @@ public class Message {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    @Column(nullable = false)
+    private boolean vanish = false;   // true = this message was sent in vanish mode
+
+    @Column(nullable = false)
+    private boolean seen = false;     // true = receiver has seen it
+
     private LocalDateTime createdAt;
 
     @PrePersist
