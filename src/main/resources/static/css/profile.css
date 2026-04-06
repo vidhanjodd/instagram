@@ -937,3 +937,29 @@ div.pp-replies .pp-c {
 .pp-left * {
     background-color: #000000 !important;
 }
+
+.private-lock {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 20px;
+            color: var(--muted);
+            gap: 14px;
+        }
+        .private-lock i { font-size: 52px; }
+        .private-lock h3 { font-size: 18px; font-weight: 700; color: var(--text); }
+        .private-lock p  { font-size: 14px; }
+
+        .btn-follow    { background: #0095f6; color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-requested { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .btn-edit      { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 16px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+
+        .private-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }

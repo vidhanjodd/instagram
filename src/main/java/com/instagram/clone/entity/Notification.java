@@ -41,6 +41,9 @@ public class Notification {
     @Column(name = "reel_id")
     private Long reelId;
 
+    @Column(name = "follow_id")
+    private Long followId;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean isRead = false;
@@ -54,6 +57,8 @@ public class Notification {
 
     public enum NotificationType {
         FOLLOW,
+        FOLLOW_REQUEST,
+        FOLLOW_ACCEPT,
         POST_LIKE,
         REEL_LIKE,
         POST_COMMENT,

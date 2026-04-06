@@ -31,17 +31,70 @@ public class FollowService {
         Optional<Follow> existingFollow = followRepository.findByFollowerAndFollowing(follower, following);
 
         if (existingFollow.isPresent()) {
+            Follow f = existingFollow.get();
+            if(f.isPending()){
+                notificationService.deleteFollowRequestNotification(f.getId());
+            }
             followRepository.delete(existingFollow.get());
-        } else {
-            Follow newFollow = Follow.builder()
-                    .follower(follower)
-                    .following(following)
-                    .build();
-            followRepository.save(newFollow);
-            notificationService.notifyFollow(currentUserId,targetUserId);
+        }
+        else {
+            if(following.isPrivate()){
+                if(followRepository.existsPendingRequest(follower,following)){
+                    return;
+                }
+                Follow newFollow = Follow.builder()
+                        .follower(follower)
+                        .following(following)
+                        .build();
+                Follow saved = followRepository.save(newFollow);
+                notificationService.notifyFollowRequest(currentUserId,targetUserId,saved.getId());
+            }
+            else {
+                Follow newFollow = Follow.builder()
+                        .follower(follower)
+                        .following(following)
+                        .status(Follow.FollowStatus.ACCEPTED)
+                        .build();
+                followRepository.save(newFollow);
+                notificationService.notifyFollow(currentUserId,targetUserId);
+            }
+
         }
     }
+    @Transactional
+    public void acceptFollowRequest(Long followId, Long ownerId) {
+        Follow follow = followRepository.findById(followId)
+                .orElseThrow(() -> new RuntimeException("Follow request not found"));
 
+        if (!follow.getFollowing().getId().equals(ownerId)) {
+            throw new RuntimeException("Not authorized to accept this request");
+        }
+
+        if (!follow.isPending()) {
+            throw new RuntimeException("This request is not pending");
+        }
+
+        follow.setStatus(Follow.FollowStatus.ACCEPTED);
+        followRepository.save(follow);
+
+        notificationService.notifyFollowAccept(
+                ownerId,
+                follow.getFollower().getId(),
+                follow.getId()
+        );
+    }
+    @Transactional
+    public void declineFollowRequest(Long followId, Long ownerId) {
+        Follow follow = followRepository.findById(followId)
+                .orElseThrow(() -> new RuntimeException("Follow request not found"));
+
+        if (!follow.getFollowing().getId().equals(ownerId)) {
+            throw new RuntimeException("Not authorized to decline this request");
+        }
+
+        notificationService.deleteFollowRequestNotification(follow.getId());
+        followRepository.delete(follow);
+    }
     @Transactional
     public void removeFollower(Long currentUserId, Long followerToRemoveId) {
         User currentUser = userRepository.findById(currentUserId)
@@ -54,14 +107,19 @@ public class FollowService {
         existingFollow.ifPresent(followRepository::delete);
     }
     public long getFollowersCount(User user) {
-        return followRepository.countByFollowing(user);
+        return followRepository.countAcceptedByFollowing(user);
     }
 
     public long getFollowingCount(User user) {
-        return followRepository.countByFollower(user);
+        return followRepository.countAcceptedByFollower(user);
     }
 
     public boolean isFollowing(User currentUser, User targetUser) {
-        return followRepository.findByFollowerAndFollowing(currentUser, targetUser).isPresent();
+        return followRepository.findByFollowerAndFollowing(currentUser, targetUser)
+                .map(Follow::isAccepted)
+                .orElse(false);
+    }
+    public boolean hasPendingRequest(User currentUser, User targetUser) {
+        return followRepository.existsPendingRequest(currentUser, targetUser);
     }
 }

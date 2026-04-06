@@ -1,5 +1,6 @@
 package com.instagram.clone.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.instagram.clone.entity.Notification;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +23,12 @@ public class NotificationDto {
 
     private Long postId;
     private Long reelId;
+    private Long followId;
 
+    @JsonProperty("isPending")
+    private boolean isPending;
+
+    @JsonProperty("isRead")
     private boolean isRead;
 
     private LocalDateTime createdAt;
@@ -38,7 +44,9 @@ public class NotificationDto {
                 .message(buildMessage(n.getType()))
                 .postId(n.getPostId())
                 .reelId(n.getReelId())
+                .followId(n.getFollowId())
                 .isRead(n.isRead())
+                .isPending(n.getType() == Notification.NotificationType.FOLLOW_REQUEST)
                 .createdAt(n.getCreatedAt())
                 .timeAgo(computeTimeAgo(n.getCreatedAt()))
                 .build();
@@ -47,6 +55,8 @@ public class NotificationDto {
     private static String buildMessage(Notification.NotificationType type) {
         return switch (type) {
             case FOLLOW       -> "started following you";
+            case FOLLOW_REQUEST -> "requested to follow you";
+            case FOLLOW_ACCEPT  -> "accepted your follow request";
             case POST_LIKE    -> "liked your post";
             case REEL_LIKE    -> "liked your reel";
             case POST_COMMENT -> "commented on your post";

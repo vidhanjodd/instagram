@@ -66,9 +66,11 @@
 
                 <div th:if="${currentUser.id != user.id}" style="display:flex;align-items:center;gap:8px;">
                     <form th:action="@{/users/{id}/follow(id=${user.id})}" method="post" style="display:inline">
-                        <button th:if="${isFollowing}"  type="submit" class="btn-edit">Following</button>
-                        <button th:unless="${isFollowing}" type="submit" class="btn-follow">Follow</button>
+                        <button th:if="${isFollowing}" type="submit" class="btn-edit">Following</button>
+                        <button th:if="${!isFollowing and hasPendingRequest}" type="submit" class="btn-requested">Requested</button>
+                        <button th:if="${!isFollowing and !hasPendingRequest}" type="submit" class="btn-follow">Follow</button>
                     </form>
+
                     <a th:if="${isFollowing}"
                        th:href="@{/messages/{id}(id=${user.id})}"
                        class="btn-edit"
@@ -76,6 +78,10 @@
                         <i class="fa-regular fa-paper-plane" style="font-size:13px;"></i> Message
                     </a>
                 </div>
+            </div>
+
+            <div th:if="${isPrivateProfile and currentUser.id != user.id}" class="private-badge">
+                <i class="fa-solid fa-lock" style="font-size:11px;"></i> Private account
             </div>
 
             <div class="profile-stats">
@@ -105,62 +111,90 @@
         </div>
     </div>
 
-    <div class="profile-tabs">
-        <div class="tab active" onclick="switchTab('posts')">
-            <i class="fa-solid fa-table-cells"></i> POSTS
-        </div>
-        <div th:if="${currentUser != null and currentUser.id == user.id}" class="tab" onclick="switchTab('saved')">
+    <div th:if="${!isPrivateProfile or currentUser.id == user.id or isFollowing}" class="profile-tabs">
+        <button class="tab-btn active" onclick="showTab('posts', this)">
+            <i class="fa-solid fa-th"></i> POSTS
+        </button>
+        <button th:if="${#authentication.name == user.username}"
+                class="tab-btn"
+                onclick="showTab('saved', this)">
             <i class="fa-regular fa-bookmark"></i> SAVED
-        </div>
+        </button>
     </div>
 
-    <div id="posts-content" class="posts-grid">
-        <div th:each="post : ${user.posts}"
-             class="grid-item"
-             th:data-post-id="${post.id}"
-             onclick="openPostPopup(this.dataset.postId)"
-             style="cursor:pointer;">
-            <img th:if="${post.carouselMedia != null and not #lists.isEmpty(post.carouselMedia)}"
-                 th:src="${post.carouselMedia[0].mediaUrl}" alt="Post">
+    <div class="profile-content-container">
 
-            <div class="grid-overlay">
+        <!--
+            POSTS GRID
+            Each grid-item uses onclick="openPostPopup(this.dataset.postId)"
+            instead of an <a> tag so the popup opens without navigating away.
+        -->
+        <div id="posts-content" class="posts-grid">
+
+            <!-- Private account lock screen for non-followers -->
+            <div th:if="${isPrivateProfile and currentUser.id != user.id and !isFollowing}"
+                 class="private-lock">
+                <i class="fa-solid fa-lock"></i>
+                <h3>This account is private</h3>
+                <p>Follow this account to see their photos and videos.</p>
+            </div>
+
+            <!-- Actual post grid (visible when allowed) -->
+            <div th:each="post : ${posts}"
+                 th:unless="${isPrivateProfile and currentUser.id != user.id and !isFollowing}"
+                 class="grid-item"
+                 th:data-post-id="${post.id}"
+                 onclick="openPostPopup(this.dataset.postId)"
+                 style="cursor:pointer;">
+
+                <img th:src="${post.carouselMedia[0].mediaUrl}" alt="Post">
+
+                <div class="grid-overlay">
                     <span class="grid-stat">
                         <i class="fa-solid fa-heart"></i>
                         <span th:text="${post.likes != null ? post.likes.size() : 0}">0</span>
                     </span>
-                <span class="grid-stat">
+                    <span class="grid-stat">
                         <i class="fa-solid fa-comment"></i>
                         <span th:text="${post.comments != null ? post.comments.size() : 0}">0</span>
                     </span>
+                </div>
+            </div>
+
+            <!-- Empty state for own profile -->
+            <div th:if="${#lists.isEmpty(posts) and (currentUser.id == user.id or isFollowing or !isPrivateProfile)}"
+                 class="empty-grid">
+                <div class="icon">📷</div>
+                <h3>No Posts Yet</h3>
+                <p>When you share photos, they'll appear here.</p>
+                <a th:if="${currentUser.id == user.id}" th:href="@{/posts/new}" class="create-btn">
+                    <i class="fa-solid fa-plus"></i> Create post
+                </a>
             </div>
         </div>
-    </div>
 
-    <div id="saved-content" class="posts-grid" style="display: none;">
-        <div th:each="savedItem : ${user.savedPosts}"
-             class="grid-item"
-             th:data-post-id="${savedItem.post.id}"
-             onclick="openPostPopup(this.dataset.postId)"
-             style="cursor:pointer;">
-            <img th:if="${savedItem.post.carouselMedia != null and not #lists.isEmpty(savedItem.post.carouselMedia)}"
-                 th:src="${savedItem.post.carouselMedia[0].mediaUrl}" alt="Saved Post">
-
-            <div class="grid-overlay">
+        <div id="saved-content" class="posts-grid" style="display: none;">
+            <div th:each="savedItem : ${user.savedPosts}"
+                 class="grid-item"
+                 th:data-post-id="${savedItem.post.id}"
+                 onclick="openPostPopup(this.dataset.postId)"
+                 style="cursor:pointer;">
+                <img th:src="${savedItem.post.carouselMedia[0].mediaUrl}" alt="Saved Post">
+                <div class="grid-overlay">
                     <span class="grid-stat">
                         <i class="fa-solid fa-heart"></i>
                         <span th:text="${savedItem.post.likes != null ? savedItem.post.likes.size() : 0}">0</span>
                     </span>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(user.savedPosts)}"
+                 style="grid-column:1/-1;text-align:center;padding:40px;color:#8e8e8e;">
+                <i class="fa-regular fa-bookmark" style="font-size:40px;margin-bottom:10px;"></i>
+                <p>Save photos and videos that you want to see again.</p>
             </div>
         </div>
-
-        <div th:if="${#lists.isEmpty(user.savedPosts)}" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8e8e8e;">
-            <i class="fa-regular fa-bookmark" style="font-size: 40px; margin-bottom: 10px;"></i>
-            <p>Save photos and videos that you want to see again.</p>
-        </div>
     </div>
-
 </div>
-
 <div id="ppOverlay" class="pp-overlay" onclick="if(event.target===this)closePP()">
     <div class="pp-card">
         <div class="pp-left" id="ppLeft">
@@ -577,7 +611,7 @@
             .catch(console.error);
     }
 
-    function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+   function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
     function fmtDate(iso) {
         if (!iso) return '';
         try { return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
@@ -600,93 +634,135 @@
         btn.classList.add('active');
     }
 
+    /* ── Notification dropdown ── */
+    let notifOpen = false;
 
-     // Notification files
-     let notifOpen = false;
-    // Tracks whether the dropdown is currently open.
-
-    // ── Toggle dropdown open/close ──────────────────────────────────────────
     function toggleNotifDropdown() {
         notifOpen = !notifOpen;
-        // Flip the boolean each time the bell is clicked.
-
         const dropdown = document.getElementById('notifDropdown');
         if (notifOpen) {
             dropdown.classList.add('open');
-            // .open makes display:flex, which shows the panel (see CSS).
             loadNotifications();
-            // Fetch and render notifications from the server.
             markAllRead();
-            // Tell the server to mark all as read (the badge will reset to 0).
         } else {
             dropdown.classList.remove('open');
-            // Hides the panel.
         }
     }
 
-    // ── Close when clicking outside the dropdown ────────────────────────────
     document.addEventListener('click', function(e) {
         const wrap = document.querySelector('.notif-wrap');
-        // If the click target is outside .notif-wrap, close the dropdown.
         if (wrap && !wrap.contains(e.target) && notifOpen) {
             notifOpen = false;
             document.getElementById('notifDropdown').classList.remove('open');
         }
     });
 
-    // ── Fetch notifications and render them ─────────────────────────────────
     function loadNotifications() {
         const list = document.getElementById('notifList');
-
-        // Show loading spinner while fetching
         list.innerHTML = '<div class="notif-loading"><div class="notif-spinner"></div></div>';
 
         fetch('/notifications')
-        // GET /notifications → NotificationController.getNotifications()
-        // Returns: [ { id, actorUsername, actorProfilePic, message, type,
-        //              postId, reelId, isRead, timeAgo }, ... ]
             .then(r => r.json())
             .then(notifications => {
                 if (!notifications || notifications.length === 0) {
-                    // Show empty state
                     list.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
                     return;
                 }
-                // Render each notification as an HTML row
                 list.innerHTML = notifications.map(n => buildNotifHtml(n)).join('');
-                // .join('') converts the array of HTML strings into one big string.
+
+                // Attach Accept/Decline button listeners AFTER HTML is inserted
+                list.querySelectorAll('.notif-accept-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFollowAction(this.dataset.followId, 'accept', this.closest('.notif-item'));
+                    });
+                });
+                list.querySelectorAll('.notif-decline-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFollowAction(this.dataset.followId, 'decline', this.closest('.notif-item'));
+                    });
+                });
             })
             .catch(() => {
                 list.innerHTML = '<div class="notif-empty">Failed to load notifications.</div>';
             });
     }
 
-    // ── Build HTML for a single notification ────────────────────────────────
+    /*
+     * handleFollowAction — called when Accept or Decline is clicked.
+     *
+     * followId  = the Follow row's PK (from the notification's followId field)
+     * action    = 'accept' | 'decline'
+     * itemEl    = the .notif-item DOM element (so we can update it in place)
+     *
+     * After the server responds we replace the buttons with a status label
+     * so the user gets immediate visual feedback without a page reload.
+     */
+    function handleFollowAction(followId, action, itemEl) {
+        const url = `/users/follows/${followId}/${action}`;
+        fetch(url, {
+            method: 'POST',
+            headers: secureHeaders(false)
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Replace the Accept/Decline buttons with a done label
+                    const btnWrap = itemEl.querySelector('.notif-actions');
+                    if (btnWrap) {
+                        btnWrap.innerHTML = action === 'accept'
+                            ? '<span class="notif-action-done">✓ Accepted</span>'
+                            : '<span class="notif-action-done" style="color:#8e8e8e;">Declined</span>';
+                    }
+                }
+            })
+            .catch(console.error);
+    }
+
+    /*
+     * buildNotifHtml — builds the HTML for ONE notification row.
+     *
+     * For FOLLOW_REQUEST type (isPending = true) we render two buttons:
+     *   [Confirm]  [Delete]   ← same style as Instagram's notification buttons
+     *
+     * For all other types we render a plain link.
+     */
     function buildNotifHtml(n) {
-        // Determine where clicking this notification should navigate to
         let href = '#';
-
-        if (n.postId) {
-            // Notification is about a post → open it (the feed popup handles the URL)
-            href = '/posts/' + n.postId;
-        } else if (n.reelId) {
-            // Notification is about a reel → open reel detail page
-            href = '/reels/' + n.reelId;
-        } else if (n.type === 'FOLLOW') {
-            // Follow notification → open the actor's profile
+        if (n.postId)              href = '/posts/' + n.postId;
+        else if (n.reelId)         href = '/reels/' + n.reelId;
+        else if (n.type === 'FOLLOW' || n.type === 'FOLLOW_ACCEPT')
             href = '/users/' + n.actorId + '/profile';
-        }
 
-        // Build the avatar HTML (profile pic or initial letter fallback)
         const avatarHtml = n.actorProfilePic
             ? `<img src="${escHtml(n.actorProfilePic)}" alt="" />`
-            // If the actor has a profile pic, show it as an <img>
             : `${(n.actorUsername || '?').charAt(0).toUpperCase()}`;
-            // Otherwise show the first letter of their username
 
-        // .unread class adds blue background + blue dot
         const unreadClass = n.read ? '' : 'unread';
 
+        // ── FOLLOW_REQUEST: show Accept + Decline buttons ──────────────────
+        if (n.isPending && n.followId) {
+            return `
+                <div class="notif-item ${unreadClass}" style="cursor:default;">
+                    <a href="/users/${n.actorId}/profile" class="notif-avatar" style="text-decoration:none;">
+                        <div class="notif-avatar-inner">${avatarHtml}</div>
+                    </a>
+                    <div class="notif-text" style="flex:1; min-width:0">
+                        <strong>${escHtml(n.actorUsername)}</strong> ${escHtml(n.message)}
+                        <span class="notif-time">${escHtml(n.timeAgo)}</span>
+                    </div>
+                    <div class="notif-actions">
+                        <button class="notif-accept-btn" data-follow-id="${n.followId}">Confirm</button>
+                        <button class="notif-decline-btn" data-follow-id="${n.followId}">Delete</button>
+                    </div>
+                    <div class="notif-dot"></div>
+                </div>`;
+        }
+
+        // ── All other notification types: plain link row ───────────────────
         return `
             <a class="notif-item ${unreadClass}" href="${escHtml(href)}">
                 <div class="notif-avatar">
@@ -697,70 +773,43 @@
                     <span class="notif-time">${escHtml(n.timeAgo)}</span>
                 </div>
                 <div class="notif-dot"></div>
-            </a>
-        `;
-        // The .notif-dot is always rendered, but CSS only makes it visible
-        // when the parent .notif-item has the .unread class.
+            </a>`;
     }
 
-    // ── Mark all notifications as read ──────────────────────────────────────
     function markAllRead() {
         fetch('/notifications/mark-read', {
             method: 'POST',
-            // We reuse the csrfToken variable already defined on the page
-            // (it's set at the top of feed.html and profile.html).
-            headers: secureHeaders ? secureHeaders(false) : {}
-            // secureHeaders() is already defined in your feed.html and profile.html.
-            // If this function is not available, the {} fallback is used.
+            headers: secureHeaders(false)
         })
-        .then(() => {
-            // After marking as read, reset the badge to 0
-            updateBadge(0);
-        })
-        .catch(console.error);
+            .then(() => updateBadge(0))
+            .catch(console.error);
     }
 
-    // ── Update the red badge number ─────────────────────────────────────────
     function updateBadge(count) {
         const badge = document.getElementById('notifBadge');
         if (!badge) return;
-
         if (count > 0) {
             badge.textContent = count > 99 ? '99+' : count;
-            // Show "99+" if more than 99 unread (same as Instagram)
             badge.classList.remove('hidden');
         } else {
             badge.classList.add('hidden');
-            // Hide the badge entirely when count is 0
         }
     }
 
-    // ── Poll for unread count every 30 seconds ──────────────────────────────
-    // This keeps the badge up to date without requiring a page reload.
     function pollUnreadCount() {
         fetch('/notifications/count')
-        // GET /notifications/count → returns { "count": 3 }
             .then(r => r.json())
             .then(data => updateBadge(data.count))
             .catch(() => {});
-            // Silently ignore errors (e.g. if the user logs out)
     }
 
-    // Run immediately on page load to set initial badge
     pollUnreadCount();
-
-    // Then run every 30 seconds
     setInterval(pollUnreadCount, 30000);
-    // 30000 milliseconds = 30 seconds
-    // This polls the server periodically to check for new notifications.
 
-    // ── HTML escape helper ──────────────────────────────────────────────────
     function escHtml(s) {
         const d = document.createElement('div');
         d.textContent = s || '';
         return d.innerHTML;
-        // This prevents XSS: if a username contains <script>, it gets escaped
-        // to &lt;script&gt; and rendered as text, not executed.
     }
 </script>
 </body>

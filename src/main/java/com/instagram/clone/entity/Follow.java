@@ -18,6 +18,10 @@ import java.time.LocalDateTime;
 @Builder
 public class Follow {
 
+    public enum FollowStatus {
+        PENDING,
+        ACCEPTED
+    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,10 +36,22 @@ public class Follow {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User following;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    @Builder.Default
+    private FollowStatus status = FollowStatus.PENDING;
+
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public boolean isAccepted() {
+        return status == FollowStatus.ACCEPTED || status == null;
+    }
+    public boolean isPending() {
+        return status == FollowStatus.PENDING;
     }
 }
