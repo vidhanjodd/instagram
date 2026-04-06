@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -170,6 +171,11 @@ public class CommentService {
     @Transactional
     public CommentResponse createComment(CommentRequest request) {
 
+        // Route to reply handler if parentId is present
+        if (request.getParentId() != null) {
+            return createReply(request);
+        }
+
         request.validate();
 
         User user = userRepository.findById(request.getUserId())
@@ -197,5 +203,74 @@ public class CommentService {
                 .replyCount(0)
                 .replies(List.of())
                 .build();
+    }
+
+    @Transactional
+    private CommentResponse createReply(CommentRequest request) {
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Comment parent = commentRepository.findById(request.getParentId())
+                .orElseThrow(() -> new RuntimeException("Parent comment not found"));
+
+        String content = request.getReplyingToUsername() != null
+                ? "@" + request.getReplyingToUsername() + " " + request.getContent()
+                : request.getContent();
+
+        Comment reply = Comment.builder()
+                .user(user)
+                .content(content)
+                .parent(parent)
+                .reel(parent.getReel())   // inherit reel from parent
+                .build();
+
+        commentRepository.save(reply);
+
+        return CommentResponse.builder()
+                .id(reply.getId())
+                .username(user.getUsername())
+                .userId(user.getId())
+                .content(reply.getContent())
+                .profilePicUrl(user.getProfilePicUrl())
+                .createdAt(reply.getCreatedAt())
+                .replyCount(0)
+                .replies(List.of())
+                .build();
+    }
+
+    @Transactional
+    public void deleteCommentIfOwner(Long commentId, Long userId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        if (!comment.getUser().getId().equals(userId))
+            throw new RuntimeException("Not authorized");
+
+        // ✅ Delete all replies first, then the parent
+        deleteCommentAndReplies(comment);
+    }
+
+    private void deleteCommentAndReplies(Comment comment) {
+        // Recursively delete all nested replies first
+        if (comment.getReplies() != null && !comment.getReplies().isEmpty()) {
+            for (Comment reply : new ArrayList<>(comment.getReplies())) {
+                deleteCommentAndReplies(reply);
+            }
+        }
+
+        // Detach from reel/post
+        if (comment.getReel() != null) {
+            comment.getReel().removeComment(comment);
+        } else if (comment.getPost() != null) {
+            comment.getPost().getComments().remove(comment);
+        }
+
+        // Detach from parent
+        if (comment.getParent() != null) {
+            comment.getParent().getReplies().remove(comment);
+        }
+
+        commentRepository.delete(comment);
     }
 }

@@ -47,10 +47,8 @@ public class Comment {
     @Column(nullable = false, length = 1000)
     private String content;
 
-    // Parent comment for replies
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id", nullable = true)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private Comment parent;
 
     // Replies (fixed: initialized list)
@@ -72,6 +70,8 @@ public class Comment {
     }
 
     private void validateCommentAssociation() {
+        if (this.parent != null) return;
+
         boolean hasPost = this.post != null;
         boolean hasReel = this.reel != null;
 

@@ -70,7 +70,7 @@ public class Reel {
 
     public void removeComment(Comment comment) {
         if (comments.remove(comment)) {
-            commentCount--;
+            commentCount = Math.max(0, commentCount - 1);
         }
     }
 

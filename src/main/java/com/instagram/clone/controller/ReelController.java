@@ -10,6 +10,7 @@ import com.instagram.clone.service.CommentService;
 import com.instagram.clone.service.ReelLikeService;
 import com.instagram.clone.service.ReelService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -174,6 +175,18 @@ public class ReelController {
             e.printStackTrace();
             throw e;
         }
+    }
+
+    @DeleteMapping("/{reelId}/comments/{commentId}")
+    @ResponseBody
+    public ResponseEntity<?> deleteComment(
+            @PathVariable Long reelId,
+            @PathVariable Long commentId,
+            Principal principal
+    ) {
+        User user = getCurrentUser(principal);
+        commentService.deleteCommentIfOwner(commentId, user.getId());
+        return ResponseEntity.ok().build();
     }
 
 
