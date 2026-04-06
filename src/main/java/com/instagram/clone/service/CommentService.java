@@ -26,6 +26,7 @@ public class CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final ReelRepository reelRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public CommentResponse createTopLevelComment(CommentRequest request) {
@@ -45,11 +46,19 @@ public class CommentService {
                     .orElseThrow(() -> new RuntimeException("Post not found"));
             comment.setPost(post);
             post.getComments().add(comment);
+            commentRepository.save(comment);
+            if (!user.getId().equals(post.getUser().getId())) {
+                notificationService.notifyPostComment(user.getId(), post.getUser().getId(), post.getId());
+            }
         } else {
             Reel reel = reelRepository.findById(request.getReelId())
                     .orElseThrow(() -> new RuntimeException("Reel not found"));
             comment.setReel(reel);
             reel.addComment(comment);
+            commentRepository.save(comment);
+            if (!user.getId().equals(reel.getUser().getId())) {
+                notificationService.notifyReelComment(user.getId(), reel.getUser().getId(), reel.getId());
+            }
         }
 
         commentRepository.save(comment);
@@ -140,7 +149,6 @@ public class CommentService {
     @Transactional
     public CommentResponse createComment(CommentRequest request) {
 
-        // Route to reply handler if parentId is present
         if (request.getParentId() != null) {
             return createReply(request);
         }
@@ -161,6 +169,10 @@ public class CommentService {
 
         reel.addComment(comment);
         commentRepository.save(comment);
+
+        notificationService.notifyReelComment(user.getId(),
+                reel.getUser().getId(),
+                reel.getId());
 
         return CommentResponse.builder()
                 .id(comment.getId())
@@ -224,26 +236,22 @@ public class CommentService {
         if (!comment.getUser().getId().equals(userId))
             throw new RuntimeException("Not authorized");
 
-        // ✅ Delete all replies first, then the parent
         deleteCommentAndReplies(comment);
     }
 
     private void deleteCommentAndReplies(Comment comment) {
-        // Recursively delete all nested replies first
         if (comment.getReplies() != null && !comment.getReplies().isEmpty()) {
             for (Comment reply : new ArrayList<>(comment.getReplies())) {
                 deleteCommentAndReplies(reply);
             }
         }
 
-        // Detach from reel/post
         if (comment.getReel() != null) {
             comment.getReel().removeComment(comment);
         } else if (comment.getPost() != null) {
             comment.getPost().getComments().remove(comment);
         }
 
-        // Detach from parent
         if (comment.getParent() != null) {
             comment.getParent().getReplies().remove(comment);
         }

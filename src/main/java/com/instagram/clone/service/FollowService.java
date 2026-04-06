@@ -16,7 +16,7 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
-
+    private final NotificationService notificationService;
     @Transactional
     public void toggleFollow(Long currentUserId, Long targetUserId) {
         if (currentUserId.equals(targetUserId)) {
@@ -38,6 +38,7 @@ public class FollowService {
                     .following(following)
                     .build();
             followRepository.save(newFollow);
+            notificationService.notifyFollow(currentUserId,targetUserId);
         }
     }
 

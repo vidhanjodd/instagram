@@ -18,6 +18,7 @@ public class PostLikeService {
     private final PostLikeRepository postLikeRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final NotificationService notificationService;
 
 
     public boolean toggleLike(String username, Long postId) {
@@ -39,6 +40,11 @@ public class PostLikeService {
                     .build();
 
             postLikeRepository.save(postLike);
+            notificationService.notifyPostLike(
+                    user.getId(),
+                    post.getUser().getId(),
+                    postId
+            );
             return true;
         }
     }

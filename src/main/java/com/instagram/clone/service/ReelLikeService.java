@@ -15,6 +15,7 @@ public class ReelLikeService {
 
     private final ReelLikeRepository reelLikeRepository;
     private final ReelRepository reelRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public long likeReel(Long reelId, User user) {
@@ -33,6 +34,7 @@ public class ReelLikeService {
         reelLikeRepository.save(like);
 
         reel.setLikeCount(reel.getLikeCount() + 1);
+        notificationService.notifyReelLike(user.getId(),reel.getUser().getId(),reelId);
 
         return reel.getLikeCount();
     }
