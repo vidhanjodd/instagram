@@ -5,12 +5,19 @@ import com.instagram.clone.dto.CommentResponse;
 import com.instagram.clone.entity.Comment;
 import com.instagram.clone.entity.Post;
 import com.instagram.clone.entity.User;
+import com.instagram.clone.repository.CommentRepository;
+import com.instagram.clone.repository.PostRepository;
 import com.instagram.clone.repository.UserRepository;
 import com.instagram.clone.service.CommentService;
 import com.instagram.clone.service.PostService;
+import com.instagram.clone.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -37,18 +41,36 @@ public class PostController {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
     private User getCurrentUser(Principal principal) {
         return userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Logged in user not found in database"));
     }
 
     @GetMapping
-    public String showFeed(Model model, Principal principal) {
-        List<Post> posts = postService.getAllPosts();
+    public String showFeed(Model model, Principal principal, HttpServletRequest request, HttpServletResponse response) {
+        Optional<User> currentUserOpt = userRepository.findByUsername(principal.getName());
+        if (currentUserOpt.isEmpty()) {
+            new SecurityContextLogoutHandler().logout(request, response,
+                    SecurityContextHolder.getContext().getAuthentication());
+            return "redirect:/login";
+        }
+
+        List<Post> posts = postService.getAllPosts()
+                .stream()
+                .filter(p -> p.getUser() != null)
+                .collect(Collectors.toList());
 
         model.addAttribute("posts", posts);
-        model.addAttribute("currentUser", getCurrentUser(principal));
-
+        model.addAttribute("currentUser", currentUserOpt.get());
         return "homepage/feed";
     }
 
@@ -65,12 +87,12 @@ public class PostController {
             Principal principal,
             RedirectAttributes redirectAttributes) {
 
-        if (files == null || files.length==0 || files[0].isEmpty()) {
+        if (files == null || files.length == 0 || files[0].isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "At least one media file is required.");
             return "redirect:/posts/new";
         }
 
-        if (files.length  > 10) {
+        if (files.length > 10) {
             redirectAttributes.addFlashAttribute("error", "You can only upload a maximum of 10 media files.");
             return "redirect:/posts/new";
         }
@@ -90,9 +112,7 @@ public class PostController {
     public String showUserProfile(@PathVariable Long userId, Model model, Principal principal) {
         List<Post> posts = postService.getPostsByUserId(userId);
         model.addAttribute("posts", posts);
-
         model.addAttribute("currentUser", getCurrentUser(principal));
-
         return "profilepage/profile";
     }
 
@@ -118,7 +138,6 @@ public class PostController {
                 .collect(Collectors.toList());
 
         model.addAttribute("comments", topLevelComments);
-
         model.addAttribute("currentUser", getCurrentUser(principal));
 
         return "homepage/post-details";
@@ -146,13 +165,11 @@ public class PostController {
 
         List<CommentResponse> comments = commentService.getCommentsForPost(id);
 
-        // Post owner info
         Map<String, Object> owner = new HashMap<>();
         owner.put("id", post.getUser().getId());
         owner.put("username", post.getUser().getUsername());
         owner.put("profilePicUrl", post.getUser().getProfilePicUrl());
 
-        // Current user info (for delete/reply button logic in JS)
         Map<String, Object> me = new HashMap<>();
         me.put("id", currentUser.getId());
         me.put("username", currentUser.getUsername());
@@ -177,18 +194,12 @@ public class PostController {
             @RequestBody CommentRequest request,
             Authentication authentication) {
 
-        // Always resolve userId from the session — never trust the request body
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
         request.setUserId(user.getId());
-
-        if (request.getParentId() == null) {
-            commentService.createTopLevelComment(request);
-            List<CommentResponse> all = commentService.getCommentsForPost(request.getPostId());
-            return ResponseEntity.ok(all.get(all.size() - 1));
-        } else {
-            commentService.addReply(request);
-            List<CommentResponse> replies = commentService.getRepliesToComment(request.getParentId());
-            return ResponseEntity.ok(replies.get(replies.size() - 1));
+        if (request.getPostId() == null) {
+            return ResponseEntity.badRequest().body(null);
         }
+        CommentResponse response = commentService.createComment(request);
+        return ResponseEntity.ok(response);
     }
 }

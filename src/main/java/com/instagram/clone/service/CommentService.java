@@ -28,7 +28,7 @@ public class CommentService {
     private final ReelRepository reelRepository;
 
     @Transactional
-    public void createTopLevelComment(CommentRequest request) {
+    public CommentResponse createTopLevelComment(CommentRequest request) {
         request.validate();
 
         User user = userRepository.findById(request.getUserId())
@@ -53,34 +53,13 @@ public class CommentService {
         }
 
         commentRepository.save(comment);
+        
+        return mapToBasicResponse(comment);
     }
 
     @Transactional
-    public void addReply(CommentRequest request) {
-
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Comment parent = commentRepository.findById(request.getParentId())
-                .orElseThrow(() -> new RuntimeException("Parent comment not found"));
-
-        String content = request.getReplyingToUsername() != null
-                ? "@" + request.getReplyingToUsername() + " " + request.getContent()
-                : request.getContent();
-
-        Comment reply = Comment.builder()
-                .user(user)
-                .content(content)
-                .parent(parent)
-                .build();
-
-        if (parent.getPost() != null) {
-            reply.setPost(parent.getPost());
-        } else {
-            reply.setReel(parent.getReel());
-        }
-
-        commentRepository.save(reply);
+    public CommentResponse addReply(CommentRequest request) {
+        return createReplyInternal(request);
     }
 
     @Transactional(readOnly = true)
@@ -114,17 +93,7 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(Long commentId) {
-
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
-
-        if (comment.getPost() != null) {
-            comment.getPost().getComments().remove(comment);
-        } else if (comment.getReel() != null) {
-            comment.getReel().removeComment(comment);
-        }
-
-        commentRepository.delete(comment);
+        throw new UnsupportedOperationException("Use deleteCommentIfOwner to ensure ownership check.");
     }
 
     @Transactional(readOnly = true)
@@ -205,39 +174,47 @@ public class CommentService {
                 .build();
     }
 
-    @Transactional
-    private CommentResponse createReply(CommentRequest request) {
+        @Transactional
+        private CommentResponse createReply(CommentRequest request) {
+        return createReplyInternal(request);
+        }
 
+        private CommentResponse createReplyInternal(CommentRequest request) {
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
         Comment parent = commentRepository.findById(request.getParentId())
-                .orElseThrow(() -> new RuntimeException("Parent comment not found"));
+            .orElseThrow(() -> new RuntimeException("Parent comment not found"));
 
         String content = request.getReplyingToUsername() != null
-                ? "@" + request.getReplyingToUsername() + " " + request.getContent()
-                : request.getContent();
+            ? "@" + request.getReplyingToUsername() + " " + request.getContent()
+            : request.getContent();
 
         Comment reply = Comment.builder()
-                .user(user)
-                .content(content)
-                .parent(parent)
-                .reel(parent.getReel())   // inherit reel from parent
-                .build();
+            .user(user)
+            .content(content)
+            .parent(parent)
+            .build();
+
+        if (parent.getPost() != null) {
+            reply.setPost(parent.getPost());
+        } else {
+            reply.setReel(parent.getReel());
+        }
 
         commentRepository.save(reply);
 
         return CommentResponse.builder()
-                .id(reply.getId())
-                .username(user.getUsername())
-                .userId(user.getId())
-                .content(reply.getContent())
-                .profilePicUrl(user.getProfilePicUrl())
-                .createdAt(reply.getCreatedAt())
-                .replyCount(0)
-                .replies(List.of())
-                .build();
-    }
+            .id(reply.getId())
+            .username(user.getUsername())
+            .userId(user.getId())
+            .content(reply.getContent())
+            .profilePicUrl(user.getProfilePicUrl())
+            .createdAt(reply.getCreatedAt())
+            .replyCount(0)
+            .replies(List.of())
+            .build();
+        }
 
     @Transactional
     public void deleteCommentIfOwner(Long commentId, Long userId) {

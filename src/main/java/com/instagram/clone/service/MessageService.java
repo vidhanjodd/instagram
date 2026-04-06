@@ -1,0 +1,130 @@
+package com.instagram.clone.service;
+
+import com.instagram.clone.dto.ChatMessage;
+import com.instagram.clone.dto.MessageRequest;
+import com.instagram.clone.dto.MessageResponse;
+import com.instagram.clone.entity.Message;
+import com.instagram.clone.entity.User;
+import com.instagram.clone.repository.MessageRepository;
+import com.instagram.clone.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class MessageService {
+
+    private final MessageRepository messageRepository;
+    private final UserRepository userRepository;
+
+
+    public ChatMessage sendMessage(User sender, MessageRequest request) {
+        User receiver = userRepository.findById(request.getReceiverId())
+                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+
+        Message message = Message.builder()
+                .sender(sender)
+                .receiver(receiver)
+                .content(request.getContent())
+                .vanish(request.isVanish())
+                .build();
+
+        Message saved = messageRepository.save(message);
+
+        return ChatMessage.builder()
+                .id(saved.getId())
+                .senderId(sender.getId())
+                .senderUsername(sender.getUsername())
+                .senderProfilePic(sender.getProfilePicUrl())
+                .receiverId(receiver.getId())
+                .receiverUsername(receiver.getUsername())
+                .content(saved.getContent())
+                .vanish(saved.isVanish())
+                .createdAt(saved.getCreatedAt())
+                .build();
+    }
+
+    /**
+     * Mark all unseen vanish messages from sender as seen and soft-delete them.
+     * Returns list of deleted message IDs so controller can broadcast.
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public List<Long> markVanishMessagesSeen(User viewer, Long senderId) {
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Message> unseen = messageRepository.findUnseenVanishMessages(viewer, sender);
+        List<Long> deletedIds = new java.util.ArrayList<>();
+
+        for (Message m : unseen) {
+            m.setSeen(true);
+            m.setDeleted(true);
+            messageRepository.save(m);
+            deletedIds.add(m.getId());
+        }
+        return deletedIds;
+    }
+
+    /**
+     * Get full conversation between two users.
+     */
+    public List<MessageResponse> getConversation(User currentUser, Long otherUserId) {
+        User otherUser = userRepository.findById(otherUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return messageRepository.findConversation(currentUser, otherUser)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get latest message per conversation for inbox.
+     */
+    public List<MessageResponse> getInbox(User currentUser) {
+        return messageRepository.findLatestMessagePerConversation(currentUser)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    private MessageResponse toResponse(Message m) {
+        return MessageResponse.builder()
+                .id(m.getId())
+                .senderId(m.getSender().getId())
+                .senderUsername(m.getSender().getUsername())
+                .senderProfilePic(m.getSender().getProfilePicUrl())
+                .receiverId(m.getReceiver().getId())
+                .receiverUsername(m.getReceiver().getUsername())
+                .content(m.getContent())
+                .createdAt(m.getCreatedAt())
+                .build();
+    }
+
+    public ChatMessage deleteMessage(Long messageId, User requester) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+
+        if (!message.getSender().getId().equals(requester.getId())) {
+            throw new RuntimeException("You can only delete your own messages");
+        }
+
+        message.setDeleted(true);
+        messageRepository.save(message);
+
+        // Return a ChatMessage so the controller can broadcast deletion via WebSocket
+        return ChatMessage.builder()
+                .id(message.getId())
+                .senderId(message.getSender().getId())
+                .senderUsername(message.getSender().getUsername())
+                .senderProfilePic(message.getSender().getProfilePicUrl())
+                .receiverId(message.getReceiver().getId())
+                .receiverUsername(message.getReceiver().getUsername())
+                .content(null)
+                .createdAt(message.getCreatedAt())
+                .build();
+    }
+}

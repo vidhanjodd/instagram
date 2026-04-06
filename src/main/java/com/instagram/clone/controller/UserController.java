@@ -8,9 +8,13 @@ import com.instagram.clone.repository.UserRepository;
 import com.instagram.clone.service.FollowService;
 import com.instagram.clone.service.PostService;
 import com.instagram.clone.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/users")
@@ -50,9 +55,23 @@ public class UserController {
     }
 
     @GetMapping("/{id}/profile")
-    public String viewProfile(@PathVariable Long id, Model model, Authentication authentication) {
-        User profileUser = userService.getUserById(id);
-        User loggedInUser = userService.getUserByUsername(authentication.getName());
+    public String viewProfile(@PathVariable Long id, Model model, Authentication authentication,
+                              HttpServletRequest request, HttpServletResponse response) {
+
+        Optional<User> loggedInOpt = userRepository.findByUsername(authentication.getName());
+        if (loggedInOpt.isEmpty()) {
+            new SecurityContextLogoutHandler().logout(request, response,
+                    SecurityContextHolder.getContext().getAuthentication());
+            return "redirect:/login";
+        }
+
+        Optional<User> profileUserOpt = userRepository.findById(id);
+        if (profileUserOpt.isEmpty()) {
+            return "redirect:/posts";
+        }
+
+        User profileUser = profileUserOpt.get();
+        User loggedInUser = loggedInOpt.get();
 
         long followersCount = followService.getFollowersCount(profileUser);
         long followingCount = followService.getFollowingCount(profileUser);

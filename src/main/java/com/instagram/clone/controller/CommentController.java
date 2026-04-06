@@ -2,6 +2,8 @@ package com.instagram.clone.controller;
 
 import com.instagram.clone.dto.CommentRequest;
 import com.instagram.clone.dto.CommentResponse;
+import com.instagram.clone.entity.User;
+import com.instagram.clone.repository.UserRepository;
 import com.instagram.clone.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,26 +14,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * REST API controller for managing comments on Posts and Reels.
- * Supports both POST and Reel comment operations with polymorphic handling.
- */
 @Controller
 @RequestMapping("/comments")
 @RequiredArgsConstructor
 public class CommentController {
 
     private final CommentService commentService;
+    private final UserRepository userRepository;
 
-    // ==================== POST Comments Endpoints ====================
-
-    /**
-     * Get all top-level comments for a Post.
-     * Includes nested replies for each comment.
-     *
-     * @param postId Post ID
-     * @return List of CommentResponse objects with nested replies
-     */
     @GetMapping("/post/{postId}")
     @ResponseBody
     public ResponseEntity<List<CommentResponse>> getPostComments(@PathVariable Long postId) {
@@ -44,14 +34,6 @@ public class CommentController {
         }
     }
 
-    /**
-     * Create a top-level comment on a Post via JSON.
-     *
-     * @param postId Post ID
-     * @param request CommentRequest with postId, userId, and content
-     * @param authentication Current user authentication
-     * @return Created CommentResponse or error message
-     */
     @PostMapping("/post/{postId}")
     @ResponseBody
     public ResponseEntity<Object> createPostComment(@PathVariable Long postId,
@@ -59,11 +41,12 @@ public class CommentController {
                                                      Authentication authentication) {
         try {
             request.setPostId(postId);
-            request.setUserId(Long.parseLong(authentication.getName()));
+            User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+            request.setUserId(user.getId());
             request.validate();
 
-            commentService.createTopLevelComment(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Comment created successfully");
+            CommentResponse response = commentService.createTopLevelComment(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Validation error: " + e.getMessage());
@@ -73,15 +56,6 @@ public class CommentController {
         }
     }
 
-    /**
-     * Reply to a comment on a Post.
-     *
-     * @param postId Post ID
-     * @param parentId Parent comment ID
-     * @param request CommentRequest with content
-     * @param authentication Current user authentication
-     * @return Created reply CommentResponse or error message
-     */
     @PostMapping("/post/{postId}/reply")
     @ResponseBody
     public ResponseEntity<Object> replyToPostComment(@PathVariable Long postId,
@@ -89,27 +63,22 @@ public class CommentController {
                                                       @RequestBody CommentRequest request,
                                                       Authentication authentication) {
         try {
+
             request.setPostId(postId);
             request.setParentId(parentId);
-            request.setUserId(Long.parseLong(authentication.getName()));
+            request.setReelId(null);
+            User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+            request.setUserId(user.getId());
 
-            commentService.addReply(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Reply created successfully");
+            CommentResponse response = commentService.addReply(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error: " + e.getMessage());
         }
     }
 
-    // ==================== REEL Comments Endpoints ====================
-
-    /**
-     * Get all top-level comments for a Reel.
-     * Includes nested replies for each comment.
-     *
-     * @param reelId Reel ID
-     * @return List of CommentResponse objects with nested replies
-     */
     @GetMapping("/reel/{reelId}")
     @ResponseBody
     public ResponseEntity<List<CommentResponse>> getReelComments(@PathVariable Long reelId) {
@@ -122,27 +91,21 @@ public class CommentController {
         }
     }
 
-    /**
-     * Create a top-level comment on a Reel via JSON.
-     *
-     * @param reelId Reel ID
-     * @param request CommentRequest with reelId, userId, and content
-     * @param authentication Current user authentication
-     * @return Created CommentResponse or error message
-     */
     @PostMapping("/reel/{reelId}")
     @ResponseBody
     public ResponseEntity<Object> createReelComment(@PathVariable Long reelId,
                                                      @RequestBody CommentRequest request,
                                                      Authentication authentication) {
         try {
+
             request.setReelId(reelId);
-            request.setPostId(null);  // Ensure no post ID
-            request.setUserId(Long.parseLong(authentication.getName()));
+            request.setPostId(null);
+            User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+            request.setUserId(user.getId());
             request.validate();
 
-            commentService.createTopLevelComment(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Comment created successfully");
+            CommentResponse response = commentService.createTopLevelComment(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Validation error: " + e.getMessage());
@@ -152,15 +115,6 @@ public class CommentController {
         }
     }
 
-    /**
-     * Reply to a comment on a Reel.
-     *
-     * @param reelId Reel ID
-     * @param parentId Parent comment ID
-     * @param request CommentRequest with content
-     * @param authentication Current user authentication
-     * @return Created reply CommentResponse or error message
-     */
     @PostMapping("/reel/{reelId}/reply")
     @ResponseBody
     public ResponseEntity<Object> replyToReelComment(@PathVariable Long reelId,
@@ -168,56 +122,43 @@ public class CommentController {
                                                       @RequestBody CommentRequest request,
                                                       Authentication authentication) {
         try {
-            request.setReelId(reelId);
-            request.setPostId(null);  // Ensure no post ID
-            request.setParentId(parentId);
-            request.setUserId(Long.parseLong(authentication.getName()));
 
-            commentService.addReply(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Reply created successfully");
+            request.setReelId(reelId);
+            request.setPostId(null);
+            request.setParentId(parentId);
+            User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+            request.setUserId(user.getId());
+
+            CommentResponse response = commentService.addReply(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error: " + e.getMessage());
         }
     }
 
-
-    // ==================== Generic Comment Endpoints ====================
-
-    /**
-     * Delete a comment by ID.
-     * Only the comment author can delete their own comments.
-     *
-     * @param commentId Comment ID
-     * @param authentication Current user authentication
-     * @return Success message or error
-     */
-    @DeleteMapping("/{commentId}")
+    @PostMapping("/delete/{commentId}")
     @ResponseBody
     public ResponseEntity<String> deleteComment(@PathVariable Long commentId,
-                                                 Authentication authentication) {
+                                                Authentication authentication) {
         try {
-            CommentResponse comment = commentService.getCommentById(commentId);
-
-            if (!comment.getUsername().equals(authentication.getName())) {
+            User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
+            commentService.deleteCommentIfOwner(commentId, user.getId());
+            return ResponseEntity.ok("Comment deleted successfully");
+        } catch (RuntimeException e) {
+            if ("Not authorized".equals(e.getMessage())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("You can only delete your own comments");
             }
-
-            commentService.deleteComment(commentId);
-            return ResponseEntity.ok("Comment deleted successfully");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error: " + e.getMessage());
         }
     }
 
-    /**
-     * Get all replies to a specific comment.
-     *
-     * @param parentId Parent comment ID
-     * @return List of reply CommentResponse objects
-     */
     @GetMapping("/replies/{parentId}")
     @ResponseBody
     public ResponseEntity<List<CommentResponse>> getReplies(@PathVariable Long parentId) {
@@ -230,16 +171,6 @@ public class CommentController {
         }
     }
 
-    // ==================== Legacy Form-Based Endpoint ====================
-
-    /**
-     * Legacy form-based comment creation endpoint.
-     * Maintains backward compatibility with existing form submissions.
-     * Automatically redirects to appropriate post page.
-     *
-     * @param request CommentRequest from form
-     * @return Redirect to post details page
-     */
     @PostMapping("/add")
     public String create(@ModelAttribute CommentRequest request) {
         if (request.getParentId() == null) {
