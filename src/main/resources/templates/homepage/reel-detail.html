@@ -69,7 +69,6 @@
     </div>
 </div>
 
-<!-- 🔥 IMPORTANT: inject userId correctly -->
 <script th:inline="javascript">
     const userId = [[${currentUser.id}]];
 </script>
@@ -102,7 +101,6 @@
 
          let isLiked = false;
 
-         // ---------------- VIEW ----------------
          try {
              const res = await fetch(`/reels/${reelId}/view`, {
                  method: 'POST',
@@ -111,7 +109,6 @@
              if (res.ok) viewStat.textContent = await res.text();
          } catch {}
 
-         // ---------------- LIKE STATE ----------------
          try {
              const res = await fetch(`/reels/${reelId}/liked`);
              if (res.ok) {
@@ -120,7 +117,6 @@
              }
          } catch {}
 
-         // ---------------- LIKE ----------------
          likeBtn.addEventListener('click', async () => {
              try {
                  const url = isLiked
@@ -145,12 +141,10 @@
              }
          });
 
-         // ---------------- VIDEO ----------------
          video.addEventListener('click', () => {
              video.paused ? video.play() : video.pause();
          });
 
-         // ---------------- OPEN COMMENTS ----------------
          commentBtn.addEventListener('click', async () => {
              modal.classList.remove('hidden');
 
@@ -179,12 +173,10 @@
              }
          });
 
-         // ---------------- CLOSE ----------------
          modal.addEventListener('click', (e) => {
              if (e.target === modal) modal.classList.add('hidden');
          });
 
-         // ---------------- POST COMMENT ----------------
          async function postComment() {
              const content = input.value.trim();
              if (!content) return;

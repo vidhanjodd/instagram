@@ -49,6 +49,7 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id", nullable = true)
+    @OnDelete(action = OnDeleteAction.CASCADE) // ADD THIS LINE
     private Comment parent;
 
     // Replies (fixed: initialized list)

@@ -2,7 +2,6 @@ package com.instagram.clone.controller;
 
 import com.instagram.clone.dto.CommentRequest;
 import com.instagram.clone.dto.CommentResponse;
-import com.instagram.clone.entity.Comment;
 import com.instagram.clone.entity.Reel;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.UserRepository;
@@ -142,20 +141,16 @@ public class ReelController {
 
 
     @DeleteMapping("/{reelId}")
-    public String deleteReel(@PathVariable Long reelId,
-                             Principal principal,
-                             RedirectAttributes redirectAttributes) {
-
+    @ResponseBody
+    public ResponseEntity<?> deleteReel(@PathVariable Long reelId,
+                                        Principal principal) {
         try {
             User user = getCurrentUser(principal);
             reelService.deleteReel(reelId, user);
-
-            redirectAttributes.addFlashAttribute("success", "Reel deleted successfully");
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        return "redirect:/reels";
     }
 
     @PostMapping(value = "/{reelId}/comments", consumes = "application/json", produces = "application/json")
@@ -165,16 +160,10 @@ public class ReelController {
             @RequestBody CommentRequest request,
             Principal principal
     ) {
-        System.out.println(">>> Received request: " + request);
-        try {
-            User user = getCurrentUser(principal);
-            request.setReelId(reelId);
-            request.setUserId(user.getId());
-            return commentService.createComment(request);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        User user = getCurrentUser(principal);
+        request.setReelId(reelId);
+        request.setUserId(user.getId());
+        return commentService.createComment(request);
     }
 
     @DeleteMapping("/{reelId}/comments/{commentId}")
@@ -188,8 +177,4 @@ public class ReelController {
         commentService.deleteCommentIfOwner(commentId, user.getId());
         return ResponseEntity.ok().build();
     }
-
-
-
-
 }

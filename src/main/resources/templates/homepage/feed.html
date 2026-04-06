@@ -233,7 +233,6 @@
 </div>
 
 <script th:inline="javascript">
-    /* ── CSRF ── */
     const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
     const currentUserId = /*[[${currentUser.id}]]*/ null;
@@ -243,10 +242,6 @@
         if (json) h['Content-Type'] = 'application/json';
         return h;
     }
-
-    /* ════════════════════════════════════════════════
-       DELETE MODAL LOGIC (Fixed)
-    ════════════════════════════════════════════════ */
     function openDeleteModal(btn) {
         const modal = document.getElementById('deleteModal');
         const form = document.getElementById('deleteForm');
@@ -258,9 +253,6 @@
         document.getElementById('deleteModal').style.display = 'none';
     }
 
-    /* ════════════════════════════════════════════════
-       BIO RENDERER
-    ════════════════════════════════════════════════ */
     (function () {
         const bioEl = document.getElementById('bioText');
         if (!bioEl) return;
@@ -278,9 +270,6 @@
         });
     })();
 
-    /* ════════════════════════════════════════════════
-       POST POPUP
-    ════════════════════════════════════════════════ */
     let ppMediaList = [], ppMediaIdx = 0, ppPostId = null, ppReplyId = null;
 
     function openPostPopup(postId) {
@@ -410,11 +399,7 @@
                    </button>` : ''}
             </div>`;
         el.querySelector('.pp-reply-btn').onclick = function() {
-            const repliesContainer = this.closest('.pp-replies');
-
-            const rootId = repliesContainer ? repliesContainer.id.replace('pp-r-', '') : this.dataset.id;
-
-            ppStartReply(rootId, this.dataset.un);
+            ppStartReply(this.dataset.id, this.dataset.un);
         };
         const db = el.querySelector('.pp-del-btn');
         if (db) db.onclick = function(){ ppDelete(this.dataset.id, el); };
@@ -453,8 +438,11 @@
                 ? document.getElementById('ppReplyLabel').textContent.replace('@','')
                 : null
         };
-        // FIX: use /comments/add/json so we get JSON back and can update UI instantly
-        fetch('/comments/add/json', { method:'POST', headers: secureHeaders(true), body: JSON.stringify(body) })
+        // Route to correct endpoint: top-level or reply
+        const endpoint = ppReplyId 
+            ? `/comments/post/${ppPostId}/reply?parentId=${ppReplyId}`
+            : `/comments/post/${ppPostId}`;
+        fetch(endpoint, { method:'POST', headers: secureHeaders(true), body: JSON.stringify(body) })
             .then(r => { if (!r.ok) throw new Error('Comment failed: ' + r.status); return r.json(); })
             .then(nc => {
                 inp.value = ''; document.getElementById('ppPostBtn').disabled = true;
@@ -485,7 +473,6 @@
                         vrBtn.textContent = 'Hide replies';
                     }
                 } else {
-                    // FIX: top-level comment — append to scroll and scroll to it
                     const el = buildCEl(nc);
                     scroll.appendChild(el);
                     scroll.scrollTop = scroll.scrollHeight;
@@ -530,10 +517,7 @@
             cont.innerHTML = '';
             replies.forEach(r => {
                 const el = buildCEl(r);
-
-                // 🔥 FORCE FLAT UI
                 el.style.marginLeft = "0px";
-
                 cont.appendChild(el);
             });
             cont.dataset.loaded = 'true'; cont.style.display = 'block';
@@ -592,13 +576,11 @@
             .then(r => r.json())
             .then(replies => {
                 cont.innerHTML = '';
-
                 replies.forEach(r => {
                     const el = buildCEl(r);
-                    el.style.marginLeft = "0px"; // keep flat
+                    el.style.marginLeft = "0px";
                     cont.appendChild(el);
                 });
-
                 cont.style.display = 'block';
                 cont.dataset.loaded = 'true';
             });
@@ -735,9 +717,6 @@
         });
     });
 
-    /* ════════════════════════════════════════════════
-       SAVE BUTTON (feed cards)
-    ════════════════════════════════════════════════ */
     document.querySelectorAll('.save-btn-ajax').forEach(button => {
         button.addEventListener('click', async function() {
             const postId = this.getAttribute('data-post-id');

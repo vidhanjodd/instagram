@@ -403,7 +403,7 @@
     function buildReplyElement(reply) {
         const initial = reply.username ? reply.username.charAt(0).toUpperCase() : '?';
 
-        // Failsafe check in case your CommentResponse DTO uses different field names (like reply.id instead of reply.userId)
+        // Failsafe check in case your CommentResponse DTO uses different field names
         const authorId = reply.userId || reply.user_id || reply.id;
         const isOwner = authorId === currentUserId;
 
@@ -451,12 +451,8 @@
                 const repliesContainer = document.getElementById('replies-' + commentId);
                 if (repliesContainer) repliesContainer.remove();
 
-                // Hide the "View replies" button if it exists
                 const viewBtn = document.querySelector('.view-replies-btn[data-comment-id="' + commentId + '"]');
                 if (viewBtn) viewBtn.remove();
-
-                // Optional: reload the page to refresh comment counts
-                // setTimeout(() => location.reload(), 300);
             } else {
                 return res.text().then(text => { throw new Error(text) });
             }
@@ -508,7 +504,6 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    // Toggle filled vs outline icon
                     if (data.saved) {
                         icon.classList.replace('fa-regular', 'fa-solid');
                     } else {

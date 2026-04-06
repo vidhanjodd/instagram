@@ -25,7 +25,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -88,12 +87,12 @@ public class PostController {
             Principal principal,
             RedirectAttributes redirectAttributes) {
 
-        if (files == null || files.length==0 || files[0].isEmpty()) {
+        if (files == null || files.length == 0 || files[0].isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "At least one media file is required.");
             return "redirect:/posts/new";
         }
 
-        if (files.length  > 10) {
+        if (files.length > 10) {
             redirectAttributes.addFlashAttribute("error", "You can only upload a maximum of 10 media files.");
             return "redirect:/posts/new";
         }
@@ -113,9 +112,7 @@ public class PostController {
     public String showUserProfile(@PathVariable Long userId, Model model, Principal principal) {
         List<Post> posts = postService.getPostsByUserId(userId);
         model.addAttribute("posts", posts);
-
         model.addAttribute("currentUser", getCurrentUser(principal));
-
         return "profilepage/profile";
     }
 
@@ -141,7 +138,6 @@ public class PostController {
                 .collect(Collectors.toList());
 
         model.addAttribute("comments", topLevelComments);
-
         model.addAttribute("currentUser", getCurrentUser(principal));
 
         return "homepage/post-details";
@@ -169,13 +165,11 @@ public class PostController {
 
         List<CommentResponse> comments = commentService.getCommentsForPost(id);
 
-        // Post owner info
         Map<String, Object> owner = new HashMap<>();
         owner.put("id", post.getUser().getId());
         owner.put("username", post.getUser().getUsername());
         owner.put("profilePicUrl", post.getUser().getProfilePicUrl());
 
-        // Current user info (for delete/reply button logic in JS)
         Map<String, Object> me = new HashMap<>();
         me.put("id", currentUser.getId());
         me.put("username", currentUser.getUsername());
@@ -202,15 +196,10 @@ public class PostController {
 
         User user = userRepository.findByUsername(authentication.getName()).orElseThrow();
         request.setUserId(user.getId());
-
-        CommentResponse response;
-
-        if (request.getParentId() == null) {
-            response = commentService.createTopLevelComment(request);
-        } else {
-            response = commentService.addReply(request);
+        if (request.getPostId() == null) {
+            return ResponseEntity.badRequest().body(null);
         }
-
+        CommentResponse response = commentService.createComment(request);
         return ResponseEntity.ok(response);
     }
 }
