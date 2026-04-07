@@ -73,16 +73,30 @@ public class UserController {
         User profileUser = profileUserOpt.get();
         User loggedInUser = loggedInOpt.get();
 
+        boolean isOwnProfile   = loggedInUser.getId().equals(profileUser.getId());
+        boolean isFollowing    = followService.isFollowing(loggedInUser, profileUser);
+        boolean hasPendingRequest = !isOwnProfile && !isFollowing
+                && followService.hasPendingRequest(loggedInUser, profileUser);
+
         long followersCount = followService.getFollowersCount(profileUser);
         long followingCount = followService.getFollowingCount(profileUser);
-        boolean isFollowing = followService.isFollowing(loggedInUser, profileUser);
+
+
 
         model.addAttribute("user", profileUser);
         model.addAttribute("currentUser", loggedInUser);
-        model.addAttribute("posts", postService.getPostsByUserId(id));
         model.addAttribute("followersCount", followersCount);
         model.addAttribute("followingCount", followingCount);
         model.addAttribute("isFollowing", isFollowing);
+        model.addAttribute("hasPendingRequest", hasPendingRequest);
+        model.addAttribute("isPrivateProfile", profileUser.isPrivate());
+
+        boolean canSeePosts = isOwnProfile || isFollowing || !profileUser.isPrivate();
+        if (canSeePosts) {
+            model.addAttribute("posts", postService.getPostsByUserId(id));
+        } else {
+            model.addAttribute("posts", List.of());
+        }
 
         return "profilepage/profile";
     }
@@ -98,16 +112,20 @@ public class UserController {
     public String updateBio(@PathVariable Long id,
                             @RequestParam String bio,
                             @RequestParam(required = false) String websiteUrl,
+                            @RequestParam(defaultValue = "false") boolean isPrivate, // NEW
                             Authentication authentication,
-                            Model model) {
-        User userToUpdate = userService.getUserById(id);
+                            org.springframework.ui.Model model) {
 
+        User userToUpdate = userService.getUserById(id);
         if (!userToUpdate.getUsername().equals(authentication.getName())) {
             return "redirect:/users/" + id + "/profile?error=unauthorized";
         }
 
         try {
             userService.updateBio(id, bio, websiteUrl);
+            userToUpdate = userService.getUserById(id);
+            userToUpdate.setPrivate(isPrivate);
+            userRepository.save(userToUpdate);
         } catch (RuntimeException e) {
             User user = userService.getUserById(id);
             model.addAttribute("user", user);

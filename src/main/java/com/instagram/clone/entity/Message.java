@@ -32,10 +32,10 @@ public class Message {
     private boolean deleted = false;
 
     @Column(nullable = false)
-    private boolean vanish = false;   // true = this message was sent in vanish mode
+    private boolean vanish = false;
 
     @Column(nullable = false)
-    private boolean seen = false;     // true = receiver has seen it
+    private boolean seen = false;
 
     private LocalDateTime createdAt;
 

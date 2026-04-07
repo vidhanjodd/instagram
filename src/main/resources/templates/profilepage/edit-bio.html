@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Instagram · Edit Profile</title>
     <link rel="stylesheet" th:href="@{/css/edit-bio.css}"/>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -75,14 +77,14 @@
     <!-- Form -->
     <form id="editForm" th:action="@{/users/{id}/bio(id=${user.id})}" method="post" class="form-section">
 
+        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+
+        <input type="hidden" name="isPrivate" id="isPrivateHidden"
+               th:value="${user.private ? 'true' : 'false'}"/>
+
         <div class="form-field">
             <label>Username</label>
             <input type="text" th:value="${user.username}" disabled style="color: var(--muted);"/>
-        </div>
-
-        <div class="form-field">
-            <label>Email</label>
-            <input type="email" th:value="${user.email}" disabled style="color: var(--muted);"/>
         </div>
 
         <div class="form-field">
@@ -129,8 +131,9 @@
                 <div class="toggle-label">Private account</div>
                 <div class="toggle-sub">Only approved followers can see your posts</div>
             </div>
-            <div class="toggle-switch" th:classappend="${user.private ? 'on' : ''}"
-                 onclick="this.classList.toggle('on')"></div>
+            <div id="visualToggle" class="toggle-switch"
+                 th:classappend="${user.private ? 'on' : ''}"
+                 onclick="togglePrivacy(this)"></div>
         </div>
 
         <div class="submit-section">
@@ -228,6 +231,15 @@
 
         reader.readAsDataURL(file);
     });
+    function togglePrivacy(element) {
+    element.classList.toggle('on');
+
+    const isNowPrivate = element.classList.contains('on');
+
+    document.getElementById('isPrivateHidden').value = isNowPrivate ? 'true' : 'false';
+
+    console.log("Form will submit isPrivate as:", document.getElementById('isPrivateHidden').value);
+}
 </script>
 </body>
 </html>

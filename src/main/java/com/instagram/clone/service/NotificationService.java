@@ -124,7 +124,46 @@ public class NotificationService {
                         .build()
         );
     }
+    @Transactional
+    public void notifyFollowRequest(Long actorId, Long recipientId, Long followId) {
+        if (actorId.equals(recipientId)) return;
 
+        User actor     = userRepository.findById(actorId).orElseThrow();
+        User recipient = userRepository.findById(recipientId).orElseThrow();
+
+        if (notificationRepository.findByFollowId(followId).isPresent()) return;
+
+        notificationRepository.save(
+                Notification.builder()
+                        .actor(actor)
+                        .recipient(recipient)
+                        .type(NotificationType.FOLLOW_REQUEST)
+                        .followId(followId)
+                        .build()
+        );
+    }
+    @Transactional
+    public void notifyFollowAccept(Long actorId, Long recipientId, Long followId) {
+        if (actorId.equals(recipientId)) return;
+
+        User actor     = userRepository.findById(actorId).orElseThrow();
+        User recipient = userRepository.findById(recipientId).orElseThrow();
+
+        notificationRepository.deleteByFollowId(followId);
+
+        notificationRepository.save(
+                Notification.builder()
+                        .actor(actor)
+                        .recipient(recipient)
+                        .type(NotificationType.FOLLOW_ACCEPT)
+                        .followId(followId)
+                        .build()
+        );
+    }
+    @Transactional
+    public void deleteFollowRequestNotification(Long followId) {
+        notificationRepository.deleteByFollowId(followId);
+    }
     @Transactional(readOnly = true)
     public List<NotificationDto> getNotifications(String username) {
         User user = userRepository.findByUsername(username).orElseThrow();

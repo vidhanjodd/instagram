@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
@@ -32,4 +33,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     boolean existsByActorAndRecipientAndType(
             User actor, User recipient,
             Notification.NotificationType type);
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Notification n WHERE n.followId = :followId")
+    void deleteByFollowId(@Param("followId") Long followId);
+
+    Optional<Notification> findByFollowId(Long followId);
 }
