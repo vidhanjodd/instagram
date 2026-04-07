@@ -1,7 +1,6 @@
 package com.instagram.clone.controller;
 
 import com.instagram.clone.dto.MessageRequest;
-import com.instagram.clone.dto.UserRegisterResponse;
 import com.instagram.clone.entity.Follow;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.FollowRepository;
@@ -27,13 +26,11 @@ public class ShareController {
 
     /**
      * GET /users/following/{userId}
-     * Returns the list of users that currentUser is following.
-     * Used to populate the share modal with people you can send to.
+     * Returns the list of users that currentUser follows.
      */
     @GetMapping("/users/following/{userId}")
     public ResponseEntity<List<Map<String, Object>>> getFollowing(@PathVariable Long userId) {
         List<Follow> follows = followRepository.findByFollowerId(userId);
-
         List<Map<String, Object>> result = follows.stream()
                 .map(f -> {
                     User u = f.getFollowing();
@@ -44,26 +41,27 @@ public class ShareController {
                     );
                 })
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(result);
     }
 
     /**
      * POST /messages/send/http
-     * HTTP version of sending a message (used by share feature).
-     * The WebSocket /app/chat.send is used for real-time chat,
-     * but share sends via HTTP so no WebSocket connection is needed on the feed page.
+     * Always allowed — privacy is enforced at VIEW time (PostController),
+     * not at send time. Just like real Instagram.
      */
     @PostMapping("/messages/send/http")
-    public ResponseEntity<Void> sendMessageHttp(
+    public ResponseEntity<?> sendMessageHttp(
             @RequestBody MessageRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            User sender = userRepository.findByUsername(userDetails.getUsername());
+            User sender = userRepository.findByUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
             messageService.sendMessage(sender, request);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "failed", "message", e.getMessage()));
         }
     }
 }

@@ -157,7 +157,7 @@
                                 </div>
                                 <div th:classappend="${msg.senderId == currentUser.id} ? ' sent' : ' received'"
                                      th:class="'bubble' + (${msg.senderId == currentUser.id} ? ' sent' : ' received')"
-                                     th:text="${msg.content}">message</div>
+                                     th:utext="${@linkifier.linkify(msg.content)}">message</div>
                                 <button th:if="${msg.senderId == currentUser.id}"
                                         class="msg-delete-btn"
                                         th:attr="data-msg-id=${msg.id}"
@@ -355,7 +355,7 @@
 
         const bubble = document.createElement('div');
         bubble.className = 'bubble ' + (isSent ? 'sent' : 'received') + (isVanish ? ' vanish-bubble' : '');
-        bubble.textContent = text;
+        bubble.innerHTML = linkifyText(text);
         row.appendChild(bubble);
 
         // Add delete button for sent messages
@@ -441,6 +441,15 @@
     }
     function esc(str) {
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Converts plain text to HTML — makes URLs into clickable links
+    function linkifyText(text) {
+        const escaped = esc(text);
+        const urlRegex = /(https?:\/\/[^\s<>"]+)/g;
+        return escaped.replace(urlRegex, function(url) {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="chat-link">${url}</a>`;
+        });
     }
     const emojis = [
         "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","🙂","🙃","😋","😎","😍","😘","😗","😙","😚",
