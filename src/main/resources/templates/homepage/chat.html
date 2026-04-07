@@ -241,11 +241,26 @@
     let typingTimer = null;
 
     function connect() {
-        const socket = new SockJS('/ws');
+        // Construct WebSocket URL dynamically using actual server address
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        const socketUrl = protocol + '//' + host + '/ws';
+        
+        console.log('🔌 Attempting WebSocket connection to:', socketUrl);
+        
+        const socket = new SockJS(socketUrl);
         stompClient = Stomp.over(socket);
-        stompClient.debug = null; // silence logs
+        stompClient.debug = function(msg) { console.log('📡 STOMP:', msg); };
 
-        stompClient.connect({}, function () {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        const connectHeaders = {};
+        if (csrfToken && csrfHeader) {
+            connectHeaders[csrfHeader] = csrfToken;
+        }
+
+        stompClient.connect(connectHeaders, function () {
+            console.log('✅ WebSocket connected successfully from:', socketUrl);
             wsStatus.textContent = '● Live';
             wsStatus.className = 'ws-status connected';
 
@@ -311,7 +326,8 @@
             }
 
         }, function (error) {
-            wsStatus.textContent = '● Offline';
+            console.error('❌ WebSocket connection FAILED!', error);
+            wsStatus.textContent = '● Offline (Retrying...)';
             wsStatus.className = 'ws-status disconnected';
             // Retry after 3s with exponential backoff
             setTimeout(connect, 3000);
