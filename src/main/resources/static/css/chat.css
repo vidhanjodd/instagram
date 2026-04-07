@@ -218,85 +218,6 @@ nav {
 }
 .send-btn:disabled { opacity: 0.35; cursor: default; }
 
-/* ── Vanish Mode ── */
-.vanish-toggle-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 22px;
-    color: #8e8e8e;
-    padding: 4px;
-    border-radius: 50%;
-    transition: color 0.2s, background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.vanish-toggle-btn:hover {
-    color: #a855f7;
-    background: rgba(168, 85, 247, 0.1);
-}
-.vanish-toggle-btn.vanish-active {
-    color: #a855f7;
-    background: rgba(168, 85, 247, 0.15);
-}
-
-.vanish-banner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: linear-gradient(135deg, #2d1b69, #1a0533);
-    color: #d8b4fe;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 10px 20px;
-    flex-shrink: 0;
-    border-bottom: 1px solid rgba(168, 85, 247, 0.3);
-}
-.vanish-banner i { font-size: 16px; }
-
-.vanish-off-btn {
-    background: rgba(168, 85, 247, 0.2);
-    border: 1px solid rgba(168, 85, 247, 0.4);
-    color: #d8b4fe;
-    border-radius: 12px;
-    padding: 3px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-left: 8px;
-    transition: background 0.15s;
-}
-.vanish-off-btn:hover { background: rgba(168, 85, 247, 0.35); }
-
-.conv-panel.vanish-bg .messages-area {
-    background: linear-gradient(180deg, #0d0018 0%, #1a0533 100%);
-}
-.conv-panel.vanish-bg .msg-input-wrap {
-    background: #0d0018;
-    border-top: 1px solid rgba(168, 85, 247, 0.3);
-}
-.conv-panel.vanish-bg .msg-input-bar {
-    border-color: rgba(168, 85, 247, 0.4);
-    background: #1a0533;
-    color: #f3e8ff;
-}
-.conv-panel.vanish-bg .msg-input-bar input {
-    color: #f3e8ff;
-}
-.conv-panel.vanish-bg .msg-input-bar input::placeholder {
-    color: rgba(216, 180, 254, 0.5);
-}
-
-.bubble.vanish-bubble.sent {
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
-}
-.bubble.vanish-bubble.received {
-    background: #2d1b69;
-    color: #f3e8ff;
-}
-
 /* ── Message delete button ── */
 .msg-row {
     position: relative;
@@ -387,3 +308,153 @@ nav {
     background: #f2f2f2;
     transform: scale(1.2);
 }
+/* ══════════════════════════════════
+   VANISH MODE
+══════════════════════════════════ */
+
+/* Vanish toggle button in header */
+.vanish-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #8e8e8e;
+    font-size: 20px;
+    padding: 6px;
+    border-radius: 50%;
+    transition: color 0.2s, background 0.2s;
+    display: flex; align-items: center; justify-content: center;
+}
+.vanish-toggle-btn:hover { color: #111; background: #f0f0f0; }
+.vanish-toggle-btn.active {
+    color: #fff;
+    background: #8b5cf6;
+}
+.vanish-toggle-btn.active:hover { background: #7c3aed; }
+
+/* Vanish mode banner */
+.vanish-banner {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #1a0533, #2d1054);
+    color: #c084fc;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(139,92,246,0.3);
+    animation: slideDown 0.3s ease;
+}
+.vanish-banner i { font-size: 14px; }
+.vanish-banner-close {
+    background: rgba(139,92,246,0.2);
+    border: 1px solid rgba(139,92,246,0.4);
+    color: #c084fc;
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: background 0.2s;
+}
+.vanish-banner-close:hover { background: rgba(139,92,246,0.4); }
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Full panel dark overlay when vanish is active */
+.conv-panel.vanish-active {
+    background: #0a0a0a;
+    transition: background 0.4s ease;
+}
+.conv-panel.vanish-active .conv-header {
+    background: #111;
+    border-bottom-color: rgba(139,92,246,0.3);
+}
+.conv-panel.vanish-active .conv-header-name { color: #fff; }
+.conv-panel.vanish-active .conv-header-sub  { color: #888; }
+.conv-panel.vanish-active .conv-header-actions a { color: #aaa; }
+
+.messages-area.vanish-active {
+    background: #0a0a0a;
+    transition: background 0.4s ease;
+}
+
+/* Vanish bubbles */
+.bubble.vanish-bubble {
+    background: linear-gradient(135deg, #4c1d95, #7c3aed) !important;
+    color: #fff !important;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+.bubble.vanish-bubble::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
+    border-radius: inherit;
+}
+/* Received vanish bubbles */
+.bubble.received.vanish-bubble {
+    background: linear-gradient(135deg, #1e1b4b, #312e81) !important;
+}
+
+/* Vanish label under bubble */
+.vanish-label {
+    font-size: 10px;
+    color: #8b5cf6;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0 4px;
+    margin-top: 1px;
+    opacity: 0.8;
+}
+.vanish-label i { font-size: 9px; }
+
+/* Vanish input bar */
+.vanish-input {
+    background: #1a1a2e !important;
+    border-color: rgba(139,92,246,0.5) !important;
+}
+.vanish-input input {
+    background: transparent !important;
+    color: #e2d9f3 !important;
+}
+.vanish-input input::placeholder { color: #7c6fa0 !important; }
+.vanish-input .send-btn { color: #a78bfa !important; }
+.vanish-input .emoji-btn { filter: brightness(0.7) hue-rotate(180deg); }
+
+/* Star/sparkle entrance animation for vanish bubbles */
+.bubble.vanish-bubble {
+    animation: vanishAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes vanishAppear {
+    from { opacity: 0; transform: scale(0.7) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Vanish bubble exit: fade + shrink when disappearing */
+.msg-group[data-vanish="true"].vanishing {
+    animation: vanishDisappear 0.6s ease forwards;
+}
+@keyframes vanishDisappear {
+    0%   { opacity: 1; transform: scale(1); filter: blur(0); }
+    60%  { opacity: 0.4; transform: scale(1.05); filter: blur(2px); }
+    100% { opacity: 0; transform: scale(0.8); filter: blur(6px); height: 0; margin: 0; padding: 0; }
+}
+
+/* ── Clickable links inside chat bubbles ── */
+.chat-link {
+    color: inherit;
+    text-decoration: underline;
+    word-break: break-all;
+    opacity: 0.9;
+}
+.bubble.sent .chat-link     { color: #fff; }
+.bubble.received .chat-link { color: #0095f6; }
+.chat-link:hover { opacity: 1; }

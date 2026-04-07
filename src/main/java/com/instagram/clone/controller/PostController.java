@@ -51,6 +51,7 @@ public class PostController {
     @Autowired
     private FollowRepository followRepository;
 
+
     private User getCurrentUser(Principal principal) {
         return userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Logged in user not found in database"));
@@ -164,6 +165,15 @@ public class PostController {
 
         Post post = postService.getPostById(id);
         User currentUser = userRepository.findByUsername(authentication.getName()).orElseThrow();
+        User postOwner = post.getUser();
+
+        // ── Private profile check ──────────────────────────────────────────
+        if (postOwner.isPrivate() && !postOwner.getId().equals(currentUser.getId())) {
+            boolean isFollowing = followRepository.existsByFollowerAndFollowing(currentUser, postOwner);
+            if (!isFollowing) {
+                return ResponseEntity.status(403).body(Map.of("private", true));
+            }
+        }
 
         boolean isLiked = post.getLikes() != null &&
                 post.getLikes().stream().anyMatch(l -> l.getUser().getId().equals(currentUser.getId()));
