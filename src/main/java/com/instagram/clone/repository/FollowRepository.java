@@ -41,4 +41,6 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
     @Query("SELECT f FROM Follow f WHERE f.following = :owner AND f.status = 'PENDING'")
     List<Follow> findPendingRequestsFor(@Param("owner") User owner);
+
+    List<Follow> findByFollowerId(Long followerId);
 }
