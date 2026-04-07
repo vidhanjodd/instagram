@@ -12,14 +12,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");
+        // Simple broker without heartbeat (browser handles keepalive automatically)
+        config.enableSimpleBroker("/topic", "/queue");
         config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")  // allows any IP on LAN to connect
-                .withSockJS();
+                .setAllowedOriginPatterns("*")
+                .setHandshakeHandler(new org.springframework.web.socket.server.support.DefaultHandshakeHandler())
+                .withSockJS()
+                .setStreamBytesLimit(512 * 1024)
+                .setHttpMessageCacheSize(1000)
+                .setDisconnectDelay(30000);
     }
 }
