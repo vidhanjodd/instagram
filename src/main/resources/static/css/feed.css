@@ -729,11 +729,17 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     text-align: center;
 }
 .view-comments-btn {
-   color: #8e8e8e;
-       font-size: 14px;
-       margin-top: 4px;
-       cursor: pointer;
-       transition: color 0.2s ease;
+    background: transparent !important;
+    border: none !important;
+    outline: none;
+
+    color: #8e8e8e;
+    font-size: 14px;
+    margin-top: 6px;
+    cursor: pointer;
+
+    padding: 0;
+    display: inline-block;
 }
 .view-comments-btn:hover { color: #fff; }
 

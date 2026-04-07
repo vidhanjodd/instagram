@@ -201,6 +201,15 @@ public class UserController {
     public String viewFollowers(@PathVariable Long id, Model model, Authentication authentication) {
         User profileUser = userService.getUserById(id);
         User loggedInUser = userService.getUserByUsername(authentication.getName());
+        if (profileUser.isPrivate() && !loggedInUser.getId().equals(profileUser.getId())) {
+            boolean isFollowing = followRepository.findByFollowerAndFollowing(loggedInUser, profileUser)
+                    .map(f -> f.isAccepted())
+                    .orElse(false);
+
+            if (!isFollowing) {
+                return "redirect:/users/" + id + "/profile";
+            }
+        }
 
         List<Follow> followers = followRepository.findAllByFollowing(profileUser);
 
@@ -216,6 +225,15 @@ public class UserController {
     public String viewFollowing(@PathVariable Long id, Model model, Authentication authentication) {
         User profileUser = userService.getUserById(id);
         User loggedInUser = userService.getUserByUsername(authentication.getName());
+        if (profileUser.isPrivate() && !loggedInUser.getId().equals(profileUser.getId())) {
+            boolean isFollowing = followRepository.findByFollowerAndFollowing(loggedInUser, profileUser)
+                    .map(f -> f.isAccepted())
+                    .orElse(false);
+
+            if (!isFollowing) {
+                return "redirect:/users/" + id + "/profile";
+            }
+        }
 
         List<Follow> following = followRepository.findAllByFollower(profileUser);
 
