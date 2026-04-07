@@ -252,7 +252,6 @@
         stompClient = Stomp.over(socket);
         stompClient.debug = function(msg) { console.log('📡 STOMP:', msg); };
 
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
         const connectHeaders = {};
         if (csrfToken && csrfHeader) {
