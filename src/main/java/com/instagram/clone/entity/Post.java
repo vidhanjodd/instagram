@@ -51,5 +51,8 @@ public class Post {
         carouselMedia.add(media);
         media.setPost(this);
     }
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Repost> reposts = new ArrayList<>();
 
 }

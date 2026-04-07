@@ -137,7 +137,15 @@
                         title="Comment" style="background: none; border: none; padding: 0; cursor: pointer; margin-right: 12px; color: inherit;">
                     <i class="fa-regular fa-comment" style="font-size: 24px;"></i>
                 </button>
-
+                <button class="action-btn repost-btn"
+                        th:data-post-id="${post.id}"
+                        th:data-reposted="${post.reposts != null and post.reposts.![user.id].contains(currentUser.id)}"
+                        th:title="${post.reposts != null and post.reposts.![user.id].contains(currentUser.id)} ? 'Remove Repost' : 'Repost'"
+                        style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; margin-right: 12px;">
+                    <i class="fa-solid fa-retweet repost-icon"
+                       th:classappend="${post.reposts != null and post.reposts.![user.id].contains(currentUser.id)} ? 'reposted' : ''"
+                       style="font-size: 22px;"></i>
+                </button>
                 <button class="action-btn" title="Share" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit;">
                     <i class="fa-regular fa-paper-plane" style="font-size: 24px;"></i>
                 </button>
@@ -160,7 +168,14 @@
                       th:text="${post.likes.size()} + ' ' + (${post.likes.size()} == 1 ? 'like' : 'likes')">
                 </span>
             </div>
-
+            <div class="repost-count" th:if="${post.reposts != null and not #lists.isEmpty(post.reposts)}">
+                <span th:id="'repost-count-' + ${post.id}"
+                      th:text="${post.reposts.size()} + ' ' + (${post.reposts.size()} == 1 ? 'repost' : 'reposts')">
+                </span>
+            </div>
+            <div class="repost-count" th:if="${post.reposts == null or #lists.isEmpty(post.reposts)}">
+                <span th:id="'repost-count-' + ${post.id}" style="display:none;">0 reposts</span>
+            </div>
             <div class="post-caption">
                 <span class="cap-username" th:text="${post.user.username}">username</span>
                 <span th:text="${post.caption}">Caption here</span>
@@ -250,7 +265,6 @@
         </div>
     </div>
 </div>
-
 <script th:inline="javascript">
     const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
@@ -962,6 +976,58 @@
         d.textContent = s || '';
         return d.innerHTML;
     }
+
+
+
+
+function sendRepostRequest(postId, caption, btn) {
+    fetch(`/reposts/${postId}`, {
+        method: 'POST',
+        headers: secureHeaders(true),   // secureHeaders is already defined in your feed.html
+        body: JSON.stringify({ caption: caption })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        const isNowReposted = data.reposted;
+        const count         = data.repostCount;
+
+        // Update button state
+        btn.dataset.reposted = isNowReposted ? 'true' : 'false';
+        btn.title = isNowReposted ? 'Remove Repost' : 'Repost';
+
+        // Update icon colour (green = reposted, normal = not reposted)
+        const icon = btn.querySelector('.repost-icon');
+        if (isNowReposted) {
+            icon.classList.add('reposted');
+        } else {
+            icon.classList.remove('reposted');
+        }
+
+        // Update repost count text
+        const countEl = document.getElementById('repost-count-' + postId);
+        if (countEl) {
+            if (count > 0) {
+                countEl.textContent = count + ' ' + (count === 1 ? 'repost' : 'reposts');
+                countEl.parentElement.style.display = '';
+            } else {
+                countEl.parentElement.style.display = 'none';
+            }
+        }
+    })
+    .catch(err => console.error('Repost error:', err));
+}
+
+    document.querySelectorAll('.repost-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            sendRepostRequest(this.dataset.postId, null,this);
+        });
+    });
+
 </script>
 </body>
 </html>

@@ -120,6 +120,9 @@
                 onclick="showTab('saved', this)">
             <i class="fa-regular fa-bookmark"></i> SAVED
         </button>
+        <button class="tab-btn" onclick="showTab('reposts', this)">
+            <i class="fa-solid fa-retweet"></i> Reposts
+        </button>
     </div>
 
     <div class="profile-content-container">
@@ -186,6 +189,15 @@
                 <p>Save photos and videos that you want to see again.</p>
             </div>
         </div>
+        <div id="reposts-content" class="posts-grid" style="display:none;">
+            <div id="repostsGrid" style="display:contents;">
+            </div>
+            <div id="repostsEmpty" style="display:none; grid-column:1/-1; text-align:center; padding:40px; color:#8e8e8e;">
+                <i class="fa-solid fa-retweet" style="font-size:48px; margin-bottom:12px; display:block;"></i>
+                No reposts yet.
+            </div>
+        </div>
+    </div>
     </div>
 </div>
 <div id="ppOverlay" class="pp-overlay" onclick="if(event.target===this)closePP()">
@@ -613,19 +625,20 @@
 
     /* ── Tab switching ── */
     function showTab(tabName, btn) {
-        const postsContent = document.getElementById('posts-content');
-        const savedContent = document.getElementById('saved-content');
-        const buttons = document.querySelectorAll('.tab-btn');
-        if (tabName === 'posts') {
-            postsContent.style.display = 'grid';
-            savedContent.style.display = 'none';
-        } else {
-            postsContent.style.display = 'none';
-            savedContent.style.display = 'grid';
-        }
-        buttons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    document.getElementById('posts-content').style.display   = 'none';
+    document.getElementById('saved-content').style.display   = 'none';
+    document.getElementById('reposts-content').style.display = 'none';
+
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+    document.getElementById(tabName + '-content').style.display = 'grid';
+
+    btn.classList.add('active');
+
+    if (tabName === 'reposts') {
+        loadReposts();
     }
+}
 
     /* ── Notification dropdown ── */
     let notifOpen = false;
@@ -804,6 +817,51 @@
         d.textContent = s || '';
         return d.innerHTML;
     }
+
+    let repostsLoaded = false;
+    function loadReposts() {
+    if (repostsLoaded) return;
+    repostsLoaded = true;
+
+    fetch('/reposts/my')
+        .then(r => r.json())
+        .then(reposts => {
+            const grid  = document.getElementById('repostsGrid');
+            const empty = document.getElementById('repostsEmpty');
+
+            if (!reposts || reposts.length === 0) {
+                grid.style.display  = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            grid.innerHTML = reposts.map(r => buildRepostCard(r)).join('');
+        })
+        .catch(() => {
+            document.getElementById('repostsEmpty').style.display = 'block';
+        });
+}
+    function buildRepostCard(repost) {
+    const post  = repost.post;
+    const media = post.carouselMedia && post.carouselMedia[0];
+    const thumb = media ? media.mediaUrl : '';
+    const isVideo = media && media.mediaType === 'VIDEO';
+
+    return `
+        <div class="grid-item" onclick="window.location='/posts/${post.id}'"
+             style="cursor:pointer; position:relative;">
+            ${ isVideo
+                ? `<video src="${thumb}" style="width:100%;height:100%;object-fit:cover;" muted></video>`
+                : `<img src="${thumb}" alt="repost" style="width:100%;height:100%;object-fit:cover;"/>`
+            }
+            <div class="grid-overlay">
+                <span class="grid-stat">
+                    <i class="fa-solid fa-retweet" style="color:#00c853;"></i>
+                </span>
+            </div>
+        </div>
+    `;
+}
 </script>
 </body>
 </html>
