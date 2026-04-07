@@ -6,6 +6,7 @@
     <title>Instagram · Reels</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" th:href="@{/css/reel-list.css}"/>
+    <link rel="stylesheet" th:href="@{/css/feed.css}"/>
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 </head>
@@ -53,6 +54,9 @@
                 <div class="action view-count">
                     <i class="fa-regular fa-eye"></i>
                     <span th:text="${reel.viewCount}">0</span>
+                </div>
+                <div class="action share-btn" th:data-id="${reel.id}" style="cursor: pointer;">
+                    <i class="fa-solid fa-share"></i>
                 </div>
             </div>
 
@@ -160,6 +164,16 @@
                     renderComments(comments);
                 } catch {
                     commentList.innerHTML = 'Failed to load';
+                }
+            });
+        });
+
+        document.querySelectorAll('.share-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (typeof currentUserId !== 'undefined' && currentUserId !== null) {
+                    openShareModal(btn.dataset.id, 'reel');
+                } else {
+                    alert('You must be logged in to share reels.');
                 }
             });
         });
@@ -396,6 +410,163 @@
 
         document.querySelectorAll('.reel-video').forEach(v => observer.observe(v));
     });
+</script>
+
+<!-- ── Share Modal ── -->
+<div class="share-overlay" id="shareOverlay" onclick="if(event.target===this)closeShareModal()">
+    <div class="share-modal">
+        <div class="share-modal-header">
+            <span>Share</span>
+            <button class="share-close-btn" onclick="closeShareModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="share-search-wrap">
+            <i class="fa-solid fa-magnifying-glass share-search-icon"></i>
+            <input type="text" id="shareSearchInput" placeholder="Search..."
+                   autocomplete="off" oninput="filterShareUsers(this.value)"/>
+        </div>
+        <div class="share-user-list" id="shareUsersList">
+            <div class="share-loading"><div class="share-spinner"></div></div>
+        </div>
+        <div id="shareSelectedBar" style="display:none; flex-direction:column; padding:0;">
+            <div style="padding:8px 16px;font-size:13px;color:#8e8e8e;border-top:1px solid #efefef;"
+                 id="shareSelectedNames"></div>
+            <button class="share-send-btn" id="shareSendBtn" onclick="sendShare()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let sharePostId   = null;
+    let shareContentType = 'post';  // 'post' or 'reel'
+    let shareAllUsers = [];
+    let shareSelected = new Set();
+
+    function openShareModal(contentId, contentType = 'post') {
+        sharePostId   = contentId;
+        shareContentType = contentType;
+        shareSelected = new Set();
+        document.getElementById('shareOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('shareSearchInput').value = '';
+        document.getElementById('shareSelectedBar').style.display = 'none';
+        document.getElementById('shareUsersList').innerHTML =
+            '<div class="share-loading"><div class="share-spinner"></div></div>';
+
+        fetch('/users/following/' + currentUserId)
+            .then(r => r.json())
+            .then(users => { shareAllUsers = users; renderShareUsers(users); })
+            .catch(() => {
+                document.getElementById('shareUsersList').innerHTML =
+                    '<div class="share-empty">Failed to load users.</div>';
+            });
+    }
+
+    function closeShareModal() {
+        document.getElementById('shareOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+        sharePostId = null;
+        shareSelected = new Set();
+    }
+
+    function renderShareUsers(users) {
+        const list = document.getElementById('shareUsersList');
+        if (!users || users.length === 0) {
+            list.innerHTML = '<div class="share-empty">No one to share with yet.<br><small>Follow people to share reels with them.</small></div>';
+            return;
+        }
+        list.innerHTML = '';
+        users.forEach(u => {
+            const item = document.createElement('div');
+            item.className = 'share-user-row';
+            item.dataset.userId = u.id;
+            item.innerHTML = `
+                <div class="share-user-av">
+                    ${u.profilePicUrl
+                ? `<img src="${escapeHtml(u.profilePicUrl)}" alt="${escapeHtml(u.username)}"/>`
+                : `<span>${(u.username||'?').charAt(0).toUpperCase()}</span>`}
+                </div>
+                <span class="share-user-name">${escapeHtml(u.username)}</span>
+                <div class="share-user-check" id="share-check-${u.id}">
+                    <i class="fa-solid fa-check"></i>
+                </div>`;
+            item.addEventListener('click', () => toggleShareUser(u));
+            list.appendChild(item);
+        });
+    }
+
+    function filterShareUsers(query) {
+        const q = query.trim().toLowerCase();
+        const filtered = q ? shareAllUsers.filter(u => u.username.toLowerCase().includes(q)) : shareAllUsers;
+        renderShareUsers(filtered);
+        shareSelected.forEach(id => {
+            const check = document.getElementById('share-check-' + id);
+            const item  = document.querySelector(`.share-user-row[data-user-id="${id}"]`);
+            if (check) check.classList.add('checked');
+            if (item)  item.classList.add('selected');
+        });
+    }
+
+    function toggleShareUser(u) {
+        const item  = document.querySelector(`.share-user-row[data-user-id="${u.id}"]`);
+        const check = document.getElementById('share-check-' + u.id);
+        if (shareSelected.has(u.id)) {
+            shareSelected.delete(u.id);
+            item.classList.remove('selected');
+            check.classList.remove('checked');
+        } else {
+            shareSelected.add(u.id);
+            item.classList.add('selected');
+            check.classList.add('checked');
+        }
+        updateShareBar();
+    }
+
+    function updateShareBar() {
+        const bar   = document.getElementById('shareSelectedBar');
+        const names = document.getElementById('shareSelectedNames');
+        if (shareSelected.size === 0) { bar.style.display = 'none'; return; }
+        bar.style.display = 'flex';
+        names.textContent = shareAllUsers.filter(u => shareSelected.has(u.id)).map(u => u.username).join(', ');
+    }
+
+    function sendShare() {
+        if (!sharePostId || shareSelected.size === 0) return;
+        const btn = document.getElementById('shareSendBtn');
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+
+        let contentUrl, message;
+        if (shareContentType === 'reel') {
+            contentUrl = window.location.origin + '/reels/' + sharePostId;
+            message = '📹 Check out this reel: ' + contentUrl;
+        } else {
+            contentUrl = window.location.origin + '/posts/' + sharePostId;
+            message = '📸 Check out this post: ' + contentUrl;
+        }
+
+        const csrfToken = getCsrfToken();
+        const csrfHeader = 'X-XSRF-TOKEN';
+
+        Promise.all([...shareSelected].map(receiverId =>
+            fetch('/messages/send/http', {
+                method: 'POST',
+                headers: { [csrfHeader]: csrfToken, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receiverId, content: message, vanish: false })
+            })
+        ))
+            .then(() => {
+                btn.textContent = 'Sent ✓';
+                btn.style.background = '#34d399';
+                setTimeout(closeShareModal, 900);
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.textContent = 'Send';
+                alert('Failed to send. Please try again.');
+            });
+    }
 </script>
 
 </body>

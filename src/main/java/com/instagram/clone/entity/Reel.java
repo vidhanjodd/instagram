@@ -74,19 +74,16 @@ public class Reel {
         }
     }
 
-    public void addLike(ReelLike like) {
-        likes.add(like);
-        like.setReel(this);
+    public void addLike(ReelLike reelLike) {
+        likes.add(reelLike);
+        reelLike.setReel(this);
         likeCount++;
     }
 
-    public void removeLike(ReelLike like) {
-        if (likes.remove(like)) {
-            likeCount--;
+    public void removeLike(ReelLike reelLike) {
+        if (likes.remove(reelLike)) {
+            likeCount = Math.max(0, likeCount - 1);
         }
     }
 
-    public void incrementView() {
-        this.viewCount++;
-    }
 }

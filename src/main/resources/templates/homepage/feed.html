@@ -26,8 +26,17 @@
     </div>
 
     <div class="nav-icons" style="display: flex; align-items: center; gap: 20px; font-size: 24px;">
+
         <a th:href="@{/posts}" title="Home" style="color: inherit; text-decoration: none;">
             <i class="fa-solid fa-house"></i>
+        </a>
+
+        <a th:href="@{/reels}" title="Reels" style="color: inherit; text-decoration: none;">
+        <i class="fa-solid fa-film"></i>
+        </a>
+
+        <a th:href="@{/reels/create}" title="Create Reel" style="color: inherit; text-decoration: none;">
+            <i class="fa-solid fa-video"></i>
         </a>
 
         <a th:href="@{/posts/new}" title="New Post" style="color: inherit; text-decoration: none;">
@@ -1059,11 +1068,13 @@
 
 <script>
     let sharePostId   = null;
+    let shareContentType = 'post';  // 'post' or 'reel'
     let shareAllUsers = [];
     let shareSelected = new Set();
 
-    function openShareModal(postId) {
-        sharePostId   = postId;
+    function openShareModal(contentId, contentType = 'post') {
+        sharePostId   = contentId;
+        shareContentType = contentType;
         shareSelected = new Set();
         document.getElementById('shareOverlay').classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -1155,14 +1166,20 @@
         btn.disabled = true;
         btn.textContent = 'Sending…';
 
-        const postUrl = window.location.origin + '/posts/' + sharePostId;
-        const content = '📸 Check out this post: ' + postUrl;
+        let contentUrl, message;
+        if (shareContentType === 'reel') {
+            contentUrl = window.location.origin + '/reels/' + sharePostId;
+            message = '📹 Check out this reel: ' + contentUrl;
+        } else {
+            contentUrl = window.location.origin + '/posts/' + sharePostId;
+            message = '📸 Check out this post: ' + contentUrl;
+        }
 
         Promise.all([...shareSelected].map(receiverId =>
             fetch('/messages/send/http', {
                 method: 'POST',
                 headers: { [csrfHeader]: csrfToken, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ receiverId, content, vanish: false })
+                body: JSON.stringify({ receiverId, content: message, vanish: false })
             })
         ))
             .then(() => {

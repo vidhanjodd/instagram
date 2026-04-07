@@ -92,4 +92,10 @@ public class ReelService {
 
         reelRepository.delete(reel);
     }
+
+    @Transactional(readOnly = true)
+    public String generateReelShareUrl(Long reelId) {
+        Reel reel = getReelById(reelId);
+        return "/reels/" + reel.getId();
+    }
 }
