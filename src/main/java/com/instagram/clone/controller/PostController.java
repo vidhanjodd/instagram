@@ -6,6 +6,7 @@ import com.instagram.clone.entity.Comment;
 import com.instagram.clone.entity.Post;
 import com.instagram.clone.entity.User;
 import com.instagram.clone.repository.CommentRepository;
+import com.instagram.clone.repository.FollowRepository;
 import com.instagram.clone.repository.PostRepository;
 import com.instagram.clone.repository.UserRepository;
 import com.instagram.clone.service.CommentService;
@@ -13,6 +14,7 @@ import com.instagram.clone.service.PostService;
 import com.instagram.clone.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,28 +29,27 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@RequiredArgsConstructor
 @Controller
 @RequestMapping("/posts")
+
+
 public class PostController {
 
     @Autowired
     private PostService postService;
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private CommentService commentService;
-
     @Autowired
     private PostRepository postRepository;
-
     @Autowired
     private UserService userService;
-
     @Autowired
     private CommentRepository commentRepository;
+    @Autowired
+    private FollowRepository followRepository;
 
     private User getCurrentUser(Principal principal) {
         return userRepository.findByUsername(principal.getName())
@@ -64,16 +65,28 @@ public class PostController {
             return "redirect:/login";
         }
 
+        User currentUser = currentUserOpt.get();
+
+        Set<Long> followingIds = followRepository.findAllAcceptedByFollower(currentUser)
+                .stream()
+                .map(f -> f.getFollowing().getId())
+                .collect(Collectors.toSet());
+
         List<Post> posts = postService.getAllPosts()
                 .stream()
                 .filter(p -> p.getUser() != null)
+                .filter(p -> {
+                    User postOwner = p.getUser();
+                    if (postOwner.getId().equals(currentUser.getId())) return true;
+                    if (postOwner.isPrivate()) return followingIds.contains(postOwner.getId());
+                    return true;
+                })
                 .collect(Collectors.toList());
 
         model.addAttribute("posts", posts);
-        model.addAttribute("currentUser", currentUserOpt.get());
+        model.addAttribute("currentUser", currentUser);
         return "homepage/feed";
     }
-
     @GetMapping("/new")
     public String showCreatePostForm(Model model, Principal principal) {
         model.addAttribute("currentUserId", getCurrentUser(principal).getId());

@@ -1016,3 +1016,53 @@ div.pp-replies .pp-c {
 .dark .repost-icon.reposted {
     color: #00e676 !important;
 }
+
+/* ── Follow request action buttons in notification panel ─── */
+.notif-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.notif-accept-btn {
+    padding: 6px 16px;
+    background: #0095f6;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+.notif-accept-btn:hover {
+    opacity: 0.85;
+}
+
+.notif-decline-btn {
+    padding: 6px 16px;
+    background: var(--surface, #0a0a0a);
+    color: var(--text, #f5f5f5);
+    border: 1px solid var(--border, #2a2a2a);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+.notif-decline-btn:hover {
+    background: rgba(237, 73, 86, 0.1);
+    border-color: #ed4956;
+    color: #ed4956;
+}
+
+.notif-action-done {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0095f6;
+}
