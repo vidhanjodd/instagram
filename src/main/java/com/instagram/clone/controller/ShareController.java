@@ -24,10 +24,7 @@ public class ShareController {
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
 
-    /**
-     * GET /users/following/{userId}
-     * Returns the list of users that currentUser follows.
-     */
+
     @GetMapping("/users/following/{userId}")
     public ResponseEntity<List<Map<String, Object>>> getFollowing(@PathVariable Long userId) {
         List<Follow> follows = followRepository.findByFollowerId(userId);
@@ -44,11 +41,7 @@ public class ShareController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * POST /messages/send/http
-     * Always allowed — privacy is enforced at VIEW time (PostController),
-     * not at send time. Just like real Instagram.
-     */
+
     @PostMapping("/messages/send/http")
     public ResponseEntity<?> sendMessageHttp(
             @RequestBody MessageRequest request,
