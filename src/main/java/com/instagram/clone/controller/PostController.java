@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -144,19 +145,26 @@ public class PostController {
     @GetMapping("/{id}")
     public String getPostDetails(@PathVariable Long id, Model model, Principal principal) {
         Post post = postService.getPostById(id);
+        User currentUser = getCurrentUser(principal);
+
+        User postOwner = post.getUser();
+        if (postOwner.isPrivate() && !postOwner.getId().equals(currentUser.getId())) {
+            boolean isFollowing = followRepository.findByFollowerAndFollowing(currentUser, postOwner)
+                    .map(f -> f.isAccepted())
+                    .orElse(false);
+            if (!isFollowing) {
+                return "redirect:/posts";
+            }
+        }
 
         model.addAttribute("post", post);
-
         List<Comment> topLevelComments = post.getComments().stream()
                 .filter(comment -> comment.getParent() == null)
                 .collect(Collectors.toList());
-
         model.addAttribute("comments", topLevelComments);
-        model.addAttribute("currentUser", getCurrentUser(principal));
-
+        model.addAttribute("currentUser", currentUser);
         return "homepage/post-details";
     }
-
     @GetMapping("/{id}/data")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getPostData(
@@ -167,11 +175,13 @@ public class PostController {
         User currentUser = userRepository.findByUsername(authentication.getName()).orElseThrow();
         User postOwner = post.getUser();
 
-        // ── Private profile check ──────────────────────────────────────────
+
         if (postOwner.isPrivate() && !postOwner.getId().equals(currentUser.getId())) {
-            boolean isFollowing = followRepository.existsByFollowerAndFollowing(currentUser, postOwner);
+            boolean isFollowing = followRepository.findByFollowerAndFollowing(currentUser, postOwner)
+                    .map(f -> f.isAccepted())
+                    .orElse(false);
             if (!isFollowing) {
-                return ResponseEntity.status(403).body(Map.of("private", true));
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
             }
         }
 
