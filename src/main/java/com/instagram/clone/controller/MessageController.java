@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import java.security.Principal;
 import java.util.List;
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -65,15 +64,10 @@ public class MessageController {
     @MessageMapping("/chat.send")
     public void handleMessage(@Payload MessageRequest request, Principal principal) {
 
-        // Debug logging for multi-machine chat
-        System.out.println("📨 [CHAT] Message received from principal: " + principal.getName());
-        System.out.println("📨 [CHAT] Receiver ID: " + request.getReceiverId());
-        System.out.println("📨 [CHAT] Message content: " + request.getContent());
 
         User sender = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
 
-        System.out.println("📨 [CHAT] Sender ID: " + sender.getId());
 
         ChatMessage chatMessage = messageService.sendMessage(sender, request);
 
