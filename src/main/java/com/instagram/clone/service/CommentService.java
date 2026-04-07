@@ -56,6 +56,7 @@ public class CommentService {
             comment.setReel(reel);
             reel.addComment(comment);
             commentRepository.save(comment);
+            reelRepository.save(reel);
             if (!user.getId().equals(reel.getUser().getId())) {
                 notificationService.notifyReelComment(user.getId(), reel.getUser().getId(), reel.getId());
             }
@@ -168,6 +169,7 @@ public class CommentService {
 
         reel.addComment(comment);
         commentRepository.save(comment);
+        reelRepository.save(reel);
 
         notificationService.notifyReelComment(user.getId(),
                 reel.getUser().getId(),
@@ -249,6 +251,7 @@ public class CommentService {
 
         if (comment.getReel() != null) {
             comment.getReel().removeComment(comment);
+            reelRepository.save(comment.getReel());
         } else if (comment.getPost() != null) {
             comment.getPost().getComments().remove(comment);
         }

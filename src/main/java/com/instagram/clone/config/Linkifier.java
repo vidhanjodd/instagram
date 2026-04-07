@@ -2,19 +2,13 @@ package com.instagram.clone.config;
 
 import org.springframework.stereotype.Component;
 
-/**
- * Thymeleaf helper bean — converts plain text with URLs into HTML with clickable links.
- * Used in chat.html as:  th:utext="${@linkifier.linkify(msg.content)}"
- */
+
 @Component("linkifier")
 public class Linkifier {
 
     private static final java.util.regex.Pattern URL_PATTERN =
             java.util.regex.Pattern.compile("(https?://[^\\s<>\"]+)");
 
-    /**
-     * Escapes HTML, then wraps any http/https URLs in <a> tags.
-     */
     public String linkify(String text) {
         if (text == null || text.isBlank()) return "";
 

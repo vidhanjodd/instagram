@@ -258,7 +258,7 @@
                     // Don't double-append our own sent messages (we append optimistically)
                     if (msg.senderId != currentUserId) {
                         hideTyping();
-                        appendBubble(msg.content, false, msg.senderUsername, msg.senderProfilePic, new Date(), msg.id, msg.vanish);
+                        appendBubble(msg.content, false, msg.senderUsername, msg.senderProfilePic, new Date(msg.createdAt), msg.id, msg.vanish);
                         // If it's a vanish message received, mark it as seen immediately
                         if (msg.vanish) {
                             stompClient.send('/app/chat.seen', {}, JSON.stringify({ senderId: otherUserId }));
@@ -278,6 +278,27 @@
                 }
             });
 
+            // Subscribe to shared conversation topic for real-time sync across machines
+            if (otherUserId) {
+                const conversationId = Math.min(currentUserId, otherUserId) * 1000000 
+                                     + Math.max(currentUserId, otherUserId);
+                stompClient.subscribe('/topic/conversation/' + conversationId, function (frame) {
+                    const msg = JSON.parse(frame.body);
+                    
+                    // Only process if this conversation is open
+                    if (otherUserId && (msg.senderId == otherUserId || msg.senderId == currentUserId)) {
+                        // For messages from the other user in the conversation
+                        if (msg.senderId == otherUserId && !area.querySelector(`.msg-group[data-msg-id="${msg.id}"]`)) {
+                            hideTyping();
+                            appendBubble(msg.content, false, msg.senderUsername, msg.senderProfilePic, new Date(msg.createdAt), msg.id, msg.vanish);
+                            if (msg.vanish) {
+                                stompClient.send('/app/chat.seen', {}, JSON.stringify({ senderId: otherUserId }));
+                            }
+                        }
+                    }
+                });
+            }
+
             // Subscribe to delete events → remove bubble when other user deletes
             stompClient.subscribe('/topic/delete/' + currentUserId, function (frame) {
                 const msgId = JSON.parse(frame.body);
@@ -289,10 +310,10 @@
                 stompClient.send('/app/chat.seen', {}, JSON.stringify({ senderId: otherUserId }));
             }
 
-        }, function () {
+        }, function (error) {
             wsStatus.textContent = '● Offline';
             wsStatus.className = 'ws-status disconnected';
-            // Retry after 3s
+            // Retry after 3s with exponential backoff
             setTimeout(connect, 3000);
         });
     }
@@ -332,8 +353,18 @@
 
     // ── Append bubble to DOM ─────────────────────────────────────────────────
     function appendBubble(text, isSent, username, profilePic, date, msgId, isVanish) {
+        // Check if message already exists (prevents duplicates on slow connections)
+        if (msgId && area.querySelector(`.msg-group[data-msg-id="${msgId}"]`)) {
+            return;
+        }
+
+        // Cache typing indicator before removal
+        const typingWasVisible = typingEl && typingEl.classList.contains('visible');
+        
         // Remove typing indicator from flow before appending
-        if (typingEl) area.removeChild(typingEl);
+        if (typingEl && typingEl.parentNode) {
+            area.removeChild(typingEl);
+        }
 
         const group = document.createElement('div');
         group.className = 'msg-group ' + (isSent ? 'sent' : 'received');
@@ -376,9 +407,11 @@
         ts.textContent = (isVanish ? '👻 ' : '') + formatTime(date);
         group.appendChild(ts);
 
-        // Re-attach typing indicator at the end
+        // Re-attach typing indicator at the end if it was visible
         area.appendChild(group);
-        if (typingEl) area.appendChild(typingEl);
+        if (typingEl && typingWasVisible) {
+            area.appendChild(typingEl);
+        }
 
         area.scrollTop = area.scrollHeight;
     }
@@ -521,6 +554,14 @@
         if (!box.contains(e.target) && !btn.contains(e.target)) {
             box.style.display = "none";
         }
+    });
+
+    const client = new StompJs.Client({
+        brokerURL: 'ws://localhost:8080/ws',
+        heartbeatIncoming: 4000,  // Expect heartbeat every 4 seconds
+        heartbeatOutgoing: 4000,  // Send heartbeat every 4 seconds
+        reconnectDelay: 5000,     // Reconnect after 5s if disconnected
+        debug: (msg) => console.log(msg)
     });
 </script>
 </body>

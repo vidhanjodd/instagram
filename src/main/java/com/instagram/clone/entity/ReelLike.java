@@ -4,6 +4,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -21,13 +26,16 @@ public class ReelLike {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // User who liked the reel
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
-    // Reel that is liked
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reel_id", nullable = false)
     private Reel reel;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 }
