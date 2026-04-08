@@ -333,6 +333,29 @@
 
         connect();
 
+        // ── Exit detection: trigger vanish deletion when user leaves chat ────────
+        function handleChatExit() {
+            // Only send exit event if we're in a conversation and connected
+            if (otherUserId && stompClient && stompClient.connected) {
+                console.log('👋 User exiting chat with', otherUserId, '- triggering vanish deletion');
+                stompClient.send('/app/chat.exit', {}, JSON.stringify({ senderId: otherUserId }));
+            }
+        }
+
+        // Detect navigation away from this page
+        window.addEventListener('beforeunload', function () {
+            handleChatExit();
+        });
+
+        // Detect navigation to inbox (conversation list)
+        document.addEventListener('click', function (e) {
+            // Only for links that navigate away from the current conversation
+            const link = e.target.closest('a');
+            if (link && link !== document.querySelector('.conv-row.active')) {
+                handleChatExit();
+            }
+        });
+
         // ── Input handlers ───────────────────────────────────────────────────────
         if (input && sendBtn) {
             input.addEventListener('input', function () {

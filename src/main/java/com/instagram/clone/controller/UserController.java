@@ -7,6 +7,7 @@ import com.instagram.clone.repository.FollowRepository;
 import com.instagram.clone.repository.UserRepository;
 import com.instagram.clone.service.FollowService;
 import com.instagram.clone.service.PostService;
+import com.instagram.clone.service.ReelService;
 import com.instagram.clone.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,6 +33,7 @@ public class UserController {
 
     private final UserService userService;
     private final PostService postService;
+    private final ReelService reelService;
     private final FollowService followService;
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
@@ -94,8 +96,10 @@ public class UserController {
         boolean canSeePosts = isOwnProfile || isFollowing || !profileUser.isPrivate();
         if (canSeePosts) {
             model.addAttribute("posts", postService.getPostsByUserId(id));
+            model.addAttribute("reels", reelService.getReelsByUserId(id));
         } else {
             model.addAttribute("posts", List.of());
+            model.addAttribute("reels", List.of());
         }
 
         return "profilepage/profile";

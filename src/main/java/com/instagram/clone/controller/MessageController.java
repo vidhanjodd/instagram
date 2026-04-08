@@ -61,31 +61,6 @@ public class MessageController {
         return "homepage/chat";
     }
 
-    @MessageMapping("/chat.send")
-    public void handleMessage(@Payload MessageRequest request, Principal principal) {
-
-
-        User sender = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
-
-
-        ChatMessage chatMessage = messageService.sendMessage(sender, request);
-
-        // Send to receiver's personal topic
-        messagingTemplate.convertAndSend(
-                "/topic/messages/" + request.getReceiverId(), chatMessage);
-
-        // Send to sender's personal topic for acknowledgment
-        messagingTemplate.convertAndSend(
-                "/topic/messages/" + sender.getId(), chatMessage);
-        
-        // Also send to a shared conversation topic so both can receive in real-time
-        long conversationId = Math.min(sender.getId(), request.getReceiverId()) * 1000000 
-                            + Math.max(sender.getId(), request.getReceiverId());
-        messagingTemplate.convertAndSend(
-                "/topic/conversation/" + conversationId, chatMessage);
-    }
-
     @DeleteMapping("/{messageId}")
     @ResponseBody
     public ResponseEntity<?> deleteMessage(@PathVariable Long messageId,
@@ -96,14 +71,12 @@ public class MessageController {
         try {
             ChatMessage deleted = messageService.deleteMessage(messageId, requester);
 
-            // Broadcast deletion to both users' personal topics
             messagingTemplate.convertAndSend(
                     "/topic/delete/" + deleted.getReceiverId(), deleted.getId());
             messagingTemplate.convertAndSend(
                     "/topic/delete/" + deleted.getSenderId(), deleted.getId());
             
-            // Also broadcast to shared conversation topic for cross-machine sync
-            long conversationId = Math.min(deleted.getSenderId(), deleted.getReceiverId()) * 1000000 
+            long conversationId = Math.min(deleted.getSenderId(), deleted.getReceiverId()) * 1000000
                                 + Math.max(deleted.getSenderId(), deleted.getReceiverId());
             messagingTemplate.convertAndSend(
                     "/topic/conversation/" + conversationId + "/delete", deleted.getId());
@@ -114,19 +87,6 @@ public class MessageController {
         }
     }
 
-    @MessageMapping("/chat.seen")
-    public void markSeen(@Payload java.util.Map<String, Long> payload, Principal principal) {
-        User viewer = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
 
-        Long senderId = payload.get("senderId");
-        if (senderId == null) return;
 
-        List<Long> deletedIds = messageService.markVanishMessagesSeen(viewer, senderId);
-
-        for (Long msgId : deletedIds) {
-            messagingTemplate.convertAndSend("/topic/delete/" + viewer.getId(), msgId);
-            messagingTemplate.convertAndSend("/topic/delete/" + senderId, msgId);
-        }
-    }
 }
