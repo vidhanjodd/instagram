@@ -74,16 +74,4 @@ public class Reel {
         }
     }
 
-    public void addLike(ReelLike reelLike) {
-        likes.add(reelLike);
-        reelLike.setReel(this);
-        likeCount++;
-    }
-
-    public void removeLike(ReelLike reelLike) {
-        if (likes.remove(reelLike)) {
-            likeCount = Math.max(0, likeCount - 1);
-        }
-    }
-
 }

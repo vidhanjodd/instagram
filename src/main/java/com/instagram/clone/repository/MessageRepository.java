@@ -28,4 +28,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             "AND m.vanish = true AND m.seen = false AND m.deleted = false")
     List<Message> findUnseenVanishMessages(@Param("receiver") User receiver,
                                            @Param("sender") User sender);
+
+    @Query("SELECT m FROM Message m WHERE m.receiver = :receiver AND m.sender = :sender " +
+            "AND m.vanish = true AND m.seen = true AND m.deleted = false")
+    List<Message> findSeenVanishMessages(@Param("receiver") User receiver,
+                                         @Param("sender") User sender);
 }

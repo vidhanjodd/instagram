@@ -61,28 +61,6 @@ public class MessageController {
         return "homepage/chat";
     }
 
-    @MessageMapping("/chat.send")
-    public void handleMessage(@Payload MessageRequest request, Principal principal) {
-
-
-        User sender = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
-
-
-        ChatMessage chatMessage = messageService.sendMessage(sender, request);
-
-        messagingTemplate.convertAndSend(
-                "/topic/messages/" + request.getReceiverId(), chatMessage);
-
-        messagingTemplate.convertAndSend(
-                "/topic/messages/" + sender.getId(), chatMessage);
-        
-        long conversationId = Math.min(sender.getId(), request.getReceiverId()) * 1000000 
-                            + Math.max(sender.getId(), request.getReceiverId());
-        messagingTemplate.convertAndSend(
-                "/topic/conversation/" + conversationId, chatMessage);
-    }
-
     @DeleteMapping("/{messageId}")
     @ResponseBody
     public ResponseEntity<?> deleteMessage(@PathVariable Long messageId,
@@ -98,7 +76,7 @@ public class MessageController {
             messagingTemplate.convertAndSend(
                     "/topic/delete/" + deleted.getSenderId(), deleted.getId());
             
-            long conversationId = Math.min(deleted.getSenderId(), deleted.getReceiverId()) * 1000000 
+            long conversationId = Math.min(deleted.getSenderId(), deleted.getReceiverId()) * 1000000
                                 + Math.max(deleted.getSenderId(), deleted.getReceiverId());
             messagingTemplate.convertAndSend(
                     "/topic/conversation/" + conversationId + "/delete", deleted.getId());
@@ -109,19 +87,6 @@ public class MessageController {
         }
     }
 
-    @MessageMapping("/chat.seen")
-    public void markSeen(@Payload java.util.Map<String, Long> payload, Principal principal) {
-        User viewer = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
 
-        Long senderId = payload.get("senderId");
-        if (senderId == null) return;
 
-        List<Long> deletedIds = messageService.markVanishMessagesSeen(viewer, senderId);
-
-        for (Long msgId : deletedIds) {
-            messagingTemplate.convertAndSend("/topic/delete/" + viewer.getId(), msgId);
-            messagingTemplate.convertAndSend("/topic/delete/" + senderId, msgId);
-        }
-    }
 }
