@@ -10,6 +10,8 @@
     <link rel="stylesheet" th:href="@{/css/feed.css}" />
     <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
 </head>
 <body>
 
@@ -84,8 +86,13 @@
     const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
     function getCsrfToken() {
-        const match = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='));
-        return match ? decodeURIComponent(match.split('=')[1]) : '';
+        const meta = document.querySelector('meta[name="_csrf"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
+    function getCsrfHeader() {
+        const meta = document.querySelector('meta[name="_csrf_header"]');
+        return meta ? meta.getAttribute('content') : 'X-CSRF-TOKEN';
     }
 
     function escapeHtml(str) {
@@ -97,6 +104,7 @@
 
         const reelId = parseInt(window.location.pathname.split('/').pop());
         const csrfToken       = getCsrfToken();
+        const csrfHeader      = getCsrfHeader();
         const modal           = document.getElementById('commentModal');
         const commentList     = document.getElementById('commentList');
         const input           = document.getElementById('commentInput');
@@ -116,7 +124,7 @@
         try {
             fetch(`/reels/${reelId}/view`, {
                 method: 'POST',
-                headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+                headers: { [csrfHeader]: csrfToken }
             }).then(r => r.text()).then(count => {
                 viewCountEl.textContent = count;
             });
@@ -130,7 +138,7 @@
                 try {
                     const res = await fetch(`/reels/${rId}`, {
                         method: 'DELETE',
-                        headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+                        headers: { [csrfHeader]: csrfToken }
                     });
                     if (res.ok || res.redirected) {
                         window.location.href = '/reels';
@@ -152,7 +160,7 @@
                 const liked = btn.classList.contains('liked');
                 try {
                     const res = await fetch(`/reels/${reelId}/${liked ? 'unlike' : 'like'}`, {
-                        method: 'POST', headers: { 'X-XSRF-TOKEN': csrfToken }
+                        method: 'POST', headers: { [csrfHeader]: csrfToken }
                     });
                     btn.querySelector('span').textContent = await res.text();
                     btn.classList.toggle('liked');
@@ -293,7 +301,7 @@
                     try {
                         const res = await fetch(`/reels/${reelId}/comments/${commentId}`, {
                             method: 'DELETE',
-                            headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+                            headers: { [csrfHeader]: csrfToken }
                         });
                         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -340,7 +348,7 @@
             try {
                 const res = await fetch(`/reels/${reelId}/comments`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCsrfToken() },
+                    headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
                     body: JSON.stringify(payload)
                 });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -531,7 +539,7 @@
         }
 
         const csrfToken = getCsrfToken();
-        const csrfHeader = 'X-XSRF-TOKEN';
+        const csrfHeader = getCsrfHeader();
 
         Promise.all([...shareSelected].map(receiverId =>
             fetch('/messages/send/http', {
