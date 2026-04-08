@@ -9,6 +9,7 @@ import com.instagram.clone.repository.MessageRepository;
 import com.instagram.clone.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,7 +21,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
 
-
+    /** Save message to DB and return ChatMessage DTO for WebSocket broadcast. */
     public ChatMessage sendMessage(User sender, MessageRequest request) {
         User receiver = userRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
@@ -30,64 +31,36 @@ public class MessageService {
                 .receiver(receiver)
                 .content(request.getContent())
                 .vanish(request.isVanish())
+                .seen(false)
+                .deleted(false)
                 .build();
 
         Message saved = messageRepository.save(message);
-
-        return ChatMessage.builder()
-                .id(saved.getId())
-                .senderId(sender.getId())
-                .senderUsername(sender.getUsername())
-                .senderProfilePic(sender.getProfilePicUrl())
-                .receiverId(receiver.getId())
-                .receiverUsername(receiver.getUsername())
-                .content(saved.getContent())
-                .vanish(saved.isVanish())
-                .createdAt(saved.getCreatedAt())
-                .build();
+        return toChatMessage(saved, sender, receiver);
     }
 
     /**
-     * Mark all unseen vanish messages from sender as seen only.
-     * Does NOT delete yet - deletion happens on chat exit.
+     * Called when receiver sees a vanish message.
+     * Deletes from DB immediately and returns the message ID
+     * so the WebSocket can notify both users to remove the bubble.
      */
-    @org.springframework.transaction.annotation.Transactional
-    public void markVanishMessagesSeen(User viewer, Long senderId) {
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    @Transactional
+    public Long markSeenAndDeleteIfVanish(Long messageId, User viewer) {
+        Message msg = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
 
-        List<Message> unseen = messageRepository.findUnseenVanishMessages(viewer, sender);
-
-        for (Message m : unseen) {
-            m.setSeen(true);
-            messageRepository.save(m);
+        if (!msg.getReceiver().getId().equals(viewer.getId())) {
+            throw new RuntimeException("Not authorized");
         }
-    }
 
-    /**
-     * Delete all seen vanish messages from sender when viewer exits chat.
-     * ONLY deletes when: vanish=true AND seen=true (marked by markVanishMessagesSeen).
-     * Returns list of deleted message IDs so controller can broadcast.
-     */
-    @org.springframework.transaction.annotation.Transactional
-    public List<Long> deleteSeenVanishMessagesOnExit(User viewer, Long senderId) {
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        List<Message> seenVanish = messageRepository.findSeenVanishMessages(viewer, sender);
-        List<Long> deletedIds = new java.util.ArrayList<>();
-
-        for (Message m : seenVanish) {
-            m.setDeleted(true);
-            messageRepository.save(m);
-            deletedIds.add(m.getId());
+        if (msg.isVanish() && !msg.isSeen()) {
+            messageRepository.deleteById(messageId);
+            return messageId;
         }
-        return deletedIds;
+        return null;
     }
 
-    /**
-     * Get full conversation between two users.
-     */
+    /** Get full conversation between two users. */
     public List<MessageResponse> getConversation(User currentUser, Long otherUserId) {
         User otherUser = userRepository.findById(otherUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -98,14 +71,28 @@ public class MessageService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get latest message per conversation for inbox.
-     */
+    /** Get latest message per conversation for inbox. */
     public List<MessageResponse> getInbox(User currentUser) {
         return messageRepository.findLatestMessagePerConversation(currentUser)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    private ChatMessage toChatMessage(Message m, User sender, User receiver) {
+        return ChatMessage.builder()
+                .id(m.getId())
+                .senderId(sender.getId())
+                .senderUsername(sender.getUsername())
+                .senderProfilePic(sender.getProfilePicUrl())
+                .receiverId(receiver.getId())
+                .receiverUsername(receiver.getUsername())
+                .content(m.getContent())
+                .createdAt(m.getCreatedAt())
+                .vanish(m.isVanish())
+                .seen(m.isSeen())
+                .deleted(m.isDeleted())
+                .build();
     }
 
     private MessageResponse toResponse(Message m) {
@@ -118,30 +105,9 @@ public class MessageService {
                 .receiverUsername(m.getReceiver().getUsername())
                 .content(m.getContent())
                 .createdAt(m.getCreatedAt())
-                .build();
-    }
-
-    public ChatMessage deleteMessage(Long messageId, User requester) {
-        Message message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new RuntimeException("Message not found"));
-
-        if (!message.getSender().getId().equals(requester.getId())) {
-            throw new RuntimeException("You can only delete your own messages");
-        }
-
-        message.setDeleted(true);
-        messageRepository.save(message);
-
-        // Return a ChatMessage so the controller can broadcast deletion via WebSocket
-        return ChatMessage.builder()
-                .id(message.getId())
-                .senderId(message.getSender().getId())
-                .senderUsername(message.getSender().getUsername())
-                .senderProfilePic(message.getSender().getProfilePicUrl())
-                .receiverId(message.getReceiver().getId())
-                .receiverUsername(message.getReceiver().getUsername())
-                .content(null)
-                .createdAt(message.getCreatedAt())
+                .vanish(m.isVanish())
+                .seen(m.isSeen())
+                .deleted(m.isDeleted())
                 .build();
     }
 }
