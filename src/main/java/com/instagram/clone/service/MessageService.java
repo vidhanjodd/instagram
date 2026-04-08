@@ -21,7 +21,6 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
 
-    /** Save message to DB and return ChatMessage DTO for WebSocket broadcast. */
     public ChatMessage sendMessage(User sender, MessageRequest request) {
         User receiver = userRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
@@ -39,11 +38,7 @@ public class MessageService {
         return toChatMessage(saved, sender, receiver);
     }
 
-    /**
-     * Called when receiver sees a vanish message.
-     * Deletes from DB immediately and returns the message ID
-     * so the WebSocket can notify both users to remove the bubble.
-     */
+
     @Transactional
     public Long markSeenAndDeleteIfVanish(Long messageId, User viewer) {
         Message msg = messageRepository.findById(messageId)
@@ -60,7 +55,6 @@ public class MessageService {
         return null;
     }
 
-    /** Get full conversation between two users. */
     public List<MessageResponse> getConversation(User currentUser, Long otherUserId) {
         User otherUser = userRepository.findById(otherUserId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -71,7 +65,6 @@ public class MessageService {
                 .collect(Collectors.toList());
     }
 
-    /** Get latest message per conversation for inbox. */
     public List<MessageResponse> getInbox(User currentUser) {
         return messageRepository.findLatestMessagePerConversation(currentUser)
                 .stream()

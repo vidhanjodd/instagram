@@ -11,7 +11,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 .nav-icons { display: flex; align-items: center; gap: 18px; }
 .nav-icons a, .nav-icons button { background: none; border: none; color: var(--text); cursor: pointer; font-size: 20px; padding: 4px; text-decoration: none; transition: transform 0.15s, opacity 0.15s; }
 .nav-icons a:hover, .nav-icons button:hover { transform: scale(1.1); opacity: 0.8; }
-/* ─── SEARCH BAR (add this to your feed.css) ─────────────────────────────── */
 
 .search-wrap {
     position: relative;
@@ -53,7 +52,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     color: #8e8e8e;
 }
 
-/* Dropdown results panel */
 .search-dropdown {
     position: absolute;
     top: calc(100% + 8px);
@@ -63,7 +61,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     border: 1px solid #2a2a2a;
     border-radius: 12px;
     overflow: hidden;
-    display: none;            /* hidden until results arrive */
+    display: none;
     z-index: 9999;
     box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
@@ -180,7 +178,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 .post-caption { padding: 2px 14px 6px; font-size: 13px; line-height: 1.5; }
 .post-caption .cap-username { font-weight: 600; margin-right: 6px; }
 
-/* --- NEW COMMENT STYLES ADDED HERE --- */
 .post-comments-list { padding: 0 14px; margin-bottom: 6px; }
 .comment-line { font-size: 13px; margin-bottom: 4px; line-height: 1.4; }
 .comment-line .com-username { font-weight: 600; margin-right: 6px; }
@@ -197,7 +194,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 .btn-delete { background: none; border: none; color: var(--muted); font-size: 11px; cursor: pointer; padding: 0; transition: color 0.2s; }
 .btn-delete:hover { color: #e1306c; }
 
-/* SIDEBAR */
 .sidebar { position: sticky; top: 74px; height: fit-content; }
 .sidebar-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .sidebar-avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(45deg, #833ab4, #fd1d1d, #fcb045); padding: 2px; flex-shrink: 0; }
@@ -236,7 +232,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
 
 
-     /* Instagram-style Delete Modal */
  .modal-overlay {
      display: none;
      position: fixed;
@@ -305,7 +300,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     background: #fafafa;
 }
 
-/* Three-dots button */
 .post-more {
     border: none;
     cursor: pointer;
@@ -348,17 +342,15 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     transition: background 0.15s, color 0.15s;
 }
 
-/* Feed: dark bg, light text */
 .post-more {
     color: #8e8e8e;
 }
 .post-more:hover {
     color: #f5f5f5;
     background: rgba(255,255,255,0.08);
-    transform: none; /* override old rule */
+    transform: none;
 }
 
-/* Profile grid: sits on top of image, always white */
 .grid-dots-btn {
     color: #fff;
     background: rgba(0,0,0,0.45);
@@ -371,7 +363,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     background: rgba(0,0,0,0.65);
 }
 
-/* ── Dropdown panel (shared) ────────────────────────────────────── */
 .feed-dropdown,
 .grid-dropdown {
     display: none;
@@ -398,7 +389,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Dropdown items (shared) ────────────────────────────────────── */
 .feed-dropdown-item,
 .grid-dropdown-item {
     display: flex;
@@ -426,7 +416,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     border-top: 1px solid #efefef;
 }
 
-/* Delete item: red */
 .feed-delete-btn,
 .grid-delete-btn {
     color: #ed4956;
@@ -437,7 +426,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     color: #ed4956;
 }
 
-/* ── Shared modal overlay ───────────────────────────────────────── */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -456,7 +444,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     to   { opacity: 1; }
 }
 
-/* ── Modal box ──────────────────────────────────────────────────── */
 .modal-box {
     border-radius: 16px;
     width: 400px;
@@ -485,7 +472,7 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     border-bottom: 1px solid #efefef;
 }
 
-/* ── Modal buttons ──────────────────────────────────────────────── */
+
 .modal-btn {
     display: block;
     width: 100%;
@@ -507,10 +494,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 .modal-save   { color: #0095f6; font-weight: 700; }
 .modal-cancel { color: #262626; }
 
-/* Overlay */
-/* ========================================================= */
-/* POST POPUP MODAL (UPDATED)                  */
-/* ========================================================= */
 
 .pp-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -530,7 +513,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     overflow: hidden;
 }
 
-/* --- LEFT SIDE (MEDIA) --- */
 .pp-left {
     flex: 1 1 auto;
     min-width: 0;
@@ -556,7 +538,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     object-fit: contain;
 }
 
-/* Media Navigation Arrows & Dots */
 .pp-nav {
     position: absolute; top: 50%; transform: translateY(-50%);
     background: rgba(255,255,255,0.7); border: none; border-radius: 50%;
@@ -572,9 +553,8 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 .pp-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer; }
 .pp-dot.active { background: #fff; }
 
-/* --- RIGHT SIDE (COMMENTS) --- */
 .pp-right {
-    flex: 0 0 350px; /* Locks width to exactly 350px so text can't squish image */
+    flex: 0 0 350px;
     width: 350px;
     display: flex;
     flex-direction: column;
@@ -582,7 +562,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     border-left: 1px solid #2a2a2a;
 }
 
-/* Header */
 .pp-header {
     display: flex; align-items: center; padding: 14px 16px;
     border-bottom: 1px solid #efefef;
@@ -598,12 +577,11 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     background: none; border: none; cursor: pointer; font-size: 20px; color: #262626;
 }
 
-/* Scroll Area (Caption + Comments) */
 .pp-scroll {
     flex: 1; overflow-y: auto; padding: 16px;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
-.pp-scroll::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+.pp-scroll::-webkit-scrollbar { display: none; }
 
 .pp-caption { display: flex; margin-bottom: 16px; }
 .pp-caption-text { flex: 1; font-size: 14px; line-height: 1.4; word-break: break-word; }
@@ -625,17 +603,15 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 .pp-del-btn { color: #ed4956; display: none; }
 .pp-del-btn.show { display: inline-block; }
 
-/* The little line before "View replies" */
 .pp-vr-btn { margin-top: 8px; display: inline-block; position: relative; padding-left: 30px; }
 .pp-vr-btn::before {
     content: ''; position: absolute; left: 0; top: 50%; width: 20px; height: 1px; background: #8e8e8e;
 }
 
-/* --- REPLIES FIX (No Ladder, Instagram Style) --- */
 .pp-replies {
     border-left: none !important;
     padding-left: 0 !important;
-    margin-left: 44px !important; /* aligns perfectly with parent text */
+    margin-left: 44px !important;
     margin-top: 8px;
 }
 .pp-replies .pp-c::before,
@@ -650,14 +626,12 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     padding-top: 4px;
     margin-bottom: 12px;
 }
-/* Smaller avatar for replies */
 .pp-replies .pp-c-av {
     width: 24px !important;
     height: 24px !important;
     font-size: 11px;
 }
 
-/* Footer (Actions + Input) */
 .pp-footer { border-top: 1px solid #efefef; padding: 12px 16px; background: #0a0a0a; }
 .pp-actions { display: flex; gap: 16px; margin-bottom: 8px; }
 .pp-act-btn { background: none; border: none; font-size: 24px; cursor: pointer; padding: 0; color: #262626; }
@@ -676,12 +650,10 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
 .pp-post-btn { background: none; border: none; color: #0095f6; font-weight: 600; font-size: 14px; cursor: pointer; padding: 0 8px; }
 .pp-post-btn:disabled { color: #8e8e8e; opacity: 0.5; cursor: default; }
 
-/* Loading Spinner */
 .pp-spin-wrap { display: flex; justify-content: center; padding: 40px; }
 .pp-spinner { width: 24px; height: 24px; border: 3px solid #efefef; border-top: 3px solid #8e8e8e; border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* Mobile Responsive Popup */
 @media (max-width: 768px) {
     .pp-card {
         flex-direction: column;
@@ -691,7 +663,6 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     .pp-right { flex: 1 1 auto; width: 100%; border-left: none; }
 }
 
-/* Ensure the action bar is a single row with space between sides */
 .post-actions {
     display: flex !important;
     justify-content: space-between !important;
@@ -700,13 +671,11 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     width: 100%;
 }
 
-/* Keep the left three icons close together */
 .left-actions {
     display: flex;
     gap: 16px;
 }
 
-/* Reset button styles to make icons look native */
 .action-btn {
     background: transparent !important;
     border: none !important;
@@ -734,24 +703,25 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     outline: none;
 
     color: #8e8e8e;
-    font-size: 14px;
-    margin-top: 6px;
+    font-size: 13px;
+    margin: 4px 14px;
     cursor: pointer;
 
     padding: 0;
-    display: inline-block;
+
+    display: block;
+    width: 100%;
+    text-align: left;
 }
 .view-comments-btn:hover { color: #fff; }
 
 
-/* 1. Remove the vertical line and indent replies to align with parent text */
 .pp-replies {
     border-left: none !important;
     padding-left: 0 !important;
-    margin-left: 48px !important; /* Shifts replies to align with the text above it */
+    margin-left: 48px !important;
 }
 
-/* 2. Hide the L-shaped brackets (drawn by pseudo-elements) */
 .pp-replies .pp-c::before,
 .pp-replies .pp-c::after,
 .pp-replies::before,
@@ -759,40 +729,32 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba
     display: none !important;
 }
 
-/* 3. Ensure the reply comment itself has no weird margins or borders */
 .pp-replies .pp-c {
     margin-left: 0 !important;
     border: none !important;
-    padding-top: 8px; /* Adds a little breathing room between replies */
+    padding-top: 8px;
 }
 
-/* Optional: Make reply avatars slightly smaller, just like Instagram does */
 .pp-replies .pp-c-av,
 .pp-replies .pp-c-av img {
     width: 24px !important;
     height: 24px !important;
-    font-size: 12px; /* If it's a letter initial */
+    font-size: 12px;
 }
-/* =========================================
-   FORCE OVERRIDES FOR POPUP
-   ========================================= */
 
-/* 1. Force Black Background on Left Side */
 .pp-left,
 #ppMedia,
 .pp-left * {
     background-color: #000000 !important;
 }
 
-/* 2. Annihilate the Ladder Lines */
 div.pp-replies {
     border-left: 0 !important;
     border: none !important;
     padding-left: 0 !important;
-    margin-left: 48px !important; /* Indent replies under text */
+    margin-left: 48px !important;
 }
 
-/* 3. Destroy all pseudo-elements creating the L-brackets */
 div.pp-replies::before,
 div.pp-replies::after,
 div.pp-replies > div::before,
@@ -807,7 +769,6 @@ div.pp-replies .pp-c::after {
     height: 0 !important;
 }
 
-/* 4. Fix reply padding */
 div.pp-replies .pp-c {
     margin-left: 0 !important;
     padding-top: 4px !important;
@@ -815,25 +776,21 @@ div.pp-replies .pp-c {
 
 
 
-/* Popup Card */
 .pp-card {
     background: #0a0a0a !important;
     color: #f5f5f5 !important;
 }
 
-/* Right Comment Panel */
 .pp-right {
     background: #0a0a0a !important;
     color: #f5f5f5 !important;
     border-left: 1px solid #2a2a2a !important;
 }
 
-/* Footer */
 .pp-footer {
     background: #0a0a0a !important;
 }
 
-/* Input */
 .pp-input {
     background: transparent !important;
     color: #f5f5f5 !important;
@@ -843,12 +800,10 @@ div.pp-replies .pp-c {
     color: #8e8e8e !important;
 }
 
-/* Header */
 .pp-header {
     border-bottom: 1px solid #2a2a2a !important;
 }
 
-/* Buttons */
 .pp-close {
     color: #f5f5f5 !important;
 }
@@ -1011,7 +966,6 @@ div.pp-replies .pp-c {
     color: #00e676 !important;
 }
 
-/* ── Follow request action buttons in notification panel ─── */
 .notif-actions {
     display: flex;
     gap: 8px;
@@ -1064,10 +1018,6 @@ div.pp-replies .pp-c {
 
 
 
-/* ══════════════════════════════════
-   SHARE MODAL
-══════════════════════════════════ */
-
 .share-overlay {
     display: none;
     position: fixed;
@@ -1102,7 +1052,6 @@ div.pp-replies .pp-c {
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Header */
 .share-modal-header {
     display: flex;
     align-items: center;
@@ -1122,7 +1071,6 @@ div.pp-replies .pp-c {
 }
 .share-close-btn:hover { background: #f0f0f0; }
 
-/* Search */
 .share-search-wrap {
     display: flex;
     align-items: center;
@@ -1139,7 +1087,6 @@ div.pp-replies .pp-c {
 }
 .share-search-wrap input::placeholder { color: #aaa; }
 
-/* User list */
 .share-user-list {
     flex: 1;
     overflow-y: auto;
@@ -1166,7 +1113,6 @@ div.pp-replies .pp-c {
     font-size: 14px; padding: 40px 20px;
 }
 
-/* User row */
 .share-user-row {
     display: flex;
     align-items: center;
@@ -1225,7 +1171,6 @@ div.pp-replies .pp-c {
     color: #fff;
 }
 
-/* Message input */
 .share-message-wrap {
     padding: 10px 16px;
     border-top: 1px solid #efefef;
@@ -1238,7 +1183,6 @@ div.pp-replies .pp-c {
 }
 .share-message-wrap input::placeholder { color: #aaa; }
 
-/* Send button */
 .share-send-btn {
     margin: 0 16px 14px;
     width: calc(100% - 32px);
@@ -1259,7 +1203,6 @@ div.pp-replies .pp-c {
     cursor: default;
 }
 
-/* Toast notification */
 .share-toast {
     position: fixed;
     bottom: 32px;
@@ -1281,7 +1224,6 @@ div.pp-replies .pp-c {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Private account lock badge in share modal */
 .share-private-badge {
     display: inline-flex;
     align-items: center;

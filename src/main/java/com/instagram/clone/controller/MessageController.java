@@ -32,7 +32,6 @@ public class MessageController {
     private final MessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // ── Page: inbox ──────────────────────────────────────────────────────────
     @GetMapping
     public String inbox(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         User currentUser = userRepository.findByUsername(userDetails.getUsername())
@@ -43,7 +42,6 @@ public class MessageController {
         return "homepage/chat";
     }
 
-    // ── Page: conversation with a specific user ───────────────────────────────
     @GetMapping("/{userId}")
     public String conversation(@PathVariable Long userId,
                                @AuthenticationPrincipal UserDetails userDetails,
@@ -63,25 +61,19 @@ public class MessageController {
         return "homepage/chat";
     }
 
-    // ── WebSocket: send a normal or vanish message ────────────────────────────
     @MessageMapping("/chat.send")
     public void handleMessage(@Payload MessageRequest request, Principal principal) {
         if (principal == null) throw new IllegalStateException("User not authenticated");
 
-        // BUG FIX 1: was missing sendMessage() call entirely
-        // BUG FIX 2: variable was named 'chatMessage' but then used 'sender' (undefined)
         User sender = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
 
         ChatMessage chatMessage = messageService.sendMessage(sender, request);
 
-        // Push to receiver — they get the message in real time
         messagingTemplate.convertAndSend("/topic/messages/" + request.getReceiverId(), chatMessage);
-        // Push back to sender — so optimistic bubble gets the real DB id
         messagingTemplate.convertAndSend("/topic/messages/" + sender.getId(), chatMessage);
     }
 
-    // ── WebSocket: receiver marks vanish message as seen ─────────────────────
     @MessageMapping("/chat.seen")
     public void handleSeen(@Payload Map<String, Long> payload, Principal principal) {
         Long messageId = payload.get("messageId");
@@ -97,11 +89,9 @@ public class MessageController {
                 messagingTemplate.convertAndSend("/topic/delete/" + payload.get("senderId"), deletedId);
             }
         } catch (Exception e) {
-            // Not authorized or already deleted — ignore
         }
     }
 
-    // ── REST: delete own message ──────────────────────────────────────────────
     @DeleteMapping("/{msgId}")
     @ResponseBody
     public ResponseEntity<Void> deleteMessage(@PathVariable Long msgId,
@@ -109,7 +99,6 @@ public class MessageController {
         User currentUser = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
 
-        // BUG FIX 3: was using userRepository.findById (wrong repo!) and not actually deleting
         messageRepository.findById(msgId).ifPresent(msg -> {
             if (msg.getSender().getId().equals(currentUser.getId())) {
                 messageRepository.deleteById(msgId);
