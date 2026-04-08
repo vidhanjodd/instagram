@@ -71,15 +71,12 @@ public class MessageController {
 
         ChatMessage chatMessage = messageService.sendMessage(sender, request);
 
-        // Send to receiver's personal topic
         messagingTemplate.convertAndSend(
                 "/topic/messages/" + request.getReceiverId(), chatMessage);
 
-        // Send to sender's personal topic for acknowledgment
         messagingTemplate.convertAndSend(
                 "/topic/messages/" + sender.getId(), chatMessage);
         
-        // Also send to a shared conversation topic so both can receive in real-time
         long conversationId = Math.min(sender.getId(), request.getReceiverId()) * 1000000 
                             + Math.max(sender.getId(), request.getReceiverId());
         messagingTemplate.convertAndSend(
@@ -96,13 +93,11 @@ public class MessageController {
         try {
             ChatMessage deleted = messageService.deleteMessage(messageId, requester);
 
-            // Broadcast deletion to both users' personal topics
             messagingTemplate.convertAndSend(
                     "/topic/delete/" + deleted.getReceiverId(), deleted.getId());
             messagingTemplate.convertAndSend(
                     "/topic/delete/" + deleted.getSenderId(), deleted.getId());
             
-            // Also broadcast to shared conversation topic for cross-machine sync
             long conversationId = Math.min(deleted.getSenderId(), deleted.getReceiverId()) * 1000000 
                                 + Math.max(deleted.getSenderId(), deleted.getReceiverId());
             messagingTemplate.convertAndSend(
