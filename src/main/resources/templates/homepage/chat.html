@@ -41,7 +41,6 @@
             </div>
             <div class="inbox-tabs">
                 <button class="inbox-tab active">Messages</button>
-                <button class="inbox-tab">Requests</button>
             </div>
 
             <div class="inbox-scroll">
@@ -258,7 +257,7 @@
 
             stompClient.connect(connectHeaders, function () {
                 console.log('✅ WebSocket connected successfully from:', socketUrl);
-                wsStatus.textContent = '● Live';
+                wsStatus.textContent = '● online';
                 wsStatus.className = 'ws-status connected';
 
                 // Subscribe to MY personal topic → receives messages sent TO me
