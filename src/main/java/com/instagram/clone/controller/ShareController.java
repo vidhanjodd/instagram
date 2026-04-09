@@ -25,9 +25,11 @@ public class ShareController {
     private final FollowRepository followRepository;
 
 
-    @GetMapping("/users/following/{userId}")
-    public ResponseEntity<List<Map<String, Object>>> getFollowing(@PathVariable Long userId) {
-        List<Follow> follows = followRepository.findByFollowerId(userId);
+    @GetMapping("/users/following/{username}")
+    public ResponseEntity<List<Map<String, Object>>> getFollowing(@PathVariable String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<Follow> follows = followRepository.findByFollowerId(user.getId());
         List<Map<String, Object>> result = follows.stream()
                 .map(f -> {
                     User u = f.getFollowing();

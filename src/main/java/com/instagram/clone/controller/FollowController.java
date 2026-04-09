@@ -19,30 +19,34 @@ public class FollowController {
     private final FollowService followService;
     private final UserRepository userRepository;
 
-    @PostMapping("/{targetUserId}/follow")
-    public String toggleFollow(@PathVariable Long targetUserId,
+    @PostMapping("/{username}/follow")
+    public String toggleFollow(@PathVariable String username,
                                Principal principal,
                                @RequestHeader(value = "Referer", required = false) String referer) {
 
         User loggedInUser = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        User targetUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        followService.toggleFollow(loggedInUser.getId(), targetUserId);
+        followService.toggleFollow(loggedInUser.getId(), targetUser.getId());
 
-        return (referer != null) ? "redirect:" + referer : "redirect:/users/" + targetUserId + "/profile";
+        return (referer != null) ? "redirect:" + referer : "redirect:/users/" + username + "/profile";
     }
 
-    @PostMapping("/{followerId}/remove-follower")
-    public String removeFollower(@PathVariable Long followerId,
+    @PostMapping("/{followerUsername}/remove-follower")
+    public String removeFollower(@PathVariable String followerUsername,
                                  Principal principal,
                                  @RequestHeader(value = "Referer", required = false) String referer) {
 
         User loggedInUser = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        User followerUser = userRepository.findByUsername(followerUsername)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        followService.removeFollower(loggedInUser.getId(), followerId);
+        followService.removeFollower(loggedInUser.getId(), followerUser.getId());
 
-        return (referer != null) ? "redirect:" + referer : "redirect:/users/" + loggedInUser.getId() + "/profile";
+        return (referer != null) ? "redirect:" + referer : "redirect:/users/" + loggedInUser.getUsername() + "/profile";
     }
 
     @PostMapping("/follows/{followId}/accept")

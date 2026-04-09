@@ -24,7 +24,7 @@
             <a th:href="@{/posts}" title="Home"><i class="fa-solid fa-house"></i></a>
             <a th:href="@{/posts/new}" title="New Post"><i class="fa-regular fa-square-plus"></i></a>
             <a th:href="@{/messages}" title="Messages"><i class="fa-solid fa-paper-plane"></i></a>
-            <a th:href="@{/users/{id}/profile(id=${currentUser.id})}" title="Profile"><i
+            <a th:href="@{/users/{username}/profile(username=${currentUser.username})}" title="Profile"><i
                     class="fa-regular fa-circle-user"></i></a>
             <form th:action="@{/logout}" method="post" style="display:inline;margin:0;">
                 <button type="submit" title="Logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
@@ -53,7 +53,7 @@
                     partnerId=${msg.senderId == currentUser.id ? msg.receiverId : msg.senderId},
                     partnerName=${msg.senderId == currentUser.id ? msg.receiverUsername : msg.senderUsername},
                     partnerPic=${msg.senderId == currentUser.id ? null : msg.senderProfilePic}">
-                        <a th:href="@{/messages/{id}(id=${partnerId})}"
+                        <a th:href="@{/messages/{username}(username=${partnerName})}"
                             th:classappend="${otherUser != null and otherUser.id == partnerId} ? ' active' : ''"
                             class="conv-row">
                             <div class="conv-av">
@@ -89,7 +89,7 @@
             <th:block th:if="${otherUser != null}">
 
                 <div class="conv-header">
-                    <a th:href="@{/users/{id}/profile(id=${otherUser.id})}" style="text-decoration:none;">
+                    <a th:href="@{/users/{username}/profile(username=${otherUser.username})}" style="text-decoration:none;">
                         <div class="conv-header-av">
                             <div class="conv-header-av-inner">
                                 <img th:if="${otherUser.profilePicUrl != null}" th:src="${otherUser.profilePicUrl}"
@@ -108,7 +108,7 @@
                             title="Vanish mode">
                             <i class="fa-solid fa-ghost"></i>
                         </button>
-                        <a th:href="@{/users/{id}/profile(id=${otherUser.id})}" title="View profile">
+                        <a th:href="@{/users/{username}/profile(username=${otherUser.username})}" title="View profile">
                             <i class="fa-regular fa-circle-user"></i>
                         </a>
                     </div>
@@ -133,7 +133,7 @@
                         </div>
                         <div style="font-weight:600;font-size:15px;" th:text="${otherUser.username}">username</div>
                         <div style="font-size:13px;color:#8e8e8e;">Instagram</div>
-                        <a th:href="@{/users/{id}/profile(id=${otherUser.id})}" style="margin-top:4px;background:#efefef;color:#111;border-radius:8px;
+                        <a th:href="@{/users/{username}/profile(username=${otherUser.username})}" style="margin-top:4px;background:#efefef;color:#111;border-radius:8px;
                               padding:7px 16px;font-size:13px;font-weight:600;text-decoration:none;">
                             View profile
                         </a>
@@ -493,8 +493,8 @@
 
         // ── Update inbox sidebar preview ──────────────────────────────────────────
         function updateInboxPreview(msg) {
-            const partnerId = msg.senderId == currentUserId ? msg.receiverId : msg.senderId;
-            const row = document.querySelector(`.conv-row[href="/messages/${partnerId}"]`);
+            const partnerUsername = msg.senderId == currentUserId ? msg.receiverUsername : msg.senderUsername;
+            const row = document.querySelector(`.conv-row[href="/messages/${partnerUsername}"]`);
             if (row) {
                 const preview = row.querySelector('.conv-preview');
                 const time = row.querySelector('.conv-time');

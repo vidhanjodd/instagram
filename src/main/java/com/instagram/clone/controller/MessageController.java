@@ -42,16 +42,16 @@ public class MessageController {
         return "homepage/chat";
     }
 
-    @GetMapping("/{userId}")
-    public String conversation(@PathVariable Long userId,
+    @GetMapping("/{username}")
+    public String conversation(@PathVariable String username,
                                @AuthenticationPrincipal UserDetails userDetails,
                                Model model) {
         User currentUser = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
-        User otherUser = userRepository.findById(userId)
+        User otherUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<MessageResponse> messages = messageService.getConversation(currentUser, userId);
+        List<MessageResponse> messages = messageService.getConversation(currentUser, otherUser.getId());
         List<MessageResponse> inbox    = messageService.getInbox(currentUser);
 
         model.addAttribute("messages",    messages);

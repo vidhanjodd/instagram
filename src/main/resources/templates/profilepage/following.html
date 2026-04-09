@@ -14,7 +14,7 @@
 <body>
 
 <nav>
-  <a class="nav-back" th:href="@{/users/{id}/profile(id=${user.id})}">
+  <a class="nav-back" th:href="@{/users/{username}/profile(username=${user.username})}">
     <i class="fa-solid fa-arrow-left"></i>
   </a>
   <span class="nav-title" th:text="${user.username}">username</span>
@@ -24,11 +24,11 @@
 <div class="page">
   <div class="tabs">
     <a class="tab-link"
-       th:href="@{/users/{id}/followers(id=${user.id})}">
+       th:href="@{/users/{username}/followers(username=${user.username})}">
       Followers
     </a>
     <a class="tab-link active"
-       th:href="@{/users/{id}/following(id=${user.id})}">
+       th:href="@{/users/{username}/following(username=${user.username})}">
       Following
     </a>
   </div>
@@ -43,7 +43,7 @@
 
     <div th:each="follow : ${following}" class="user-row">
 
-      <a th:href="@{/users/{id}/profile(id=${follow.following.id})}">
+      <a th:href="@{/users/{username}/profile(username=${follow.following.username})}">
         <div class="avatar-ring">
           <div class="avatar-inner">
 
@@ -60,7 +60,7 @@
       </a>
 
       <div class="user-info">
-        <a th:href="@{/users/{id}/profile(id=${follow.following.id})}"
+        <a th:href="@{/users/{username}/profile(username=${follow.following.username})}"
            th:text="${follow.following.username}">username</a>
         <div class="user-sub"
              th:text="${follow.following.bio != null && !#strings.isEmpty(follow.following.bio) ? follow.following.bio : 'Instagram user'}">bio</div>
@@ -69,7 +69,7 @@
       <!--
       -->
       <form th:if="${isOwnProfile}"
-            th:action="@{/users/{targetId}/follow(targetId=${follow.following.id})}"
+            th:action="@{/users/{username}/follow(username=${follow.following.username})}"
             method="post" style="display:inline">
         <button class="btn-unfollow" type="submit">Following</button>
       </form>

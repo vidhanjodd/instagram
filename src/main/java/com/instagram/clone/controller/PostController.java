@@ -123,9 +123,10 @@ public class PostController {
         }
     }
 
-    @GetMapping("/user/{userId}")
-    public String showUserProfile(@PathVariable Long userId, Model model, Principal principal) {
-        List<Post> posts = postService.getPostsByUserId(userId);
+    @GetMapping("/user/{username}")
+    public String showUserProfile(@PathVariable String username, Model model, Principal principal) {
+        User user = userService.getUserByUsername(username);
+        List<Post> posts = postService.getPostsByUserId(user.getId());
         model.addAttribute("posts", posts);
         model.addAttribute("currentUser", getCurrentUser(principal));
         return "profilepage/profile";

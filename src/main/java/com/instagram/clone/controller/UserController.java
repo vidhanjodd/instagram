@@ -56,8 +56,8 @@ public class UserController {
         }
     }
 
-    @GetMapping("/{id}/profile")
-    public String viewProfile(@PathVariable Long id, Model model, Authentication authentication,
+    @GetMapping("/{username}/profile")
+    public String viewProfile(@PathVariable String username, Model model, Authentication authentication,
                               HttpServletRequest request, HttpServletResponse response) {
 
         Optional<User> loggedInOpt = userRepository.findByUsername(authentication.getName());
@@ -67,7 +67,7 @@ public class UserController {
             return "redirect:/login";
         }
 
-        Optional<User> profileUserOpt = userRepository.findById(id);
+        Optional<User> profileUserOpt = userRepository.findByUsername(username);
         if (profileUserOpt.isEmpty()) {
             return "redirect:/posts";
         }
@@ -95,8 +95,8 @@ public class UserController {
 
         boolean canSeePosts = isOwnProfile || isFollowing || !profileUser.isPrivate();
         if (canSeePosts) {
-            model.addAttribute("posts", postService.getPostsByUserId(id));
-            model.addAttribute("reels", reelService.getReelsByUserId(id));
+            model.addAttribute("posts", postService.getPostsByUserId(profileUser.getId()));
+            model.addAttribute("reels", reelService.getReelsByUserId(profileUser.getId()));
         } else {
             model.addAttribute("posts", List.of());
             model.addAttribute("reels", List.of());
@@ -105,72 +105,72 @@ public class UserController {
         return "profilepage/profile";
     }
 
-    @GetMapping("/{id}/edit")
-    public String showEditBio(@PathVariable Long id, Model model) {
-        User user = userService.getUserById(id);
+    @GetMapping("/{username}/edit")
+    public String showEditBio(@PathVariable String username, Model model) {
+        User user = userService.getUserByUsername(username);
         model.addAttribute("user", user);
         return "profilepage/edit-bio";
     }
 
-    @PostMapping("/{id}/bio")
-    public String updateBio(@PathVariable Long id,
+    @PostMapping("/{username}/bio")
+    public String updateBio(@PathVariable String username,
                             @RequestParam String bio,
                             @RequestParam(required = false) String websiteUrl,
                             @RequestParam(defaultValue = "false") boolean isPrivate, // NEW
                             Authentication authentication,
                             org.springframework.ui.Model model) {
 
-        User userToUpdate = userService.getUserById(id);
+        User userToUpdate = userService.getUserByUsername(username);
         if (!userToUpdate.getUsername().equals(authentication.getName())) {
-            return "redirect:/users/" + id + "/profile?error=unauthorized";
+            return "redirect:/users/" + username + "/profile?error=unauthorized";
         }
 
         try {
-            userService.updateBio(id, bio, websiteUrl);
-            userToUpdate = userService.getUserById(id);
+            userService.updateBio(userToUpdate.getId(), bio, websiteUrl);
+            userToUpdate = userService.getUserByUsername(username);
             userToUpdate.setPrivate(isPrivate);
             userRepository.save(userToUpdate);
         } catch (RuntimeException e) {
-            User user = userService.getUserById(id);
+            User user = userService.getUserByUsername(username);
             model.addAttribute("user", user);
             model.addAttribute("urlError", e.getMessage());
             return "profilepage/edit-bio";
         }
 
-        return "redirect:/users/" + id + "/profile";
+        return "redirect:/users/" + username + "/profile";
     }
 
-    @PostMapping("/{id}/delete")
-    public String deleteUser(@PathVariable Long id, Authentication authentication) {
-        User user = userService.getUserById(id);
+    @PostMapping("/{username}/delete")
+    public String deleteUser(@PathVariable String username, Authentication authentication) {
+        User user = userService.getUserByUsername(username);
 
         if (!user.getUsername().equals(authentication.getName())) {
             return "redirect:/login?error=unauthorized";
         }
 
-        userService.deleteUser(id);
+        userService.deleteUser(user.getId());
         return "redirect:/login";
     }
-    @PostMapping("/{id}/profile-picture")
-    public String uploadProfilePicture(@PathVariable Long id,
+    @PostMapping("/{username}/profile-picture")
+    public String uploadProfilePicture(@PathVariable String username,
                                        @RequestParam("profilePic") MultipartFile file,
                                        Authentication authentication,
                                        Model model) {
 
-        User userToUpdate = userService.getUserById(id);
+        User userToUpdate = userService.getUserByUsername(username);
         if (!userToUpdate.getUsername().equals(authentication.getName())) {
-            return "redirect:/users/" + id + "/profile?error=unauthorized";
+            return "redirect:/users/" + username + "/profile?error=unauthorized";
         }
 
         if (file == null || file.isEmpty()) {
-            return "redirect:/users/" + id + "/edit";
+            return "redirect:/users/" + username + "/edit";
         }
 
         try {
-            userService.uploadProfilePicture(id, file);
-            return "redirect:/users/" + id + "/edit?success=true";
+            userService.uploadProfilePicture(userToUpdate.getId(), file);
+            return "redirect:/users/" + username + "/edit?success=true";
         } catch (Exception e) {
-            User user = userService.getUserById(id);
+            User user = userService.getUserByUsername(username);
             model.addAttribute("user", user);
             model.addAttribute("picError", e.getMessage());
             return "profilepage/edit-bio";
@@ -201,9 +201,9 @@ public class UserController {
 
         return ResponseEntity.ok(result);
     }
-    @GetMapping("/{id}/followers")
-    public String viewFollowers(@PathVariable Long id, Model model, Authentication authentication) {
-        User profileUser = userService.getUserById(id);
+    @GetMapping("/{username}/followers")
+    public String viewFollowers(@PathVariable String username, Model model, Authentication authentication) {
+        User profileUser = userService.getUserByUsername(username);
         User loggedInUser = userService.getUserByUsername(authentication.getName());
         if (profileUser.isPrivate() && !loggedInUser.getId().equals(profileUser.getId())) {
             boolean isFollowing = followRepository.findByFollowerAndFollowing(loggedInUser, profileUser)
@@ -211,7 +211,7 @@ public class UserController {
                     .orElse(false);
 
             if (!isFollowing) {
-                return "redirect:/users/" + id + "/profile";
+                return "redirect:/users/" + username + "/profile";
             }
         }
 
@@ -225,9 +225,9 @@ public class UserController {
         return "profilepage/followers";
     }
 
-    @GetMapping("/{id}/following")
-    public String viewFollowing(@PathVariable Long id, Model model, Authentication authentication) {
-        User profileUser = userService.getUserById(id);
+    @GetMapping("/{username}/following")
+    public String viewFollowing(@PathVariable String username, Model model, Authentication authentication) {
+        User profileUser = userService.getUserByUsername(username);
         User loggedInUser = userService.getUserByUsername(authentication.getName());
         if (profileUser.isPrivate() && !loggedInUser.getId().equals(profileUser.getId())) {
             boolean isFollowing = followRepository.findByFollowerAndFollowing(loggedInUser, profileUser)
@@ -235,7 +235,7 @@ public class UserController {
                     .orElse(false);
 
             if (!isFollowing) {
-                return "redirect:/users/" + id + "/profile";
+                return "redirect:/users/" + username + "/profile";
             }
         }
 

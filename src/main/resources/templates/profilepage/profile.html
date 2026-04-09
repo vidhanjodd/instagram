@@ -57,22 +57,22 @@
                 <span class="profile-username" th:text="${user.username}">username</span>
 
                 <div class="profile-actions" th:if="${currentUser.id == user.id}">
-                    <a class="btn-edit" th:href="@{/users/{id}/edit(id=${user.id})}">Edit profile</a>
-                    <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post"
+                    <a class="btn-edit" th:href="@{/users/{username}/edit(username=${user.username})}">Edit profile</a>
+                    <form th:action="@{/users/{username}/delete(username=${user.username})}" method="post"
                           style="display:inline" onsubmit="return confirm('Delete account?')">
                         <button class="btn-danger" type="submit">Delete account</button>
                     </form>
                 </div>
 
                 <div th:if="${currentUser.id != user.id}" style="display:flex;align-items:center;gap:8px;">
-                    <form th:action="@{/users/{id}/follow(id=${user.id})}" method="post" style="display:inline">
+                    <form th:action="@{/users/{username}/follow(username=${user.username})}" method="post" style="display:inline">
                         <button th:if="${isFollowing}" type="submit" class="btn-edit">Following</button>
                         <button th:if="${!isFollowing and hasPendingRequest}" type="submit" class="btn-requested">Requested</button>
                         <button th:if="${!isFollowing and !hasPendingRequest}" type="submit" class="btn-follow">Follow</button>
                     </form>
 
                     <a th:if="${isFollowing}"
-                       th:href="@{/messages/{id}(id=${user.id})}"
+                       th:href="@{/messages/{username}(username=${user.username})}"
                        class="btn-edit"
                        style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
                         <i class="fa-regular fa-paper-plane" style="font-size:13px;"></i> Message
@@ -89,11 +89,11 @@
                     <span class="stat-num" th:text="${#lists.size(posts)}">0</span>
                     <span class="stat-label">posts</span>
                 </div>
-                <a class="stat stat-link" th:href="@{/users/{id}/followers(id=${user.id})}">
+                <a class="stat stat-link" th:href="@{/users/{username}/followers(username=${user.username})}">
                     <span class="stat-num" th:text="${followersCount}">0</span>
                     <span class="stat-label">followers</span>
                 </a>
-                <a class="stat stat-link" th:href="@{/users/{id}/following(id=${user.id})}">
+                <a class="stat stat-link" th:href="@{/users/{username}/following(username=${user.username})}">
                     <span class="stat-num" th:text="${followingCount}">0</span>
                     <span class="stat-label">following</span>
                 </a>
@@ -283,6 +283,7 @@
     const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
     const currentUserId = /*[[${currentUser.id}]]*/ null;
+    const currentUsername = /*[[${currentUser.username}]]*/ '';
 
     function secureHeaders(json) {
         const h = { [csrfHeader]: csrfToken };
@@ -775,7 +776,7 @@
         if (n.postId)              href = '/posts/' + n.postId;
         else if (n.reelId)         href = '/reels/' + n.reelId;
         else if (n.type === 'FOLLOW' || n.type === 'FOLLOW_ACCEPT')
-            href = '/users/' + n.actorId + '/profile';
+            href = '/users/' + n.actorUsername + '/profile';
 
         const avatarHtml = n.actorProfilePic
             ? `<img src="${escHtml(n.actorProfilePic)}" alt="" />`
@@ -787,7 +788,7 @@
         if (n.isPending && n.followId) {
             return `
                 <div class="notif-item ${unreadClass}" style="cursor:default;">
-                    <a href="/users/${n.actorId}/profile" class="notif-avatar" style="text-decoration:none;">
+                    <a href="/users/${n.actorUsername}/profile" class="notif-avatar" style="text-decoration:none;">
                         <div class="notif-avatar-inner">${avatarHtml}</div>
                     </a>
                     <div class="notif-text" style="flex:1; min-width:0">

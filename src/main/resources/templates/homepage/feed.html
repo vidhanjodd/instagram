@@ -63,7 +63,7 @@
                 </div>
             </div>
         </div>
-        <a th:href="@{/users/{id}/profile(id=${currentUser.id})}" title="Profile" style="color: inherit; text-decoration: none;">
+        <a th:href="@{/users/{username}/profile(username=${currentUser.username})}" title="Profile" style="color: inherit; text-decoration: none;">
             <i class="fa-regular fa-circle-user"></i>
         </a>
         <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">
@@ -80,7 +80,7 @@
         <div class="post-card" th:each="post : ${posts}">
 
             <div class="post-header">
-                <a class="post-user" th:href="@{/users/{id}/profile(id=${post.user.id})}">
+                <a class="post-user" th:href="@{/users/{username}/profile(username=${post.user.username})}">
                     <div class="post-avatar">
                         <img th:if="${post.user.profilePicUrl != null}"
                              th:src="${post.user.profilePicUrl}"
@@ -281,6 +281,7 @@
     const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
     const currentUserId = /*[[${currentUser.id}]]*/ null;
+    const currentUsername = /*[[${currentUser.username}]]*/ '';
 
     function secureHeaders(json) {
         const h = { [csrfHeader]: csrfToken };
@@ -659,7 +660,7 @@
                             users.forEach(user => {
                                 const initial = user.username.charAt(0).toUpperCase();
                                 const item = document.createElement('a');
-                                item.href = `/users/${user.id}/profile`;
+                                item.href = `/users/${user.username}/profile`;
                                 item.className = 'search-result-item';
                                 item.innerHTML = `
                                 <div class="search-result-avatar">
@@ -912,7 +913,7 @@
         if (n.postId)              href = '/posts/' + n.postId;
         else if (n.reelId)         href = '/reels/' + n.reelId;
         else if (n.type === 'FOLLOW' || n.type === 'FOLLOW_ACCEPT')
-            href = '/users/' + n.actorId + '/profile';
+            href = '/users/' + n.actorUsername + '/profile';
 
         const avatarHtml = n.actorProfilePic
             ? `<img src="${escHtml(n.actorProfilePic)}" alt="" />`
@@ -924,7 +925,7 @@
         if (n.isPending && n.followId) {
             return `
                 <div class="notif-item ${unreadClass}" style="cursor:default;">
-                    <a href="/users/${n.actorId}/profile" class="notif-avatar" style="text-decoration:none;">
+                    <a href="/users/${n.actorUsername}/profile" class="notif-avatar" style="text-decoration:none;">
                         <div class="notif-avatar-inner">${avatarHtml}</div>
                     </a>
                     <div class="notif-text" style="flex:1; min-width:0">
@@ -1083,7 +1084,7 @@
         document.getElementById('shareUsersList').innerHTML =
             '<div class="share-loading"><div class="share-spinner"></div></div>';
 
-        fetch('/users/following/' + currentUserId)
+        fetch('/users/following/' + currentUsername)
             .then(r => r.json())
             .then(users => { shareAllUsers = users; renderShareUsers(users); })
             .catch(() => {

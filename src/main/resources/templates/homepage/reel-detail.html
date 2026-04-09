@@ -79,7 +79,8 @@
 </div>
 
 <script th:inline="javascript">
-    const currentUserId = [[${currentUser != null ? currentUser.id : null}]];
+    const currentUserId = /*[[${currentUser != null ? currentUser.id : null}]]*/ null;
+    const currentUsername = /*[[${currentUser != null ? currentUser.username : null}]]*/ null;
 </script>
 
 <script>
@@ -446,7 +447,7 @@
         document.getElementById('shareUsersList').innerHTML =
             '<div class="share-loading"><div class="share-spinner"></div></div>';
 
-        fetch('/users/following/' + currentUserId)
+        fetch('/users/following/' + currentUsername)
             .then(r => r.json())
             .then(users => { shareAllUsers = users; renderShareUsers(users); })
             .catch(() => {

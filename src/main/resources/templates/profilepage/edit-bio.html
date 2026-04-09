@@ -12,7 +12,7 @@
 </head>
 <body>
 <nav>
-    <a class="nav-back" th:href="@{/users/{id}/profile(id=${user.id})}">←</a>
+    <a class="nav-back" th:href="@{/users/{username}/profile(username=${user.username})}">←</a>
     <span class="nav-title">Edit profile</span>
     <button class="nav-save" form="editForm" type="submit">Done</button>
 </nav>
@@ -29,7 +29,7 @@
 
         <div th:if="${picError}" class="pic-error" th:text="${picError}"></div>
         <form class="pic-upload-form"
-              th:action="@{/users/{id}/profile-picture(id=${user.id})}"
+              th:action="@{/users/{username}/profile-picture(username=${user.username})}"
               method="post"
               enctype="multipart/form-data"
               id="picForm">
@@ -74,7 +74,7 @@
         </form>
     </div>
 
-    <form id="editForm" th:action="@{/users/{id}/bio(id=${user.id})}" method="post" class="form-section">
+    <form id="editForm" th:action="@{/users/{username}/bio(username=${user.username})}" method="post" class="form-section">
 
         <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
 
@@ -141,7 +141,7 @@
     </form>
 
     <div class="danger-zone">
-        <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post"
+        <form th:action="@{/users/{username}/delete(username=${user.username})}" method="post"
               onsubmit="return confirm('Are you sure you want to permanently delete your account?')">
             <button class="btn-delete-account" type="submit">Delete account</button>
         </form>
