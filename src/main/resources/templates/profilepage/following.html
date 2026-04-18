@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${user.username} + ' • Following'">Following</title>
+  <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" th:href="@{/css/following.css}"/>
+
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+<body>
+
+<nav>
+  <a class="nav-back" th:href="@{/users/{username}/profile(username=${user.username})}">
+    <i class="fa-solid fa-arrow-left"></i>
+  </a>
+  <span class="nav-title" th:text="${user.username}">username</span>
+  <span class="nav-spacer"></span>
+</nav>
+
+<div class="page">
+  <div class="tabs">
+    <a class="tab-link"
+       th:href="@{/users/{username}/followers(username=${user.username})}">
+      Followers
+    </a>
+    <a class="tab-link active"
+       th:href="@{/users/{username}/following(username=${user.username})}">
+      Following
+    </a>
+  </div>
+
+  <div class="user-list">
+
+    <div th:if="${#lists.isEmpty(following)}" class="empty">
+      <i class="fa-regular fa-user"></i>
+      <h3>Not following anyone</h3>
+      <p th:text="${user.username} + ' isn\'t following anyone yet.'">Not following anyone yet.</p>
+    </div>
+
+    <div th:each="follow : ${following}" class="user-row">
+
+      <a th:href="@{/users/{username}/profile(username=${follow.following.username})}">
+        <div class="avatar-ring">
+          <div class="avatar-inner">
+
+            <img th:if="${follow.following.profilePicUrl != null}"
+                 th:src="${follow.following.profilePicUrl}"
+                 style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+
+            <span th:unless="${follow.following.profilePicUrl != null}"
+                  th:text="${#strings.substring(follow.follower.username, 0, 1).toUpperCase()}">
+             </span>
+
+          </div>
+        </div>
+      </a>
+
+      <div class="user-info">
+        <a th:href="@{/users/{username}/profile(username=${follow.following.username})}"
+           th:text="${follow.following.username}">username</a>
+        <div class="user-sub"
+             th:text="${follow.following.bio != null && !#strings.isEmpty(follow.following.bio) ? follow.following.bio : 'Instagram user'}">bio</div>
+      </div>
+
+      <!--
+      -->
+      <form th:if="${isOwnProfile}"
+            th:action="@{/users/{username}/follow(username=${follow.following.username})}"
+            method="post" style="display:inline">
+        <button class="btn-unfollow" type="submit">Following</button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

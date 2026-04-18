@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Instagram · Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/login.css}"/>
+</head>
+<body>
+<div class="wrapper">
+    <div class="card">
+        <div class="logo">Instagram</div>
+
+        <div th:if="${param.error}" class="alert">
+            Your username or password is incorrect.
+        </div>
+        <div th:if="${param.logout}" class="alert success">
+            You've been logged out successfully.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="field">
+                <input type="text" id="username" name="username" placeholder="username" required/>
+                <label for="username">username</label>
+            </div>
+            <div class="field">
+                <input type="password" id="password" name="password" placeholder="password" required/>
+                <label for="password">Password</label>
+            </div>
+            <button type="submit" class="btn-login">Log in</button>
+        </form>
+
+        <div class="divider"><span>OR</span></div>
+
+        <a href="#" class="forgot">Forgot password?</a>
+    </div>
+
+    <div class="register-card">
+        Don't have an account? <a th:href="@{/users/register}">Sign up</a>
+    </div>
+
+    <div class="app-links">
+        <p>Get the app.</p>
+        <div class="app-badges">
+            <a href="https://play.google.com/store/apps/details?id=com.instagram.android&hl=en_IN&pli=1" class="badge">📱 App Store</a>
+            <a href="https://apps.apple.com/us/app/instagram/id389801252" class="badge">🤖 Google Play</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

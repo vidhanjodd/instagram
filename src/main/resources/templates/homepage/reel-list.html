@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Instagram · Reels</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" th:href="@{/css/reel-list.css}"/>
+    <link rel="stylesheet" th:href="@{/css/feed.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
+
+<nav class="nav-bar">
+    <a class="nav-logo" th:href="@{/posts}">Instagram</a>
+    <div class="nav-title">Reels</div>
+</nav>
+
+<div class="reels-container">
+
+    <div th:if="${#lists.isEmpty(reels)}" class="no-reels-message">
+        <h2>No Reels Yet</h2>
+        <a th:href="@{/reels/create}">Create One</a>
+    </div>
+
+    <div th:each="reel : ${reels}" class="reel">
+
+        <div class="reel-card">
+
+            <video class="reel-video" th:data-id="${reel.id}" muted loop playsinline>
+                <source th:src="${reel.videoUrl}" type="video/mp4">
+            </video>
+
+            <div class="reel-left">
+                <div class="username" th:text="${reel.user.username}">username</div>
+                <div class="caption" th:text="${reel.caption}">caption</div>
+                <button th:if="${currentUser != null and reel.user.id == currentUser.id}"
+                        class="delete-reel-btn"
+                        th:data-reel-id="${reel.id}">
+                    🗑 Delete Reel
+                </button>
+            </div>
+
+            <div class="reel-right">
+                <div class="action like-btn" th:data-id="${reel.id}">
+                    <i class="fa-regular fa-heart"></i>
+                    <span th:text="${reel.likeCount}">0</span>
+                </div>
+                <div class="action comment-btn" th:data-id="${reel.id}">
+                    <i class="fa-regular fa-comment"></i>
+                    <span th:text="${reel.commentCount}">0</span>
+                </div>
+                <div class="action view-count">
+                    <i class="fa-regular fa-eye"></i>
+                    <span th:text="${reel.viewCount}">0</span>
+                </div>
+                <div class="action share-btn" th:data-id="${reel.id}" style="cursor: pointer;">
+                    <i class="fa-solid fa-share"></i>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div id="commentModal" class="comment-modal hidden">
+    <div class="comment-sheet">
+        <div class="comment-header">Comments</div>
+        <div id="commentList" class="comment-list"></div>
+        <div id="replyIndicator" class="reply-indicator">
+            <span id="replyingToLabel"></span>
+            <button id="cancelReply">✕</button>
+        </div>
+        <div class="comment-input-bar">
+            <input id="commentInput" placeholder="Add a comment..." />
+            <button id="postComment">Post</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const currentUserId = /*[[${currentUser != null ? currentUser.id : null}]]*/ null;
+    const currentUsername = /*[[${currentUser != null ? currentUser.username : null}]]*/ null;
+</script>
+
+<script>
+    const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
+    function getCsrfToken() {
+        const match = document.cookie.split('; ').find(r => r.startsWith('XSRF-TOKEN='));
+        return match ? decodeURIComponent(match.split('=')[1]) : '';
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const csrfToken       = getCsrfToken();
+        const modal           = document.getElementById('commentModal');
+        const commentList     = document.getElementById('commentList');
+        const input           = document.getElementById('commentInput');
+        const postBtn         = document.getElementById('postComment');
+        const replyIndicator  = document.getElementById('replyIndicator');
+        const replyingToLabel = document.getElementById('replyingToLabel');
+        const cancelReplyBtn  = document.getElementById('cancelReply');
+
+        let currentReelId = null;
+        let replyingTo    = null;
+
+        document.querySelectorAll('.delete-reel-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const reelId = btn.dataset.reelId;
+                if (!confirm('Delete this reel? This cannot be undone.')) return;
+                try {
+                    const res = await fetch(`/reels/${reelId}`, {
+                        method: 'DELETE',
+                        headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+                    });
+                    if (res.ok || res.redirected) {
+                        btn.closest('.reel').remove();
+                    } else {
+                        alert('Failed to delete reel.');
+                    }
+                } catch (e) { console.error(e); }
+            });
+        });
+
+        document.querySelectorAll('.like-btn').forEach(async (btn) => {
+            const reelId = btn.dataset.id;
+            try {
+                const res = await fetch(`/reels/${reelId}/liked`);
+                if (res.ok && await res.json()) btn.classList.add('liked');
+            } catch {}
+
+            btn.addEventListener('click', async () => {
+                const liked = btn.classList.contains('liked');
+                try {
+                    const res = await fetch(`/reels/${reelId}/${liked ? 'unlike' : 'like'}`, {
+                        method: 'POST', headers: { 'X-XSRF-TOKEN': csrfToken }
+                    });
+                    btn.querySelector('span').textContent = await res.text();
+                    btn.classList.toggle('liked');
+                } catch {}
+            });
+        });
+
+        document.querySelectorAll('.comment-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                currentReelId = btn.dataset.id;
+                modal.classList.remove('hidden');
+                commentList.innerHTML = 'Loading...';
+                clearReply();
+                try {
+                    const res      = await fetch(`/reels/${currentReelId}/comments`);
+                    const comments = await res.json();
+                    if (!comments.length) {
+                        commentList.innerHTML = '<div class="empty-comments">No comments yet</div>';
+                        return;
+                    }
+                    renderComments(comments);
+                } catch {
+                    commentList.innerHTML = 'Failed to load';
+                }
+            });
+        });
+
+        document.querySelectorAll('.share-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (typeof currentUserId !== 'undefined' && currentUserId !== null) {
+                    openShareModal(btn.dataset.id, 'reel');
+                } else {
+                    alert('You must be logged in to share reels.');
+                }
+            });
+        });
+
+        function renderComments(comments) {
+            commentList.innerHTML = comments.map(c => buildCommentHTML(c)).join('');
+            attachListeners();
+        }
+
+        function buildCommentHTML(c) {
+            const avatar     = c.profilePicUrl || DEFAULT_AVATAR;
+            const isOwn      = currentUserId !== null && c.userId === currentUserId;
+            const hasReplies = c.replies && c.replies.length > 0;
+
+            const rightAction = isOwn
+                ? `<button class="delete-btn" data-comment-id="${c.id}">🗑</button>`
+                : `<button class="follow-btn">Follow</button>`;
+
+            const repliesSection = hasReplies ? `
+                <button class="view-replies-btn" data-comment-id="${c.id}">
+                    View ${c.replies.length} ${c.replies.length === 1 ? 'reply' : 'replies'}
+                </button>
+                <div class="replies-list hidden" id="replies-${c.id}">
+                    ${c.replies.map(r => buildReplyHTML(r)).join('')}
+                </div>` : '';
+
+            return `
+                <div class="comment-item" data-comment-id="${c.id}">
+                    <img src="${avatar}" class="comment-avatar" onerror="this.src='${DEFAULT_AVATAR}'" />
+                    <div class="comment-body">
+                        <b>${escapeHtml(c.username)}</b><span>${escapeHtml(c.content)}</span>
+                        <div class="comment-meta">
+                            <button class="reply-btn"
+                                data-username="${escapeHtml(c.username)}"
+                                data-comment-id="${c.id}">Reply</button>
+                        </div>
+                    </div>
+                    ${rightAction}
+                </div>
+                ${repliesSection}
+            `;
+        }
+
+        function buildReplyHTML(r) {
+            const avatar = r.profilePicUrl || DEFAULT_AVATAR;
+            const isOwn  = currentUserId !== null && r.userId === currentUserId;
+            const deleteBtn = isOwn
+                ? `<button class="delete-btn" data-comment-id="${r.id}">🗑</button>`
+                : '';
+            return `
+                <div class="reply-item" data-comment-id="${r.id}">
+                    <img src="${avatar}" class="reply-avatar" onerror="this.src='${DEFAULT_AVATAR}'" />
+                    <div class="reply-body">
+                        <b>${escapeHtml(r.username)}</b><span>${escapeHtml(r.content)}</span>
+                        <div class="reply-meta">
+                            <button class="reply-btn"
+                                data-username="${escapeHtml(r.username)}"
+                                data-comment-id="${r.id}">Reply</button>
+                        </div>
+                    </div>
+                    ${deleteBtn}
+                </div>
+            `;
+        }
+
+        function attachListeners() {
+            commentList.querySelectorAll('.reply-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    replyingTo = { commentId: btn.dataset.commentId, username: btn.dataset.username };
+                    replyingToLabel.innerHTML = `Replying to <b>@${escapeHtml(btn.dataset.username)}</b>`;
+                    replyIndicator.classList.add('visible');
+                    input.placeholder = `Reply to @${btn.dataset.username}...`;
+                    input.focus();
+                });
+            });
+
+            commentList.querySelectorAll('.view-replies-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const div    = document.getElementById(`replies-${btn.dataset.commentId}`);
+                    const hidden = div.classList.toggle('hidden');
+                    const count  = div.querySelectorAll('.reply-item').length;
+                    btn.textContent = hidden
+                        ? `View ${count} ${count === 1 ? 'reply' : 'replies'}`
+                        : 'Hide replies';
+                });
+            });
+
+            commentList.querySelectorAll('.follow-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const following = btn.textContent === 'Following';
+                    btn.textContent = following ? 'Follow'  : 'Following';
+                    btn.style.color = following ? '#0095f6' : '#a8a8a8';
+                });
+            });
+
+            commentList.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const commentId = btn.dataset.commentId;
+                    if (!confirm('Delete this comment?')) return;
+
+                    const commentEl = commentList.querySelector(`[data-comment-id="${commentId}"]`);
+                    const isReply   = commentEl?.closest('.replies-list') !== null;
+
+                    try {
+                        const res = await fetch(`/reels/${currentReelId}/comments/${commentId}`, {
+                            method: 'DELETE',
+                            headers: { 'X-XSRF-TOKEN': getCsrfToken() }
+                        });
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                        if (commentEl) {
+                            if (!isReply) {
+                                const next = commentEl.nextElementSibling;
+                                if (next?.classList?.contains('view-replies-btn')) {
+                                    next.nextElementSibling?.remove();
+                                    next.remove();
+                                }
+                            }
+                            commentEl.remove();
+                        }
+
+                        // MODIFIED: Decrement the comment count whether it's a top-level comment or a reply
+                        const card    = document.querySelector(`video[data-id='${currentReelId}']`).closest('.reel-card');
+                        const countEl = card.querySelector('.comment-btn span');
+                        const current = parseInt(countEl.textContent || '0');
+                        if (current > 0) countEl.textContent = current - 1;
+
+                    } catch (e) { console.error('Failed to delete comment:', e); }
+                });
+            });
+        }
+
+        cancelReplyBtn.addEventListener('click', clearReply);
+        function clearReply() {
+            replyingTo = null;
+            replyIndicator.classList.remove('visible');
+            input.placeholder = 'Add a comment...';
+        }
+
+        postBtn.addEventListener('click', postComment);
+        input.addEventListener('keypress', e => { if (e.key === 'Enter') postComment(); });
+
+        async function postComment() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            const payload = { reelId: parseInt(currentReelId), content: text };
+            if (replyingTo) {
+                payload.parentId = parseInt(replyingTo.commentId);
+                payload.replyingToUsername = replyingTo.username;
+            }
+
+            try {
+                const res = await fetch(`/reels/${currentReelId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': getCsrfToken() },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const c = await res.json();
+
+                if (replyingTo) {
+                    const parentId = replyingTo.commentId;
+                    const targetElement = commentList.querySelector(`[data-comment-id="${parentId}"]`);
+
+                    if (!targetElement) {
+                        console.error("Target element not found!");
+                        return;
+                    }
+
+                    if (targetElement.classList.contains('reply-item')) {
+                        // We are replying to a reply, just add it to the existing list
+                        const repliesDiv = targetElement.closest('.replies-list');
+                        repliesDiv.insertAdjacentHTML('beforeend', buildReplyHTML(c));
+                    } else {
+                        // We are replying to a top-level comment
+                        let repliesDiv = document.getElementById(`replies-${parentId}`);
+                        if (!repliesDiv) {
+                            targetElement.insertAdjacentHTML('afterend', `
+                                <button class="view-replies-btn" data-comment-id="${parentId}">Hide replies</button>
+                                <div class="replies-list" id="replies-${parentId}"></div>
+                            `);
+                            repliesDiv = document.getElementById(`replies-${parentId}`);
+                        } else {
+                            repliesDiv.classList.remove('hidden');
+                            const toggleBtn = commentList.querySelector(`.view-replies-btn[data-comment-id="${parentId}"]`);
+                            if (toggleBtn) toggleBtn.textContent = 'Hide replies';
+                        }
+                        repliesDiv.insertAdjacentHTML('beforeend', buildReplyHTML(c));
+                    }
+
+                    attachListeners();
+                    clearReply();
+
+                    // MODIFIED: Increment the comment count when a reply is posted
+                    const card    = document.querySelector(`video[data-id='${currentReelId}']`).closest('.reel-card');
+                    const countEl = card.querySelector('.comment-btn span');
+                    countEl.textContent = parseInt(countEl.textContent || '0') + 1;
+
+                } else {
+                    commentList.insertAdjacentHTML('afterbegin', buildCommentHTML(c));
+                    attachListeners();
+                    const card    = document.querySelector(`video[data-id='${currentReelId}']`).closest('.reel-card');
+                    const countEl = card.querySelector('.comment-btn span');
+                    countEl.textContent = parseInt(countEl.textContent || '0') + 1;
+                }
+                input.value = '';
+            } catch (e) { console.error('Failed to post comment:', e); }
+        }
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) { modal.classList.add('hidden'); clearReply(); }
+        });
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                const video  = entry.target;
+                const reelId = video.dataset.id;
+                if (entry.isIntersecting) {
+                    video.play().catch(() => {});
+                    if (!video.dataset.viewed) {
+                        video.dataset.viewed = 'true';
+                        fetch(`/reels/${reelId}/view`, {
+                            method: 'POST', headers: { 'X-XSRF-TOKEN': csrfToken }
+                        }).then(r => r.text()).then(count => {
+                            video.closest('.reel-card').querySelector('.view-count span').textContent = count;
+                        });
+                    }
+                } else {
+                    video.pause();
+                }
+            });
+        }, { threshold: 0.7 });
+
+        document.querySelectorAll('.reel-video').forEach(v => observer.observe(v));
+    });
+</script>
+
+<!-- ── Share Modal ── -->
+<div class="share-overlay" id="shareOverlay" onclick="if(event.target===this)closeShareModal()">
+    <div class="share-modal">
+        <div class="share-modal-header">
+            <span>Share</span>
+            <button class="share-close-btn" onclick="closeShareModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="share-search-wrap">
+            <i class="fa-solid fa-magnifying-glass share-search-icon"></i>
+            <input type="text" id="shareSearchInput" placeholder="Search..."
+                   autocomplete="off" oninput="filterShareUsers(this.value)"/>
+        </div>
+        <div class="share-user-list" id="shareUsersList">
+            <div class="share-loading"><div class="share-spinner"></div></div>
+        </div>
+        <div id="shareSelectedBar" style="display:none; flex-direction:column; padding:0;">
+            <div style="padding:8px 16px;font-size:13px;color:#8e8e8e;border-top:1px solid #efefef;"
+                 id="shareSelectedNames"></div>
+            <button class="share-send-btn" id="shareSendBtn" onclick="sendShare()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let sharePostId   = null;
+    let shareContentType = 'post';  // 'post' or 'reel'
+    let shareAllUsers = [];
+    let shareSelected = new Set();
+
+    function openShareModal(contentId, contentType = 'post') {
+        sharePostId   = contentId;
+        shareContentType = contentType;
+        shareSelected = new Set();
+        document.getElementById('shareOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('shareSearchInput').value = '';
+        document.getElementById('shareSelectedBar').style.display = 'none';
+        document.getElementById('shareUsersList').innerHTML =
+            '<div class="share-loading"><div class="share-spinner"></div></div>';
+
+        fetch('/users/following/' + currentUsername)
+            .then(r => r.json())
+            .then(users => { shareAllUsers = users; renderShareUsers(users); })
+            .catch(() => {
+                document.getElementById('shareUsersList').innerHTML =
+                    '<div class="share-empty">Failed to load users.</div>';
+            });
+    }
+
+    function closeShareModal() {
+        document.getElementById('shareOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+        sharePostId = null;
+        shareSelected = new Set();
+    }
+
+    function renderShareUsers(users) {
+        const list = document.getElementById('shareUsersList');
+        if (!users || users.length === 0) {
+            list.innerHTML = '<div class="share-empty">No one to share with yet.<br><small>Follow people to share reels with them.</small></div>';
+            return;
+        }
+        list.innerHTML = '';
+        users.forEach(u => {
+            const item = document.createElement('div');
+            item.className = 'share-user-row';
+            item.dataset.userId = u.id;
+            item.innerHTML = `
+                <div class="share-user-av">
+                    ${u.profilePicUrl
+                ? `<img src="${escapeHtml(u.profilePicUrl)}" alt="${escapeHtml(u.username)}"/>`
+                : `<span>${(u.username||'?').charAt(0).toUpperCase()}</span>`}
+                </div>
+                <span class="share-user-name">${escapeHtml(u.username)}</span>
+                <div class="share-user-check" id="share-check-${u.id}">
+                    <i class="fa-solid fa-check"></i>
+                </div>`;
+            item.addEventListener('click', () => toggleShareUser(u));
+            list.appendChild(item);
+        });
+    }
+
+    function filterShareUsers(query) {
+        const q = query.trim().toLowerCase();
+        const filtered = q ? shareAllUsers.filter(u => u.username.toLowerCase().includes(q)) : shareAllUsers;
+        renderShareUsers(filtered);
+        shareSelected.forEach(id => {
+            const check = document.getElementById('share-check-' + id);
+            const item  = document.querySelector(`.share-user-row[data-user-id="${id}"]`);
+            if (check) check.classList.add('checked');
+            if (item)  item.classList.add('selected');
+        });
+    }
+
+    function toggleShareUser(u) {
+        const item  = document.querySelector(`.share-user-row[data-user-id="${u.id}"]`);
+        const check = document.getElementById('share-check-' + u.id);
+        if (shareSelected.has(u.id)) {
+            shareSelected.delete(u.id);
+            item.classList.remove('selected');
+            check.classList.remove('checked');
+        } else {
+            shareSelected.add(u.id);
+            item.classList.add('selected');
+            check.classList.add('checked');
+        }
+        updateShareBar();
+    }
+
+    function updateShareBar() {
+        const bar   = document.getElementById('shareSelectedBar');
+        const names = document.getElementById('shareSelectedNames');
+        if (shareSelected.size === 0) { bar.style.display = 'none'; return; }
+        bar.style.display = 'flex';
+        names.textContent = shareAllUsers.filter(u => shareSelected.has(u.id)).map(u => u.username).join(', ');
+    }
+
+    function sendShare() {
+        if (!sharePostId || shareSelected.size === 0) return;
+        const btn = document.getElementById('shareSendBtn');
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+
+        let contentUrl, message;
+        if (shareContentType === 'reel') {
+            contentUrl = window.location.origin + '/reels/' + sharePostId;
+            message = '📹 Check out this reel: ' + contentUrl;
+        } else {
+            contentUrl = window.location.origin + '/posts/' + sharePostId;
+            message = '📸 Check out this post: ' + contentUrl;
+        }
+
+        const csrfToken = getCsrfToken();
+        const csrfHeader = 'X-XSRF-TOKEN';
+
+        Promise.all([...shareSelected].map(receiverId =>
+            fetch('/messages/send/http', {
+                method: 'POST',
+                headers: { [csrfHeader]: csrfToken, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receiverId, content: message, vanish: false })
+            })
+        ))
+            .then(() => {
+                btn.textContent = 'Sent ✓';
+                btn.style.background = '#34d399';
+                setTimeout(closeShareModal, 900);
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.textContent = 'Send';
+                alert('Failed to send. Please try again.');
+            });
+    }
+</script>
+
+</body>
+</html>

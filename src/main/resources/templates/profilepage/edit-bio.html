@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Instagram · Edit Profile</title>
+    <link rel="stylesheet" th:href="@{/css/edit-bio.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+<nav>
+    <a class="nav-back" th:href="@{/users/{username}/profile(username=${user.username})}">←</a>
+    <span class="nav-title">Edit profile</span>
+    <button class="nav-save" form="editForm" type="submit">Done</button>
+</nav>
+
+<div class="page">
+
+    <div th:if="${param.success}"
+         style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);
+                border-radius:8px;padding:10px 16px;font-size:13px;color:#34d399;
+                margin-bottom:16px;text-align:center;">
+        Profile picture updated successfully!
+    </div>
+    <div class="avatar-section">
+
+        <div th:if="${picError}" class="pic-error" th:text="${picError}"></div>
+        <form class="pic-upload-form"
+              th:action="@{/users/{username}/profile-picture(username=${user.username})}"
+              method="post"
+              enctype="multipart/form-data"
+              id="picForm">
+
+            <div class="avatar-ring">
+                <div class="avatar-inner">
+                    <img th:if="${user.profilePicUrl != null}"
+                         th:src="${user.profilePicUrl}"
+                         id="avatarPreview"
+                         alt="Profile picture"/>
+                    <img th:unless="${user.profilePicUrl != null}"
+                         id="avatarPreview"
+                         src=""
+                         alt=""
+                         style="display:none;"/>
+                    <span th:unless="${user.profilePicUrl != null}"
+                          id="letterFallback"
+                          th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">A</span>
+
+                </div>
+            </div>
+            <input type="file"
+                   id="picInput"
+                   name="profilePic"
+                   accept="image/jpeg, image/png, image/gif, image/webp"/>
+
+            <span id="previewLabel" class="avatar-preview-label" style="display:none;">
+                Preview — click "Change photo" to confirm
+            </span>
+            <button type="button"
+                    class="change-photo-btn"
+                    onclick="document.getElementById('picInput').click()">
+                Change profile photo
+            </button>
+            <button type="submit"
+                    id="uploadBtn"
+                    class="change-photo-btn"
+                    style="display:none; color: #4fa3e8; font-weight: 700; margin-top: 6px;">
+                Save photo
+            </button>
+
+        </form>
+    </div>
+
+    <form id="editForm" th:action="@{/users/{username}/bio(username=${user.username})}" method="post" class="form-section">
+
+        <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+
+        <input type="hidden" name="isPrivate" id="isPrivateHidden"
+               th:value="${user.private ? 'true' : 'false'}"/>
+
+        <div class="form-field">
+            <label>Username</label>
+            <input type="text" th:value="${user.username}" disabled style="color: var(--muted);"/>
+        </div>
+
+        <div class="form-field">
+            <label>Bio</label>
+            <textarea name="bio" maxlength="150" placeholder="Write something about yourself…"
+                      th:text="${user.bio}"
+                      oninput="updateBioCount(this)"></textarea>
+            <div class="bio-footer">
+                <span class="bio-count" id="bioCount">0 / 150</span>
+            </div>
+        </div>
+
+        <div class="form-field" id="websiteField">
+            <label>
+                <i class="fa-solid fa-link" style="font-size:11px; margin-right:4px;"></i>
+                Website
+            </label>
+            <div class="website-input-wrap">
+                <input type="text"
+                       name="websiteUrl"
+                       id="websiteInput"
+                       placeholder="Add a link"
+                       th:value="${user.websiteUrl}"
+                       autocomplete="off"
+                       oninput="validateUrl(this)"/>
+                <button type="button" class="url-clear-btn" id="urlClearBtn"
+                        onclick="clearUrl()"
+                        th:style="${user.websiteUrl != null and !#strings.isEmpty(user.websiteUrl)} ? '' : 'display:none'">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="url-error" id="urlErrorInline" style="display:none;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>Please enter a valid URL (e.g. https://example.com)</span>
+            </div>
+            <div class="url-error server-url-error"
+                 th:if="${urlError}"
+                 th:text="${urlError}">
+            </div>
+        </div>
+
+        <div class="private-toggle">
+            <div>
+                <div class="toggle-label">Private account</div>
+                <div class="toggle-sub">Only approved followers can see your posts</div>
+            </div>
+            <div id="visualToggle" class="toggle-switch"
+                 th:classappend="${user.private ? 'on' : ''}"
+                 onclick="togglePrivacy(this)"></div>
+        </div>
+
+        <div class="submit-section">
+            <button class="btn-submit" type="submit">Save changes</button>
+        </div>
+    </form>
+
+    <div class="danger-zone">
+        <form th:action="@{/users/{username}/delete(username=${user.username})}" method="post"
+              onsubmit="return confirm('Are you sure you want to permanently delete your account?')">
+            <button class="btn-delete-account" type="submit">Delete account</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Init bio count on load
+    const bioArea = document.querySelector('textarea[name="bio"]');
+    if (bioArea) {
+        document.getElementById('bioCount').textContent = bioArea.value.length + ' / 150';
+    }
+    function updateBioCount(el) {
+        document.getElementById('bioCount').textContent = el.value.length + ' / 150';
+    }
+
+    /* ── URL validation ── */
+    function validateUrl(input) {
+        const val = input.value.trim();
+        const errorEl = document.getElementById('urlErrorInline');
+        const clearBtn = document.getElementById('urlClearBtn');
+
+        clearBtn.style.display = val.length > 0 ? 'flex' : 'none';
+
+        if (val.length === 0) {
+            errorEl.style.display = 'none';
+            input.classList.remove('input-error');
+            return;
+        }
+
+        const testVal = val.startsWith('http://') || val.startsWith('https://')
+            ? val : 'https://' + val;
+
+        try {
+            const url = new URL(testVal);
+            const valid = url.hostname.includes('.');
+            errorEl.style.display = valid ? 'none' : 'flex';
+            input.classList.toggle('input-error', !valid);
+        } catch {
+            errorEl.style.display = 'flex';
+            input.classList.add('input-error');
+        }
+    }
+
+    function clearUrl() {
+        const input = document.getElementById('websiteInput');
+        input.value = '';
+        input.classList.remove('input-error');
+        document.getElementById('urlErrorInline').style.display = 'none';
+        document.getElementById('urlClearBtn').style.display = 'none';
+        input.focus();
+    }
+
+    // Init clear button visibility on load
+    (function() {
+        const input = document.getElementById('websiteInput');
+        if (input && input.value.trim().length > 0) {
+            document.getElementById('urlClearBtn').style.display = 'flex';
+        }
+    })();
+
+    document.getElementById('picInput').addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const maxBytes = 5 * 1024 * 1024; // 5 MB in bytes
+        if (file.size > maxBytes) {
+            alert('This image is larger than 5 MB. Please choose a smaller file.');
+            this.value = ''; // Reset the file input so they must pick again
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+
+            const preview = document.getElementById('avatarPreview');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+
+            const letterFallback = document.getElementById('letterFallback');
+            if (letterFallback) letterFallback.style.display = 'none';
+            document.getElementById('previewLabel').style.display = 'block';
+            document.getElementById('uploadBtn').style.display = 'inline';
+        };
+
+        reader.readAsDataURL(file);
+    });
+    function togglePrivacy(element) {
+    element.classList.toggle('on');
+
+    const isNowPrivate = element.classList.contains('on');
+
+    document.getElementById('isPrivateHidden').value = isNowPrivate ? 'true' : 'false';
+
+    console.log("Form will submit isPrivate as:", document.getElementById('isPrivateHidden').value);
+}
+</script>
+</body>
+</html>

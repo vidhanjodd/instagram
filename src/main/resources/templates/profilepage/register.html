@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Instagram · Sign Up</title>
+    <link rel="stylesheet" th:href="@{/css/register.css}"/>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+</head>
+<body>
+<div class="wrapper">
+    <div class="card">
+        <div class="logo">Instagram</div>
+        <p class="tagline">Sign up to see photos and videos from your friends.</p>
+
+        <div th:if="${error}" class="alert" th:text="${error}"></div>
+
+        <form th:action="@{/users/register}" method="post" th:object="${user}">
+            <div class="field">
+                <input type="email" id="email" th:field="*{email}" placeholder="email" required/>
+                <label for="email">Email</label>
+            </div>
+            <div class="field">
+                <input type="text" id="username" th:field="*{username}" placeholder="username" required/>
+                <label for="username">Username</label>
+            </div>
+            <div class="field">
+                <input type="password" id="password" th:field="*{password}" placeholder="password" required/>
+                <label for="password">Password</label>
+            </div>
+            <button type="submit" class="btn-signup">Sign up</button>
+            <p class="terms">
+                By signing up, you agree to our <a href="#">Terms</a>,
+                <a href="#">Privacy Policy</a> and <a href="#">Cookies Policy</a>.
+            </p>
+        </form>
+    </div>
+    <div class="login-card">
+        Have an account? <a th:href="@{/login}">Log in</a>
+    </div>
+</div>
+</body>
+</html>

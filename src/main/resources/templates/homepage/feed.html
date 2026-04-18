@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>Instagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" th:href="@{/css/feed.css}"/>
+    <link rel="stylesheet" th:href="@{/css/notifications.css}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<nav>
+    <a class="nav-logo" th:href="@{/posts}">Instagram</a>
+
+    <div class="search-wrap" id="searchWrap">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Search" autocomplete="off"/>
+        </div>
+        <div class="search-dropdown" id="searchDropdown"></div>
+    </div>
+
+    <div class="nav-icons" style="display: flex; align-items: center; gap: 20px; font-size: 24px;">
+
+        <a th:href="@{/posts}" title="Home" style="color: inherit; text-decoration: none;">
+            <i class="fa-solid fa-house"></i>
+        </a>
+
+        <a th:href="@{/reels}" title="Reels" style="color: inherit; text-decoration: none;">
+        <i class="fa-solid fa-film"></i>
+        </a>
+
+        <a th:href="@{/reels/create}" title="Create Reel" style="color: inherit; text-decoration: none;">
+            <i class="fa-solid fa-video"></i>
+        </a>
+
+        <a th:href="@{/posts/new}" title="New Post" style="color: inherit; text-decoration: none;">
+            <i class="fa-regular fa-square-plus"></i>
+        </a>
+
+        <a th:href="@{/messages}" title="Messages" style="color: inherit; text-decoration: none;">
+            <i class="fa-regular fa-paper-plane"></i>
+        </a>
+        <div class="notif-wrap">
+
+            <button class="notif-bell" id="notifBell" onclick="toggleNotifDropdown()" title="Notifications">
+                <i class="fa-regular fa-bell"></i>
+            </button>
+
+            <span class="notif-badge hidden" id="notifBadge">0</span>
+
+            <div class="notif-dropdown" id="notifDropdown">
+                <div class="notif-header">Notifications</div>
+                <div class="notif-list" id="notifList">
+                    <div class="notif-loading">
+                        <div class="notif-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a th:href="@{/users/{username}/profile(username=${currentUser.username})}" title="Profile" style="color: inherit; text-decoration: none;">
+            <i class="fa-regular fa-circle-user"></i>
+        </a>
+        <form th:action="@{/logout}" method="post" style="display:inline; margin: 0;">
+            <button type="submit" title="Logout" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; font-size: 24px;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
+        </form>
+    </div>
+</nav>
+
+<div class="layout">
+    <main>
+
+        <div class="post-card" th:each="post : ${posts}">
+
+            <div class="post-header">
+                <a class="post-user" th:href="@{/users/{username}/profile(username=${post.user.username})}">
+                    <div class="post-avatar">
+                        <img th:if="${post.user.profilePicUrl != null}"
+                             th:src="${post.user.profilePicUrl}"
+                             th:alt="${post.user.username}"
+                             style="width:100%;height:100%;object-fit:cover;border-radius:50%;border:1.5px solid #000;"/>
+
+                        <div class="post-avatar-inner"
+                             th:unless="${post.user.profilePicUrl != null}"
+                             th:text="${#strings.substring(post.user.username, 0, 1).toUpperCase()}">A</div>
+                    </div>
+                    <div class="post-username" th:text="${post.user.username}">username</div>
+                </a>
+
+                <button
+                        th:if="${post.user.id == currentUser.id}"
+                        class="post-more"
+                        th:attr="data-post-id=${post.id}"
+                        onclick="openDeleteModal(this)"
+                        title="Delete">
+                    <i class="fa-regular fa-trash-can"></i>
+                </button>
+            </div>
+
+            <div class="post-carousel-container" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none;">
+
+                <div th:each="media, mediaStat : ${post.carouselMedia}" class="carousel-slide" style="flex: 0 0 100%; scroll-snap-align: start; position: relative;">
+
+                    <img th:if="${media.mediaType == 'IMAGE'}"
+                         th:src="${media.mediaUrl}"
+                         style="width: 100%; height: auto; max-height: 600px; object-fit: cover; display: block;"
+                         th:alt="${post.caption}"/>
+
+                    <video th:if="${media.mediaType == 'VIDEO'}"
+                           th:src="${media.mediaUrl}"
+                           controls
+                           style="width: 100%; height: auto; max-height: 600px; object-fit: cover; display: block;">
+                    </video>
+
+                    <div th:if="${#lists.size(post.carouselMedia) > 1}"
+                         class="slide-counter"
+                         style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; z-index: 10;">
+                        <span th:text="${mediaStat.count}"></span> / <span th:text="${#lists.size(post.carouselMedia)}"></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="post-actions" style="display: flex; align-items: center;">
+                <button class="action-btn like-btn"
+                        th:attr="data-post-id=${post.id},
+                 data-liked=${post.likes != null and post.likes.![user.id].contains(currentUser.id)}"
+                        style="background: none; border: none; padding: 0; cursor: pointer; margin-right: 12px;"
+                        title="Like">
+                    <i class="fa-heart like-icon"
+                       th:classappend="${post.likes != null and post.likes.![user.id].contains(currentUser.id)} ? 'fa-solid' : 'fa-regular'"
+                       style="font-size: 24px;"></i>
+                </button>
+
+                <button class="action-btn"
+                        th:attr="data-post-id=${post.id}"
+                        onclick="openPostPopup(this.dataset.postId)"
+                        title="Comment" style="background: none; border: none; padding: 0; cursor: pointer; margin-right: 12px; color: inherit;">
+                    <i class="fa-regular fa-comment" style="font-size: 24px;"></i>
+                </button>
+                <button class="action-btn repost-btn"
+                        th:data-post-id="${post.id}"
+                        th:data-reposted="${post.reposts != null and post.reposts.![user.id].contains(currentUser.id)}"
+                        th:title="${post.reposts != null and post.reposts.![user.id].contains(currentUser.id)} ? 'Remove Repost' : 'Repost'"
+                        style="background: none; border: none; padding: 0; cursor: pointer; color: inherit; margin-right: 12px;">
+                    <i class="fa-solid fa-retweet repost-icon"
+                       th:classappend="${post.reposts != null and post.reposts.![user.id].contains(currentUser.id)} ? 'reposted' : ''"
+                       style="font-size: 22px;"></i>
+                </button>
+                <button class="action-btn" title="Share"
+                        th:attr="data-post-id=${post.id}"
+                        onclick="openShareModal(this.dataset.postId)"
+                        style="background: none; border: none; padding: 0; cursor: pointer; color: inherit;">
+                    <i class="fa-regular fa-paper-plane" style="font-size: 24px;"></i>
+                </button>
+
+                <div class="right-actions" style="margin-left: auto;">
+                    <button type="button"
+                            class="action-btn save-btn-ajax"
+                            th:data-post-id="${post.id}"
+                            title="Save" style="background: none; border: none; padding: 0; cursor: pointer; color: inherit;">
+                        <i th:id="'save-icon-' + ${post.id}"
+                           th:class="${#lists.contains(currentUser.savedPosts.![post.id], post.id)}
+                         ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'" style="font-size: 24px;">
+                        </i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="likes-count">
+                <span th:id="'like-count-' + ${post.id}"
+                      th:text="${post.likes.size()} + ' ' + (${post.likes.size()} == 1 ? 'like' : 'likes')">
+                </span>
+            </div>
+            <div class="repost-count" th:if="${post.reposts != null and not #lists.isEmpty(post.reposts)}">
+                <span th:id="'repost-count-' + ${post.id}"
+                      th:text="${post.reposts.size()} + ' ' + (${post.reposts.size()} == 1 ? 'repost' : 'reposts')">
+                </span>
+            </div>
+            <div class="repost-count" th:if="${post.reposts == null or #lists.isEmpty(post.reposts)}">
+                <span th:id="'repost-count-' + ${post.id}" style="display:none;">0 reposts</span>
+            </div>
+            <div class="post-caption">
+                <span class="cap-username" th:text="${post.user.username}">username</span>
+                <span th:text="${post.caption}">Caption here</span>
+            </div>
+
+            <button th:if="${post.comments != null and not #lists.isEmpty(post.comments)}"
+                    th:data-post-id="${post.id}"
+                    onclick="openPostPopup(this.dataset.postId)"
+                    class="view-comments-btn"
+                    th:text="'View all ' + ${#lists.size(post.comments)} + ' comments'">
+                View all comments
+            </button>
+
+
+            <div class="post-time" th:text="${#temporals.format(post.createdAt, 'MMMM d, yyyy')}">April 4, 2026</div>
+            <form class="post-comment-bar" th:action="@{/comments/add}" method="POST">
+                <span style="font-size:18px">&#128512;</span>
+                <input type="hidden" name="postId" th:value="${post.id}"/>
+                <input type="hidden" name="userId" th:value="${currentUser.id}"/>
+                <input class="comment-input"
+                       type="text"
+                       name="content"
+                       placeholder="Add a comment?"
+                       autocomplete="off"/>
+                <button type="submit" class="post-btn">Post</button>
+            </form>
+
+        </div>
+
+    </main>
+</div>
+
+<div class="modal-overlay" id="deleteModal" style="display: none;">
+    <div class="modal-box">
+        <div class="modal-title">Delete post?</div>
+        <div class="modal-subtitle">Are you sure you want to delete this post?</div>
+        <form id="deleteForm" method="post">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}" />
+            <button type="submit" class="modal-btn delete">Delete</button>
+        </form>
+        <button class="modal-btn cancel" onclick="closeDeleteModal()">Cancel</button>
+    </div>
+</div>
+
+<div id="ppOverlay" class="pp-overlay" onclick="if(event.target===this)closePP()">
+    <div class="pp-card">
+        <div class="pp-left" id="ppLeft">
+            <button class="pp-nav pp-prev" onclick="ppNav(-1)">&#8249;</button>
+            <div id="ppMedia" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
+            <button class="pp-nav pp-next" onclick="ppNav(1)">&#8250;</button>
+            <div class="pp-dots" id="ppDots"></div>
+        </div>
+        <div class="pp-right">
+            <div class="pp-header">
+                <div class="pp-av" id="ppAv"></div>
+                <span class="pp-owner" id="ppOwner"></span>
+                <button class="pp-close" onclick="closePP()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="pp-scroll" id="ppScroll">
+                <div class="pp-spin-wrap"><div class="pp-spinner"></div></div>
+            </div>
+            <div class="pp-footer">
+                <div class="pp-actions">
+                    <button class="pp-act-btn" id="ppLikeBtn" onclick="ppLike()" title="Like">
+                        <i class="fa-regular fa-heart" id="ppLikeIcon"></i>
+                    </button>
+                    <button class="pp-act-btn" onclick="document.getElementById('ppInput').focus()" title="Comment">
+                        <i class="fa-regular fa-comment"></i>
+                    </button>
+                    <button class="pp-act-btn" title="Share" onclick="openShareModal(ppPostId)">
+                        <i class="fa-regular fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="pp-like-count" id="ppLikeCount"></div>
+                <div class="pp-time" id="ppTime"></div>
+                <div class="pp-reply-bar" id="ppReplyBar">
+                    <span>Replying to <strong id="ppReplyLabel"></strong></span>
+                    <button class="pp-cancel-reply" onclick="ppCancelReply()">&#10005;</button>
+                </div>
+                <div class="pp-input-row">
+                    <input class="pp-input" id="ppInput" type="text"
+                           placeholder="Add a comment…" autocomplete="off"
+                           oninput="document.getElementById('ppPostBtn').disabled=!this.value.trim()"/>
+                    <button class="pp-post-btn" id="ppPostBtn" disabled onclick="ppSubmit()">Post</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:inline="javascript">
+    const csrfToken  = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+    const currentUserId = /*[[${currentUser.id}]]*/ null;
+    const currentUsername = /*[[${currentUser.username}]]*/ '';
+
+    function secureHeaders(json) {
+        const h = { [csrfHeader]: csrfToken };
+        if (json) h['Content-Type'] = 'application/json';
+        return h;
+    }
+    function openDeleteModal(btn) {
+        const modal = document.getElementById('deleteModal');
+        const form = document.getElementById('deleteForm');
+        form.action = '/posts/' + btn.dataset.postId + '/delete';
+        modal.style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    (function () {
+        const bioEl = document.getElementById('bioText');
+        if (!bioEl) return;
+        const raw = bioEl.getAttribute('data-bio') || '';
+        if (!raw.trim()) { bioEl.textContent = 'No bio yet.'; return; }
+        const urlRe = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+        bioEl.innerHTML = '';
+        raw.split(urlRe).forEach(part => {
+            if (urlRe.test(part)) {
+                const a = document.createElement('a');
+                a.href = part.startsWith('http') ? part : 'https://' + part;
+                a.textContent = part; a.target = '_blank'; a.rel = 'noopener noreferrer';
+                a.className = 'bio-link'; bioEl.appendChild(a);
+            } else { bioEl.appendChild(document.createTextNode(part)); }
+        });
+    })();
+
+    let ppMediaList = [], ppMediaIdx = 0, ppPostId = null, ppReplyId = null;
+
+    function openPostPopup(postId) {
+        ppPostId = postId;
+        ppMediaList = []; ppMediaIdx = 0; ppReplyId = null;
+        document.getElementById('ppOverlay').classList.add('pp-open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('ppScroll').innerHTML =
+            '<div class="pp-spin-wrap"><div class="pp-spinner"></div></div>';
+
+        fetch('/posts/' + postId + '/data')
+            .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(renderPopup)
+            .catch(err => {
+                document.getElementById('ppScroll').innerHTML =
+                    '<p style="color:#e1306c;padding:20px;text-align:center;">Failed to load post.</p>';
+                console.error(err);
+            });
+    }
+
+    function closePP() {
+        document.getElementById('ppOverlay').classList.remove('pp-open');
+        document.body.style.overflow = '';
+        ppPostId = null; ppReplyId = null;
+        ppCancelReply();
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePP(); });
+
+    function renderPopup(d) {
+        ppMediaList = d.media || []; ppMediaIdx = 0;
+        renderMedia();
+        const av = document.getElementById('ppAv');
+        if (d.user.profilePicUrl) av.innerHTML = `<img src="${esc(d.user.profilePicUrl)}" alt=""/>`;
+        else av.textContent = (d.user.username||'?').charAt(0).toUpperCase();
+        document.getElementById('ppOwner').textContent = d.user.username;
+        renderLike(d.liked, d.likeCount);
+        document.getElementById('ppTime').textContent = fmtDate(d.createdAt);
+        renderComments(d);
+    }
+
+    function renderMedia() {
+        const wrap = document.getElementById('ppMedia');
+        const dots = document.getElementById('ppDots');
+        const prev = document.querySelector('.pp-prev');
+        const next = document.querySelector('.pp-next');
+        const m = ppMediaList[ppMediaIdx];
+        if (!m) { wrap.innerHTML = '<p style="color:#8e8e8e">No media</p>'; return; }
+        wrap.innerHTML = m.mediaType === 'IMAGE'
+            ? `<img src="${esc(m.mediaUrl)}" style="width:100%;height:100%;object-fit:contain;" alt=""/>`
+            : `<video src="${esc(m.mediaUrl)}" controls style="width:100%;height:100%;object-fit:contain;"></video>`;
+        dots.innerHTML = '';
+        ppMediaList.forEach((_, i) => {
+            const d = document.createElement('div');
+            d.className = 'pp-dot' + (i === ppMediaIdx ? ' active' : '');
+            d.onclick = () => { ppMediaIdx = i; renderMedia(); };
+            dots.appendChild(d);
+        });
+        prev.style.display = ppMediaList.length > 1 && ppMediaIdx > 0 ? 'flex' : 'none';
+        next.style.display = ppMediaList.length > 1 && ppMediaIdx < ppMediaList.length - 1 ? 'flex' : 'none';
+    }
+
+    function ppNav(dir) {
+        const ni = ppMediaIdx + dir;
+        if (ni < 0 || ni >= ppMediaList.length) return;
+        ppMediaIdx = ni; renderMedia();
+    }
+
+    function renderLike(liked, count) {
+        const icon = document.getElementById('ppLikeIcon');
+        icon.className = liked ? 'fa-solid fa-heart' : 'fa-regular fa-heart';
+        icon.style.color = liked ? '#ff3040' : '';
+        document.getElementById('ppLikeCount').textContent =
+            count > 0 ? count + (count === 1 ? ' like' : ' likes') : '';
+    }
+
+    function ppLike() {
+        if (!ppPostId) return;
+        fetch('/posts/' + ppPostId + '/like', { method: 'POST', headers: secureHeaders(false) })
+            .then(r => r.json()).then(d => renderLike(d.liked, d.likeCount)).catch(console.error);
+    }
+
+    function renderComments(d) {
+        const scroll = document.getElementById('ppScroll');
+        scroll.innerHTML = '';
+        if (d.caption) {
+            const cap = document.createElement('div');
+            cap.className = 'pp-caption';
+            cap.innerHTML = buildAvHtml(d.user) +
+                `<div class="pp-caption-text"><strong>${esc(d.user.username)}</strong>${esc(d.caption)}</div>`;
+            scroll.appendChild(cap);
+        }
+        if (!d.comments || !d.comments.length) {
+            scroll.insertAdjacentHTML('beforeend','<div class="pp-no-comments">No comments yet.</div>');
+            return;
+        }
+        d.comments.forEach(c => scroll.appendChild(buildCEl(c)));
+    }
+
+    function buildAvHtml(u) {
+        return u.profilePicUrl
+            ? `<div class="pp-c-av"><img src="${esc(u.profilePicUrl)}" alt=""/></div>`
+            : `<div class="pp-c-av">${(u.username||'?').charAt(0).toUpperCase()}</div>`;
+    }
+
+    function buildCEl(c) {
+        const isOwner = c.userId === currentUserId;
+        const avHtml  = c.profilePicUrl
+            ? `<div class="pp-c-av"><img src="${esc(c.profilePicUrl)}" alt=""/></div>`
+            : `<div class="pp-c-av">${(c.username||'?').charAt(0).toUpperCase()}</div>`;
+        const el = document.createElement('div');
+        el.className = 'pp-c';
+        el.dataset.commentId = c.id;
+        el.dataset.userId    = c.userId;
+        el.dataset.parentId = c.parentId || c.id;
+        el.innerHTML = `
+            ${avHtml}
+            <div class="pp-c-body">
+              <div class="pp-c-text"><strong>${esc(c.username)}</strong>${esc(c.content)}</div>
+              <div class="pp-c-meta">
+                <span>${fmtDate(c.createdAt)}</span>
+                <button class="pp-reply-btn" data-id="${c.id}" data-un="${esc(c.username)}">Reply</button>
+                <button class="pp-del-btn ${isOwner?'show':''}" data-id="${c.id}">Delete</button>
+              </div>
+              ${c.replyCount > 0
+            ? `<button class="pp-vr-btn" data-id="${c.id}" data-cnt="${c.replyCount}">
+                     View ${c.replyCount} ${c.replyCount===1?'reply':'replies'}
+                   </button>` : ''}
+            </div>`;
+        el.querySelector('.pp-reply-btn').onclick = function() {
+            ppStartReply(this.dataset.id, this.dataset.un);
+        };
+        const db = el.querySelector('.pp-del-btn');
+        if (db) db.onclick = function(){ ppDelete(this.dataset.id, el); };
+        const vr = el.querySelector('.pp-vr-btn');
+        if (vr) vr.onclick = function(){ ppToggleReplies(this, c.id); };
+        return el;
+    }
+
+    function ppStartReply(id, username) {
+        ppReplyId = id;
+        document.getElementById('ppReplyLabel').textContent = '@' + username;
+        document.getElementById('ppReplyBar').classList.add('on');
+        const inp = document.getElementById('ppInput');
+        inp.placeholder = 'Reply to @' + username + '…'; inp.focus();
+    }
+
+    function ppCancelReply() {
+        ppReplyId = null;
+        document.getElementById('ppReplyBar').classList.remove('on');
+        const inp = document.getElementById('ppInput');
+        if (inp) { inp.placeholder = 'Add a comment…'; inp.value = ''; }
+        const btn = document.getElementById('ppPostBtn');
+        if (btn) btn.disabled = true;
+    }
+
+    function ppSubmit() {
+        const inp = document.getElementById('ppInput');
+        const content = inp.value.trim();
+        if (!content || !ppPostId) return;
+        const body = {
+            postId:   parseInt(ppPostId),
+            userId:   currentUserId,
+            content,
+            parentId: ppReplyId ? parseInt(ppReplyId) : null,
+            replyingToUsername: ppReplyId
+                ? document.getElementById('ppReplyLabel').textContent.replace('@','')
+                : null
+        };
+        // Route to correct endpoint: top-level or reply
+        const endpoint = ppReplyId
+            ? `/comments/post/${ppPostId}/reply?parentId=${ppReplyId}`
+            : `/comments/post/${ppPostId}`;
+        fetch(endpoint, { method:'POST', headers: secureHeaders(true), body: JSON.stringify(body) })
+            .then(r => { if (!r.ok) throw new Error('Comment failed: ' + r.status); return r.json(); })
+            .then(nc => {
+                inp.value = ''; document.getElementById('ppPostBtn').disabled = true;
+                const rid = ppReplyId;
+                let parentId = rid;
+                if (rid) {
+                    const parentEl = document.querySelector(`[data-comment-id="${rid}"]`);
+                    parentId = parentEl?.dataset.parentId || rid;
+                }
+                ppLoadReplies(parentId);
+                ppCancelReply();
+                if (!nc) return;
+                const scroll = document.getElementById('ppScroll');
+                const noC = scroll.querySelector('.pp-no-comments'); if (noC) noC.remove();
+
+                if (rid) {
+                    // Reply: reload replies container
+
+
+                    let vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentId}"]`);
+                    if (!vrBtn) {
+                        const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
+                        if (parentBody) {
+                            vrBtn = document.createElement('button');
+                            vrBtn.className = 'pp-vr-btn';
+                            vrBtn.dataset.id = parentId;
+                            vrBtn.dataset.cnt = 1;
+                            vrBtn.textContent = 'Hide replies';
+                            vrBtn.onclick = function () { ppToggleReplies(this, parentId); };
+                            parentBody.appendChild(vrBtn);
+                        }
+                    } else {
+                        const newCount = parseInt(vrBtn.dataset.cnt || '0') + 1;
+                        vrBtn.dataset.cnt = newCount;
+                        vrBtn.textContent = 'Hide replies';
+                    }
+                } else {
+                    const el = buildCEl(nc);
+                    scroll.appendChild(el);
+                    scroll.scrollTop = scroll.scrollHeight;
+                }
+            }).catch(console.error);
+    }
+
+
+    function ppToggleReplies(btn, parentId) {
+        let cont = document.getElementById('pp-r-'+parentId);
+        if (!cont) {
+            cont = document.createElement('div');
+            cont.className = 'pp-replies';
+            cont.id = 'pp-r-' + parentId;
+            const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
+            if (!parentBody) return;
+            parentBody.appendChild(cont);
+        }
+        if (cont.dataset.loaded === 'true') {
+            const hidden = cont.style.display === 'none';
+            cont.style.display = hidden ? 'block' : 'none';
+            btn.innerHTML = hidden
+                ? 'Hide replies'
+                : 'View '+btn.dataset.cnt+' '+(btn.dataset.cnt==1?'reply':'replies');
+            return;
+        }
+        btn.textContent = 'Loading…';
+        fetch('/comments/replies/'+parentId).then(r=>r.json()).then(replies=>{
+            cont.innerHTML = '';
+            replies.forEach(r => {
+                const el = buildCEl(r);
+                el.style.marginLeft = "0px";
+                cont.appendChild(el);
+            });
+            cont.dataset.loaded = 'true'; cont.style.display = 'block';
+            btn.textContent = 'Hide replies';
+        }).catch(()=>{ btn.textContent = 'View '+btn.dataset.cnt+' replies'; });
+    }
+
+    function ppDelete(id, el) {
+        fetch('/comments/delete/' + id, {
+            method: 'POST',
+            headers: secureHeaders(false)
+        })
+            .then(r => {
+                if (!r.ok) {
+                    alert('Could not delete comment.');
+                    return;
+                }
+
+                const parentEl = el.closest('.pp-replies');
+                el.remove();
+
+                if (parentEl && parentEl.children.length === 0) {
+                    const parentCommentId = parentEl.id.replace('pp-r-', '');
+
+                    parentEl.remove();
+
+                    const vrBtn = document.querySelector(`.pp-vr-btn[data-id="${parentCommentId}"]`);
+                    if (vrBtn) vrBtn.remove();
+                }
+            })
+            .catch(console.error);
+    }
+
+    function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+    function fmtDate(iso){
+        if(!iso)return'';
+        try{ return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+        catch(e){return'';}
+    }
+
+    function ppLoadReplies(parentId) {
+        let cont = document.getElementById('pp-r-' + parentId);
+
+        if (!cont) {
+            cont = document.createElement('div');
+            cont.className = 'pp-replies';
+            cont.id = 'pp-r-' + parentId;
+
+            const parentBody = document.querySelector(`[data-comment-id="${parentId}"] .pp-c-body`);
+            if (!parentBody) return;
+
+            parentBody.appendChild(cont);
+        }
+
+        fetch('/comments/replies/' + parentId)
+            .then(r => r.json())
+            .then(replies => {
+                cont.innerHTML = '';
+                replies.forEach(r => {
+                    const el = buildCEl(r);
+                    el.style.marginLeft = "0px";
+                    cont.appendChild(el);
+                });
+                cont.style.display = 'block';
+                cont.dataset.loaded = 'true';
+            });
+    }
+    (function () {
+        const input = document.getElementById('searchInput');
+        const dropdown = document.getElementById('searchDropdown');
+
+        if (!input || !dropdown) return;
+
+        let debounceTimer;
+
+        input.addEventListener('input', function () {
+            const query = this.value.trim();
+
+            clearTimeout(debounceTimer);
+            dropdown.innerHTML = '';
+
+            if (query.length === 0) {
+                dropdown.classList.remove('open');
+                return;
+            }
+
+            // Debounce: wait 300ms after user stops typing
+            debounceTimer = setTimeout(() => {
+                fetch('/users/search?query=' + encodeURIComponent(query), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(res => res.json())
+                    .then(users => {
+                        dropdown.innerHTML = '';
+
+                        if (users.length === 0) {
+                            dropdown.innerHTML = '<div class="search-no-results">No users found</div>';
+                        } else {
+                            users.forEach(user => {
+                                const initial = user.username.charAt(0).toUpperCase();
+                                const item = document.createElement('a');
+                                item.href = `/users/${user.username}/profile`;
+                                item.className = 'search-result-item';
+                                item.innerHTML = `
+                                <div class="search-result-avatar">
+                                    <div class="search-result-avatar-inner">${initial}</div>
+                                </div>
+                                <div>
+                                    <div class="search-result-username">${escapeHtml(user.username)}</div>
+                                </div>
+                            `;
+                                dropdown.appendChild(item);
+                            });
+                        }
+
+                        dropdown.classList.add('open');
+                    })
+                    .catch(() => {
+                        // silently fail
+                    });
+            }, 300);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('searchWrap').contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        // Close on Escape key
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                dropdown.classList.remove('open');
+                input.blur();
+            }
+        });
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    })();
+
+    document.querySelectorAll('.like-btn').forEach(function (btn) {
+
+        const icon = btn.querySelector('.like-icon');
+
+        if (btn.dataset.liked === 'true') {
+            icon.classList.remove('fa-regular');
+            icon.classList.add('fa-solid');
+            icon.style.color = '#ff3040';
+        } else {
+            icon.classList.remove('fa-solid');
+            icon.classList.add('fa-regular');
+            icon.style.color = '';
+        }
+
+        btn.addEventListener('click', function () {
+            const postId = this.dataset.postId;
+            fetch('/posts/' + postId + '/like', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Like failed: ' + res.status);
+                    return res.json();
+                })
+                .then(function (data) {
+
+                    if (data.liked) {
+                        icon.classList.remove('fa-regular');
+                        icon.classList.add('fa-solid');
+                        icon.style.color = '#ff3040';    // Instagram red
+                    } else {
+                        icon.classList.remove('fa-solid');
+                        icon.classList.add('fa-regular');
+                        icon.style.color = '';
+                    }
+
+                    const countEl = document.getElementById('like-count-' + postId);
+                    if (countEl) {
+                        const text = data.likeCount === 1 ? 'like' : 'likes';
+                        countEl.textContent = data.likeCount + ' ' + text;
+                    }
+
+                    btn.dataset.liked = data.liked ? 'true' : 'false';
+                })
+                .catch(function (err) {
+                    console.error('Like toggle error:', err);
+                });
+        });
+    });
+
+    document.querySelectorAll('.save-btn-ajax').forEach(button => {
+        button.addEventListener('click', async function() {
+            const postId = this.getAttribute('data-post-id');
+            const icon = document.getElementById('save-icon-' + postId);
+            const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+            try {
+                const response = await fetch(`/posts/${postId}/save`, {
+                    method: 'POST',
+                    headers: {
+                        [csrfHeader]: csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Toggle filled vs outline icon
+                    if (data.saved) {
+                        icon.classList.replace('fa-regular', 'fa-solid');
+                    } else {
+                        icon.classList.replace('fa-solid', 'fa-regular');
+                    }
+                }
+            } catch (error) {
+                console.error("Save Error:", error);
+            }
+        });
+    });
+
+    function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+    function fmtDate(iso) {
+        if (!iso) return '';
+        try { return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+        catch(e){ return ''; }
+    }
+
+    /* ── Tab switching ── */
+    function showTab(tabName, btn) {
+        const postsContent = document.getElementById('posts-content');
+        const savedContent = document.getElementById('saved-content');
+        const buttons = document.querySelectorAll('.tab-btn');
+        if (tabName === 'posts') {
+            postsContent.style.display = 'grid';
+            savedContent.style.display = 'none';
+        } else {
+            postsContent.style.display = 'none';
+            savedContent.style.display = 'grid';
+        }
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    /* ── Notification dropdown ── */
+    let notifOpen = false;
+
+    function toggleNotifDropdown() {
+        notifOpen = !notifOpen;
+        const dropdown = document.getElementById('notifDropdown');
+        if (notifOpen) {
+            dropdown.classList.add('open');
+            loadNotifications();
+            markAllRead();
+        } else {
+            dropdown.classList.remove('open');
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const wrap = document.querySelector('.notif-wrap');
+        if (wrap && !wrap.contains(e.target) && notifOpen) {
+            notifOpen = false;
+            document.getElementById('notifDropdown').classList.remove('open');
+        }
+    });
+
+    function loadNotifications() {
+        const list = document.getElementById('notifList');
+        list.innerHTML = '<div class="notif-loading"><div class="notif-spinner"></div></div>';
+
+        fetch('/notifications')
+            .then(r => r.json())
+            .then(notifications => {
+                if (!notifications || notifications.length === 0) {
+                    list.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
+                    return;
+                }
+                list.innerHTML = notifications.map(n => buildNotifHtml(n)).join('');
+
+                // Attach Accept/Decline button listeners AFTER HTML is inserted
+                list.querySelectorAll('.notif-accept-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFollowAction(this.dataset.followId, 'accept', this.closest('.notif-item'));
+                    });
+                });
+                list.querySelectorAll('.notif-decline-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFollowAction(this.dataset.followId, 'decline', this.closest('.notif-item'));
+                    });
+                });
+            })
+            .catch(() => {
+                list.innerHTML = '<div class="notif-empty">Failed to load notifications.</div>';
+            });
+    }
+
+    /*
+     * handleFollowAction — called when Accept or Decline is clicked.
+     *
+     * followId  = the Follow row's PK (from the notification's followId field)
+     * action    = 'accept' | 'decline'
+     * itemEl    = the .notif-item DOM element (so we can update it in place)
+     *
+     * After the server responds we replace the buttons with a status label
+     * so the user gets immediate visual feedback without a page reload.
+     */
+    function handleFollowAction(followId, action, itemEl) {
+        const url = `/users/follows/${followId}/${action}`;
+        fetch(url, {
+            method: 'POST',
+            headers: secureHeaders(false)
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Replace the Accept/Decline buttons with a done label
+                    const btnWrap = itemEl.querySelector('.notif-actions');
+                    if (btnWrap) {
+                        btnWrap.innerHTML = action === 'accept'
+                            ? '<span class="notif-action-done">✓ Accepted</span>'
+                            : '<span class="notif-action-done" style="color:#8e8e8e;">Declined</span>';
+                    }
+                }
+            })
+            .catch(console.error);
+    }
+
+    /*
+     * buildNotifHtml — builds the HTML for ONE notification row.
+     *
+     * For FOLLOW_REQUEST type (isPending = true) we render two buttons:
+     *   [Confirm]  [Delete]   ← same style as Instagram's notification buttons
+     *
+     * For all other types we render a plain link.
+     */
+    function buildNotifHtml(n) {
+        let href = '#';
+        if (n.postId)              href = '/posts/' + n.postId;
+        else if (n.reelId)         href = '/reels/' + n.reelId;
+        else if (n.type === 'FOLLOW' || n.type === 'FOLLOW_ACCEPT')
+            href = '/users/' + n.actorUsername + '/profile';
+
+        const avatarHtml = n.actorProfilePic
+            ? `<img src="${escHtml(n.actorProfilePic)}" alt="" />`
+            : `${(n.actorUsername || '?').charAt(0).toUpperCase()}`;
+
+        const unreadClass = n.read ? '' : 'unread';
+
+        // ── FOLLOW_REQUEST: show Accept + Decline buttons ──────────────────
+        if (n.isPending && n.followId) {
+            return `
+                <div class="notif-item ${unreadClass}" style="cursor:default;">
+                    <a href="/users/${n.actorUsername}/profile" class="notif-avatar" style="text-decoration:none;">
+                        <div class="notif-avatar-inner">${avatarHtml}</div>
+                    </a>
+                    <div class="notif-text" style="flex:1; min-width:0">
+                        <strong>${escHtml(n.actorUsername)}</strong> ${escHtml(n.message)}
+                        <span class="notif-time">${escHtml(n.timeAgo)}</span>
+                    </div>
+                    <div class="notif-actions">
+                        <button class="notif-accept-btn" data-follow-id="${n.followId}">Confirm</button>
+                        <button class="notif-decline-btn" data-follow-id="${n.followId}">Delete</button>
+                    </div>
+                    <div class="notif-dot"></div>
+                </div>`;
+        }
+
+        // ── All other notification types: plain link row ───────────────────
+        return `
+            <a class="notif-item ${unreadClass}" href="${escHtml(href)}">
+                <div class="notif-avatar">
+                    <div class="notif-avatar-inner">${avatarHtml}</div>
+                </div>
+                <div class="notif-text">
+                    <strong>${escHtml(n.actorUsername)}</strong> ${escHtml(n.message)}
+                    <span class="notif-time">${escHtml(n.timeAgo)}</span>
+                </div>
+                <div class="notif-dot"></div>
+            </a>`;
+    }
+
+    function markAllRead() {
+        fetch('/notifications/mark-read', {
+            method: 'POST',
+            headers: secureHeaders(false)
+        })
+            .then(() => updateBadge(0))
+            .catch(console.error);
+    }
+
+    function updateBadge(count) {
+        const badge = document.getElementById('notifBadge');
+        if (!badge) return;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    function pollUnreadCount() {
+        fetch('/notifications/count')
+            .then(r => r.json())
+            .then(data => updateBadge(data.count))
+            .catch(() => {});
+    }
+
+    pollUnreadCount();
+    setInterval(pollUnreadCount, 30000);
+
+    function escHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+    }
+
+
+
+
+    function sendRepostRequest(postId, caption, btn) {
+        fetch(`/reposts/${postId}`, {
+            method: 'POST',
+            headers: secureHeaders(true),   // secureHeaders is already defined in your feed.html
+            body: JSON.stringify({ caption: caption })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                const isNowReposted = data.reposted;
+                const count         = data.repostCount;
+
+                // Update button state
+                btn.dataset.reposted = isNowReposted ? 'true' : 'false';
+                btn.title = isNowReposted ? 'Remove Repost' : 'Repost';
+
+                // Update icon colour (green = reposted, normal = not reposted)
+                const icon = btn.querySelector('.repost-icon');
+                if (isNowReposted) {
+                    icon.classList.add('reposted');
+                } else {
+                    icon.classList.remove('reposted');
+                }
+
+                // Update repost count text
+                const countEl = document.getElementById('repost-count-' + postId);
+                if (countEl) {
+                    if (count > 0) {
+                        countEl.textContent = count + ' ' + (count === 1 ? 'repost' : 'reposts');
+                        countEl.parentElement.style.display = '';
+                    } else {
+                        countEl.parentElement.style.display = 'none';
+                    }
+                }
+            })
+            .catch(err => console.error('Repost error:', err));
+    }
+
+    document.querySelectorAll('.repost-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            sendRepostRequest(this.dataset.postId, null,this);
+        });
+    });
+
+</script>
+<!-- ── Share Modal ── -->
+<div class="share-overlay" id="shareOverlay" onclick="if(event.target===this)closeShareModal()">
+    <div class="share-modal">
+        <div class="share-modal-header">
+            <span>Share</span>
+            <button class="share-close-btn" onclick="closeShareModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="share-search-wrap">
+            <i class="fa-solid fa-magnifying-glass share-search-icon"></i>
+            <input type="text" id="shareSearchInput" placeholder="Search..."
+                   autocomplete="off" oninput="filterShareUsers(this.value)"/>
+        </div>
+        <div class="share-user-list" id="shareUsersList">
+            <div class="share-loading"><div class="share-spinner"></div></div>
+        </div>
+        <div id="shareSelectedBar" style="display:none; flex-direction:column; padding:0;">
+            <div style="padding:8px 16px;font-size:13px;color:#8e8e8e;border-top:1px solid #efefef;"
+                 id="shareSelectedNames"></div>
+            <button class="share-send-btn" id="shareSendBtn" onclick="sendShare()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let sharePostId   = null;
+    let shareContentType = 'post';  // 'post' or 'reel'
+    let shareAllUsers = [];
+    let shareSelected = new Set();
+
+    function openShareModal(contentId, contentType = 'post') {
+        sharePostId   = contentId;
+        shareContentType = contentType;
+        shareSelected = new Set();
+        document.getElementById('shareOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('shareSearchInput').value = '';
+        document.getElementById('shareSelectedBar').style.display = 'none';
+        document.getElementById('shareUsersList').innerHTML =
+            '<div class="share-loading"><div class="share-spinner"></div></div>';
+
+        fetch('/users/following/' + currentUsername)
+            .then(r => r.json())
+            .then(users => { shareAllUsers = users; renderShareUsers(users); })
+            .catch(() => {
+                document.getElementById('shareUsersList').innerHTML =
+                    '<div class="share-empty">Failed to load users.</div>';
+            });
+    }
+
+    function closeShareModal() {
+        document.getElementById('shareOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+        sharePostId = null;
+        shareSelected = new Set();
+    }
+
+    function renderShareUsers(users) {
+        const list = document.getElementById('shareUsersList');
+        if (!users || users.length === 0) {
+            list.innerHTML = '<div class="share-empty">No one to share with yet.<br><small>Follow people to share posts with them.</small></div>';
+            return;
+        }
+        list.innerHTML = '';
+        users.forEach(u => {
+            const item = document.createElement('div');
+            item.className = 'share-user-row';
+            item.dataset.userId = u.id;
+            item.innerHTML = `
+                <div class="share-user-av">
+                    ${u.profilePicUrl
+                ? `<img src="${esc(u.profilePicUrl)}" alt="${esc(u.username)}"/>`
+                : `<span>${(u.username||'?').charAt(0).toUpperCase()}</span>`}
+                </div>
+                <span class="share-user-name">${esc(u.username)}</span>
+                <div class="share-user-check" id="share-check-${u.id}">
+                    <i class="fa-solid fa-check"></i>
+                </div>`;
+            item.addEventListener('click', () => toggleShareUser(u));
+            list.appendChild(item);
+        });
+    }
+
+    function filterShareUsers(query) {
+        const q = query.trim().toLowerCase();
+        const filtered = q ? shareAllUsers.filter(u => u.username.toLowerCase().includes(q)) : shareAllUsers;
+        renderShareUsers(filtered);
+        shareSelected.forEach(id => {
+            const check = document.getElementById('share-check-' + id);
+            const item  = document.querySelector(`.share-user-row[data-user-id="${id}"]`);
+            if (check) check.classList.add('checked');
+            if (item)  item.classList.add('selected');
+        });
+    }
+
+    function toggleShareUser(u) {
+        const item  = document.querySelector(`.share-user-row[data-user-id="${u.id}"]`);
+        const check = document.getElementById('share-check-' + u.id);
+        if (shareSelected.has(u.id)) {
+            shareSelected.delete(u.id);
+            item.classList.remove('selected');
+            check.classList.remove('checked');
+        } else {
+            shareSelected.add(u.id);
+            item.classList.add('selected');
+            check.classList.add('checked');
+        }
+        updateShareBar();
+    }
+
+    function updateShareBar() {
+        const bar   = document.getElementById('shareSelectedBar');
+        const names = document.getElementById('shareSelectedNames');
+        if (shareSelected.size === 0) { bar.style.display = 'none'; return; }
+        bar.style.display = 'flex';
+        names.textContent = shareAllUsers.filter(u => shareSelected.has(u.id)).map(u => u.username).join(', ');
+    }
+
+    function sendShare() {
+        if (!sharePostId || shareSelected.size === 0) return;
+        const btn = document.getElementById('shareSendBtn');
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+
+        let contentUrl, message;
+        if (shareContentType === 'reel') {
+            contentUrl = window.location.origin + '/reels/' + sharePostId;
+            message = '📹 Check out this reel: ' + contentUrl;
+        } else {
+            contentUrl = window.location.origin + '/posts/' + sharePostId;
+            message = '📸 Check out this post: ' + contentUrl;
+        }
+
+        Promise.all([...shareSelected].map(receiverId =>
+            fetch('/messages/send/http', {
+                method: 'POST',
+                headers: { [csrfHeader]: csrfToken, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receiverId, content: message, vanish: false })
+            })
+        ))
+            .then(() => {
+                btn.textContent = 'Sent ✓';
+                btn.style.background = '#34d399';
+                setTimeout(closeShareModal, 900);
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.textContent = 'Send';
+                alert('Failed to send. Please try again.');
+            });
+    }
+</script>
+
+</body>
+</html>
